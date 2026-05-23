@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>China Shipments — Live Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+  :root {
+    --black:#1a1a1a; --grey-1:#f4f4f4; --grey-2:#e8e8e8; --grey-3:#aaa; --grey-4:#666;
+    --green:#1e6e2e; --amber:#8a5c00; --red:#b52a2a; --blue:#1a4a8a;
+  }
+  body { font-family:'IBM Plex Sans',sans-serif; background:#fff; color:var(--black); font-size:13px; line-height:1.5; }
+
+  .header { padding:18px 32px; border-bottom:2px solid var(--black); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:100; }
+  .header-left .title { font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
+  .header-left .subtitle { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); margin-top:3px; }
+  .header-right { display:flex; align-items:center; gap:14px; }
+  .last-updated { font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--grey-4); text-align:right; }
+  .refresh-btn { font-family:'IBM Plex Mono',monospace; font-size:10px; background:var(--black); color:#fff; border:none; padding:6px 14px; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; }
+  .refresh-btn:hover { opacity:.75; } .refresh-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+  .metrics { display:grid; grid-template-columns:repeat(6,1fr); border-bottom:1px solid var(--grey-2); }
+  .metric-card { padding:18px 20px; border-right:1px solid var(--grey-2); }
+  .metric-card:last-child { border-right:none; }
+  .metric-value { font-size:24px; font-weight:600; line-height:1.1; letter-spacing:-.01em; }
+  .metric-label { font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--grey-3); text-transform:uppercase; letter-spacing:.1em; margin-top:5px; }
+  .metric-sub { font-size:11px; color:var(--grey-4); margin-top:2px; font-family:'IBM Plex Mono',monospace; }
+
+  .section { padding:20px 32px 40px; }
+  .section-title { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey-3); border-bottom:1px solid var(--grey-2); padding-bottom:7px; margin-bottom:14px; }
+
+  .contract-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+  .contract-table thead th { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding:8px 10px; text-align:left; border-bottom:1px solid var(--black); white-space:nowrap; }
+  .contract-table tbody tr.data-row { border-bottom:1px solid var(--grey-2); cursor:pointer; transition:background .1s; }
+  .contract-table tbody tr.data-row:hover, .contract-table tbody tr.data-row.open { background:var(--grey-1); }
+  .contract-table td { padding:11px 10px; vertical-align:middle; }
+
+  .contract-id { font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:12px; color:#b52a2a; white-space:nowrap; }
+  .buyer-cell { font-size:11.5px; color:var(--grey-4); max-width:130px; }
+  .route-cell { font-size:11.5px; color:var(--black); max-width:150px; line-height:1.4; }
+  .mt-val { font-weight:500; } .mt-sub { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); }
+
+  .progress-wrap { background:var(--grey-2); height:5px; width:100%; min-width:70px; }
+  .progress-fill { background:var(--black); height:5px; transition:width .5s ease; }
+  .progress-pct { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); margin-top:4px; }
+
+  .fcl-row { display:flex; gap:4px; flex-wrap:wrap; }
+  .fcl-pill { font-family:'IBM Plex Mono',monospace; font-size:9.5px; padding:2px 5px; background:var(--grey-1); border:1px solid var(--grey-2); white-space:nowrap; }
+  .fcl-pill.paid { background:#e8f4e8; border-color:#b8d8b8; color:var(--green); }
+  .fcl-pill.pending-pay { background:#fdf0e8; border-color:#f0cca8; color:var(--amber); }
+
+  .signal { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:500; white-space:nowrap; }
+  .signal-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  .chevron { font-size:10px; color:var(--grey-3); transition:transform .2s; display:inline-block; }
+  .open .chevron { transform:rotate(90deg); }
+
+  tr.expand-row { display:none; } tr.expand-row.show { display:table-row; }
+  .expand-cell { padding:14px 14px 18px 36px; background:var(--grey-1); border-bottom:1px solid var(--grey-2); }
+  .expand-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+  .expand-section-label { font-family:'IBM Plex Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:.12em; color:var(--grey-3); margin-bottom:6px; }
+  .expand-text { font-size:12px; line-height:1.7; color:#333; white-space:pre-wrap; }
+
+  #loading { padding:80px 32px; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--grey-3); letter-spacing:.05em; }
+  .loading-dots::after { content:''; animation:dots 1.2s steps(4,end) infinite; }
+  @keyframes dots { 0%,20%{content:'';} 40%{content:'.';} 60%{content:'..';} 80%,100%{content:'...';} }
+  #error-msg { display:none; padding:40px 32px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--red); text-align:center; }
+  #dashboard { display:none; }
+
+  .footer { padding:14px 32px; border-top:1px solid var(--grey-2); font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-3); display:flex; justify-content:space-between; }
+  .countdown { color:var(--grey-4); }
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="loading-dots">Loading live data</div></div>
+<div id="error-msg"></div>
+
+<div id="dashboard">
+  <div class="header">
+    <div class="header-left">
+      <div class="title">China Shipments — Live Dashboard</div>
+      <div class="subtitle">Tarun's Brief &nbsp;|&nbsp; Source: Email Threads (Yan / Sujit) + Contract & Payment Sheet</div>
+    </div>
+    <div class="header-right">
+      <div class="last-updated" id="last-updated">—</div>
+      <button class="refresh-btn" id="refresh-btn" onclick="loadData()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="metrics" id="metrics-strip"></div>
+
+  <div class="section">
+    <div class="section-title">Contract-by-Contract Status &nbsp;—&nbsp; Click any row to expand operational + financial detail</div>
+    <table class="contract-table">
+      <thead><tr>
+        <th style="width:30px"></th>
+        <th>Contract</th><th>Buyer</th><th>Commodity / Route</th><th>Contracted</th>
+        <th>Shipped Progress</th><th>FCL Status</th><th>Payment</th><th>Signal</th>
+      </tr></thead>
+      <tbody id="contract-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">
+    <span>Data read live from your Google Sheet &nbsp;|&nbsp; Auto-refreshes every 5 minutes</span>
+    <span class="countdown" id="countdown">Next refresh in 5:00</span>
+  </div>
+</div>
+
+<script>
+let countdownInterval=null, secs=300;
+
+function parseCSV(text){
+  const rows=[]; let row=[],f='',q=false;
+  for(let i=0;i<text.length;i++){ const c=text[i],n=text[i+1];
+    if(q){ if(c==='"'&&n==='"'){f+='"';i++;} else if(c==='"'){q=false;} else {f+=c;} }
+    else { if(c==='"'){q=true;} else if(c===','){row.push(f.trim());f='';}
+      else if(c==='\n'){row.push(f.trim());rows.push(row);row=[];f='';}
+      else if(c!=='\r'){f+=c;} }
+  }
+  if(f!==''||row.length>0){row.push(f.trim());rows.push(row);}
+  return rows;
+}
+function num(v){ return parseFloat((v||'').toString().replace(/[^0-9.\-]/g,''))||0; }
+function fmt(n){ return n.toLocaleString('en-IN'); }
+function pct(a,b){ return b>0?Math.round(a/b*100):0; }
+function getSignal(c,s,p,pd){
+  if(s===0) return{label:'Not Started',color:'#999'};
+  if(p>=c&&c>0) return{label:'Complete',color:'#1e6e2e'};
+  if(p>0&&pd>0) return{label:'Partial Payment',color:'#8a5c00'};
+  if(s>0&&p===0&&pd>0) return{label:'Awaiting Payment',color:'#b52a2a'};
+  if(s>0&&p>0) return{label:'Paid',color:'#1e6e2e'};
+  return{label:'In Progress',color:'#1a4a8a'};
+}
+function parseSummary(rows){ const m={}; let t=false;
+  rows.forEach(r=>{ const k=(r[0]||'').toLowerCase().trim();
+    if(k==='metric'){t=true;return;}
+    if(t&&k){m[k]={val:(r[1]||''),extra:(r[2]||'')};}
+  }); return m;
+}
+function parseContracts(rows){ if(rows.length<2)return{hi:{},data:[]};
+  const hi={}; rows[0].forEach((h,i)=>{hi[(h||'').toLowerCase().trim()]=i;});
+  const data=rows.slice(1).filter(r=>(r[hi['contract']]||'').toUpperCase().startsWith('HK'));
+  return{hi,data};
+}
+function g(r,hi,name){ return hi[name]!=null?(r[hi[name]]!=null?r[hi[name]].toString():''):''; }
+
+function renderMetrics(m){
+  const cards=[
+    {label:'Contracted',       val:(m['total contracted (operational)']?.val||'—')+' MT', sub:'$'+(m['total contracted value']?.val||'—')+'m'},
+    {label:'Shipped So Far',   val:(m['shipped so far']?.val||'—')+' MT',  sub:m['shipped so far']?.extra||''},
+    {label:'Pending Shipment', val:(m['pending shipment']?.val||'—')+' MT', sub:m['pending shipment']?.extra||''},
+    {label:'FCL Shipped',      val:m['fcl shipped']?.val||'—',  sub:'invoiced: '+(m['fcl invoiced']?.val||'—')},
+    {label:'FCL Paid',         val:m['fcl paid']?.val||'—',     sub:m['fcl paid']?.extra||''},
+    {label:'Payment Pending',  val:m['fcl payment pending']?.val||'—', sub:'FCL awaiting collection'},
+  ];
+  document.getElementById('metrics-strip').innerHTML=cards.map(c=>`
+    <div class="metric-card"><div class="metric-value">${c.val}</div>
+    <div class="metric-label">${c.label}</div>${c.sub?`<div class="metric-sub">${c.sub}</div>`:''}</div>`).join('');
+}
+function renderContracts(hi,data){
+  let html='';
+  data.forEach((r,idx)=>{
+    const id=g(r,hi,'contract').trim(), buyer=g(r,hi,'buyer').trim();
+    const route=(g(r,hi,'commodity / route')||g(r,hi,'commodity/route')).trim();
+    const ops=(g(r,hi,'operational status (emails)')||g(r,hi,'operational status')).trim();
+    const fin=(g(r,hi,'financial status (sheet)')||g(r,hi,'financial status')).trim();
+    const terms=g(r,hi,'terms').trim();
+    const cmt=num(g(r,hi,'contracted mt')), smt=num(g(r,hi,'shipped mt'));
+    const val=(g(r,hi,'value ($)')||g(r,hi,'value')).trim();
+    const fclC=num(g(r,hi,'fcl contracted')), fclS=num(g(r,hi,'fcl shipped'));
+    const fclI=num(g(r,hi,'fcl invoiced')), fclP=num(g(r,hi,'fcl paid')), fclPd=num(g(r,hi,'fcl pending'));
+    const sp=pct(smt,cmt), sig=getSignal(fclC,fclS,fclP,fclPd);
+    html+=`
+    <tr class="data-row" id="row-${idx}" onclick="toggleRow(${idx})">
+      <td><span class="chevron">▶</span></td>
+      <td><span class="contract-id">${id}</span></td>
+      <td><div class="buyer-cell">${buyer}</div></td>
+      <td><div class="route-cell">${route}</div></td>
+      <td><div class="mt-val">${fmt(cmt)} MT</div><div class="mt-sub">${val?'$'+val.replace(/[^0-9.]/g,'')+'m':'—'}</div></td>
+      <td style="min-width:100px"><div class="progress-wrap"><div class="progress-fill" style="width:${sp}%"></div></div><div class="progress-pct">${fmt(smt)} MT &nbsp;(${sp}%)</div></td>
+      <td><div class="fcl-row"><span class="fcl-pill">${fclC} contracted</span><span class="fcl-pill">${fclS} shipped</span><span class="fcl-pill">${fclI} invoiced</span></div></td>
+      <td><div class="fcl-row"><span class="fcl-pill paid">${fclP} paid</span>${fclPd>0?`<span class="fcl-pill pending-pay">${fclPd} pending</span>`:''}</div></td>
+      <td><span class="signal" style="color:${sig.color}"><span class="signal-dot" style="background:${sig.color}"></span>${sig.label}</span></td>
+    </tr>
+    <tr class="expand-row" id="expand-${idx}"><td class="expand-cell" colspan="9">
+      <div class="expand-grid">
+        <div><div class="expand-section-label">Operational Status — From Emails</div><div class="expand-text">${ops||'—'}</div></div>
+        <div><div class="expand-section-label">Financial Status — From Sheet</div><div class="expand-text">${fin||'—'}${terms?'\n\nTerms: '+terms:''}</div></div>
+      </div>
+    </td></tr>`;
+  });
+  document.getElementById('contract-tbody').innerHTML=html;
+}
+function toggleRow(idx){
+  const dr=document.getElementById('row-'+idx), er=document.getElementById('expand-'+idx);
+  const open=dr.classList.contains('open');
+  dr.classList.toggle('open',!open); er.classList.toggle('show',!open);
+}
+
+async function loadData(){
+  const btn=document.getElementById('refresh-btn'); btn.disabled=true; btn.textContent='↻ Loading...';
+  try{
+    const res=await fetch('/api/data?t='+Date.now());
+    if(!res.ok) throw new Error('Server returned '+res.status);
+    const {summary,contract}=await res.json();
+    renderMetrics(parseSummary(parseCSV(summary)));
+    const {hi,data}=parseContracts(parseCSV(contract));
+    renderContracts(hi,data);
+    document.getElementById('loading').style.display='none';
+    document.getElementById('error-msg').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    const now=new Date();
+    document.getElementById('last-updated').innerHTML='Last updated<br>'+
+      now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' &nbsp;'+
+      now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    secs=300; clearInterval(countdownInterval); startCountdown();
+  }catch(e){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('error-msg').style.display='block';
+    document.getElementById('error-msg').textContent='Could not load data: '+e.message;
+  }
+  btn.disabled=false; btn.textContent='↻ Refresh';
+}
+function startCountdown(){
+  countdownInterval=setInterval(()=>{ secs--; const m=Math.floor(secs/60),s=secs%60;
+    document.getElementById('countdown').textContent='Next refresh in '+m+':'+String(s).padStart(2,'0');
+    if(secs<=0){clearInterval(countdownInterval);loadData();}
+  },1000);
+}
+loadData();
+</script>
+</body>
+</html>
