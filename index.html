@@ -113,10 +113,11 @@
     .last-updated { display:none; }
     .refresh-btn { padding:5px 11px; font-size:9px; touch-action:manipulation; }
 
-    /* Metrics: swipeable horizontal strip */
-    .metrics { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; scrollbar-width:none; grid-template-columns:unset; }
-    .metrics::-webkit-scrollbar { display:none; }
-    .metric-card { flex:0 0 138px; scroll-snap-align:start; padding:13px 14px; border-right:1px solid var(--grey-2) !important; border-bottom:none !important; }
+    /* Metrics: 2-column grid (mirrors desktop 4x2) */
+    .metrics { display:grid; grid-template-columns:repeat(2,1fr); }
+    .metric-card { flex:unset; width:auto; padding:13px 14px; border-right:1px solid var(--grey-2) !important; border-bottom:1px solid var(--grey-2) !important; }
+    .metric-card:nth-child(2n) { border-right:none !important; }
+    .metric-card:nth-child(n+7) { border-bottom:none !important; }
     .metric-value { font-size:18px; }
     .metric-label { font-size:8px; }
     .metric-sub { font-size:10px; }
