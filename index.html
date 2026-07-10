@@ -21,7 +21,7 @@
   .refresh-btn { font-family:'IBM Plex Mono',monospace; font-size:10px; background:var(--black); color:#fff; border:none; padding:6px 14px; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; }
   .refresh-btn:hover { opacity:.75; } .refresh-btn:disabled { opacity:.4; cursor:not-allowed; }
 
-  .metrics { display:grid; grid-template-columns:repeat(6,1fr); border-bottom:1px solid var(--grey-2); }
+  .metrics { display:grid; grid-template-columns:repeat(7,1fr); border-bottom:1px solid var(--grey-2); }
   .metric-card { padding:18px 20px; border-right:1px solid var(--grey-2); }
   .metric-card:last-child { border-right:none; }
   .metric-value { font-size:24px; font-weight:600; line-height:1.1; letter-spacing:-.01em; }
@@ -71,6 +71,75 @@
 
   .footer { padding:14px 32px; border-top:1px solid var(--grey-2); font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-3); display:flex; justify-content:space-between; }
   .countdown { color:var(--grey-4); }
+
+  .analytics { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid var(--grey-2); }
+  .analytics-panel { padding:20px 24px; border-right:1px solid var(--grey-2); }
+  .analytics-panel:last-child { border-right:none; }
+  .analytics-title { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey-3); border-bottom:1px solid var(--grey-2); padding-bottom:7px; margin-bottom:14px; }
+  .analytics-kpi { font-size:22px; font-weight:600; letter-spacing:-.01em; line-height:1.1; }
+  .analytics-kpi-sub { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); margin:3px 0 12px; }
+  .mini-table { width:100%; border-collapse:collapse; font-size:11.5px; margin-top:2px; }
+  .mini-table th { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:4px 6px; text-align:left; border-bottom:1px solid var(--grey-2); white-space:nowrap; }
+  .mini-table td { padding:5px 6px; border-bottom:1px solid var(--grey-1); vertical-align:middle; }
+  .exec-bar-wrap { background:var(--grey-2); height:4px; width:56px; display:inline-block; vertical-align:middle; }
+  .exec-bar-fill { height:4px; }
+  .flag-red { color:var(--red); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
+  .flag-amber { color:var(--amber); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
+  .flag-green { color:var(--green); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
+  .none-msg { font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--grey-3); }
+
+  /* ── Mobile card components (hidden on desktop) ── */
+  .contract-cards { display:none; padding:0 16px 32px; }
+  .m-card { border:1px solid var(--grey-2); margin-bottom:10px; overflow:hidden; }
+  .m-card-hd { padding:13px 14px 10px; cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; }
+  .m-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+  .m-card-buyer { font-size:11.5px; color:var(--grey-4); margin-bottom:9px; line-height:1.4; }
+  .m-card-fcl { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .m-card-dtl { background:var(--grey-1); border-top:1px solid var(--grey-2); padding:14px 14px 16px; display:none; }
+  .m-card-dtl.open { display:block; }
+  .m-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:14px; }
+  .m-stat-l { font-family:'IBM Plex Mono',monospace; font-size:8.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:2px; }
+  .m-stat-v { font-size:12px; font-weight:500; }
+
+  /* ── Mobile layout overrides ── */
+  @media(max-width:680px){
+    body { font-size:12px; }
+
+    /* Header */
+    .header { padding:11px 16px; }
+    .header-left .title { font-size:12px; }
+    .header-left .subtitle { font-size:8.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+    .last-updated { display:none; }
+    .refresh-btn { padding:5px 11px; font-size:9px; touch-action:manipulation; }
+
+    /* Metrics: swipeable horizontal strip */
+    .metrics { display:flex; overflow-x:auto; -webkit-overflow-scrolling:touch; scroll-snap-type:x mandatory; scrollbar-width:none; grid-template-columns:unset; }
+    .metrics::-webkit-scrollbar { display:none; }
+    .metric-card { flex:0 0 138px; scroll-snap-align:start; padding:13px 14px; border-right:1px solid var(--grey-2) !important; border-bottom:none; }
+    .metric-value { font-size:18px; }
+    .metric-label { font-size:8px; }
+    .metric-sub { font-size:10px; }
+
+    /* Analytics: stack full-width */
+    .analytics { grid-template-columns:1fr; }
+    .analytics-panel { border-right:none; border-bottom:1px solid var(--grey-2); padding:14px 16px; }
+    .analytics-panel:last-child { border-bottom:none; }
+    .analytics-kpi { font-size:19px; }
+    .mini-table th { font-size:8px; padding:4px 4px; }
+    .mini-table td { font-size:11px; padding:5px 4px; }
+
+    /* Contract section */
+    .section { padding:12px 0 0; }
+    .section-title { padding:0 16px 8px; margin-bottom:8px; }
+    .contract-table { display:none; }
+    .contract-cards { display:block !important; }
+
+    /* Expand row (desktop) also single column on mobile if ever visible */
+    .expand-grid { grid-template-columns:1fr; }
+
+    /* Footer */
+    .footer { padding:10px 16px; flex-direction:column; gap:3px; font-size:9px; }
+  }
 </style>
 </head>
 <body>
@@ -92,8 +161,23 @@
 
   <div class="metrics" id="metrics-strip"></div>
 
+  <div class="analytics">
+    <div class="analytics-panel">
+      <div class="analytics-title">Receivables Outstanding</div>
+      <div id="analytics-recv"></div>
+    </div>
+    <div class="analytics-panel">
+      <div class="analytics-title">Execution Rate by Contract</div>
+      <div id="analytics-exec"></div>
+    </div>
+    <div class="analytics-panel">
+      <div class="analytics-title">Buyer MT Concentration</div>
+      <div id="analytics-buyer"></div>
+    </div>
+  </div>
+
   <div class="section">
-    <div class="section-title">Contract-by-Contract Status &nbsp;—&nbsp; Click any row to expand operational + financial detail</div>
+    <div class="section-title">Contract Status &nbsp;—&nbsp; Tap / click any row to expand detail</div>
     <table class="contract-table">
       <thead><tr>
         <th style="width:30px"></th>
@@ -102,6 +186,7 @@
       </tr></thead>
       <tbody id="contract-tbody"></tbody>
     </table>
+    <div class="contract-cards" id="contract-cards"></div>
   </div>
 
   <div class="footer">
@@ -148,7 +233,7 @@ function parseContracts(rows){ if(rows.length<2)return{hi:{},data:[]};
 }
 function g(r,hi,name){ return hi[name]!=null?(r[hi[name]]!=null?r[hi[name]].toString():''):''; }
 
-function renderMetrics(m){
+function renderMetrics(m, uninvoicedMT){
   const cards=[
     {label:'Contracted',       val:(m['total contracted (operational)']?.val||'—')+' MT', sub:'$'+(m['total contracted value']?.val||'—')+'m'},
     {label:'Shipped So Far',   val:(m['shipped so far']?.val||'—')+' MT',  sub:m['shipped so far']?.extra||''},
@@ -156,6 +241,7 @@ function renderMetrics(m){
     {label:'FCL Shipped',      val:m['fcl shipped']?.val||'—',  sub:'invoiced: '+(m['fcl invoiced']?.val||'—')},
     {label:'FCL Paid',         val:m['fcl paid']?.val||'—',     sub:m['fcl paid']?.extra||''},
     {label:'Payment Pending',  val:m['fcl payment pending']?.val||'—', sub:'FCL awaiting collection'},
+    {label:'Shipped, Not Invoiced', val:fmt(uninvoicedMT)+' MT', sub:'(FCL Shipped − FCL Invoiced) × 26'},
   ];
   document.getElementById('metrics-strip').innerHTML=cards.map(c=>`
     <div class="metric-card"><div class="metric-value">${c.val}</div>
@@ -201,15 +287,132 @@ function toggleRow(idx){
   dr.classList.toggle('open',!open); er.classList.toggle('show',!open);
 }
 
+function renderContractsMobile(hi,data){
+  let html='';
+  data.forEach((r,idx)=>{
+    const id=g(r,hi,'contract').trim(), buyer=g(r,hi,'buyer').trim();
+    const route=(g(r,hi,'commodity / route')||g(r,hi,'commodity/route')).trim();
+    const ops=(g(r,hi,'operational status (emails)')||g(r,hi,'operational status')).trim();
+    const fin=(g(r,hi,'financial status (sheet)')||g(r,hi,'financial status')).trim();
+    const terms=g(r,hi,'terms').trim();
+    const cmt=num(g(r,hi,'contracted mt')), smt=num(g(r,hi,'shipped mt'));
+    const val=(g(r,hi,'value ($)')||g(r,hi,'value')).trim();
+    const fclC=num(g(r,hi,'fcl contracted')), fclS=num(g(r,hi,'fcl shipped'));
+    const fclI=num(g(r,hi,'fcl invoiced')), fclP=num(g(r,hi,'fcl paid')), fclPd=num(g(r,hi,'fcl pending'));
+    const sp=pct(smt,cmt), sig=getSignal(fclC,fclS,fclP,fclPd);
+    html+=`
+    <div class="m-card">
+      <div class="m-card-hd" onclick="toggleCard(${idx})">
+        <div class="m-card-top">
+          <span class="contract-id">${id}</span>
+          <div style="display:flex;align-items:center;gap:9px">
+            <span class="signal" style="color:${sig.color}"><span class="signal-dot" style="background:${sig.color}"></span>${sig.label}</span>
+            <span class="chevron" id="mchev-${idx}" style="transition:transform .2s">▶</span>
+          </div>
+        </div>
+        <div class="m-card-buyer">${buyer}${route?` &nbsp;·&nbsp; <span style="font-size:10.5px">${route}</span>`:''}</div>
+        <div class="progress-wrap"><div class="progress-fill" style="width:${sp}%"></div></div>
+        <div class="progress-pct" style="margin-top:4px">${fmt(smt)} / ${fmt(cmt)} MT &nbsp;(${sp}%)</div>
+        <div class="m-card-fcl">
+          <span class="fcl-pill">${fclC} ctr</span><span class="fcl-pill">${fclS} shpd</span><span class="fcl-pill">${fclI} inv</span>
+          <span class="fcl-pill paid">${fclP} paid</span>${fclPd>0?`<span class="fcl-pill pending-pay">${fclPd} pend</span>`:''}
+        </div>
+      </div>
+      <div class="m-card-dtl" id="mdetail-${idx}">
+        ${ops?`<div class="expand-section-label">Operational — Emails</div><div class="expand-text" style="margin-bottom:14px">${ops}</div>`:''}
+        ${fin?`<div class="expand-section-label">Financial — Sheet</div><div class="expand-text">${fin}${terms?'\n\nTerms: '+terms:''}</div>`:''}
+        <div class="m-stats">
+          ${val?`<div><div class="m-stat-l">Contract Value</div><div class="m-stat-v">$${val.replace(/[^0-9.]/g,'')}m</div></div>`:''}
+          <div><div class="m-stat-l">Contracted MT</div><div class="m-stat-v">${fmt(cmt)}</div></div>
+          <div><div class="m-stat-l">FCL Invoiced</div><div class="m-stat-v">${fclI}</div></div>
+          <div><div class="m-stat-l">FCL Pend. Pay</div><div class="m-stat-v">${fclPd>0?fclPd+' FCL':'—'}</div></div>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('contract-cards').innerHTML=html;
+}
+function toggleCard(idx){
+  const d=document.getElementById('mdetail-'+idx), c=document.getElementById('mchev-'+idx);
+  const open=d.classList.contains('open');
+  d.classList.toggle('open',!open);
+  c.style.transform=open?'':'rotate(90deg)';
+}
+
+function renderAnalytics(hi,data){
+  const fmtUsd=n=>n>=1e6?'$'+(n/1e6).toFixed(2)+'m':'$'+(n/1e3).toFixed(0)+'k';
+
+  // 1 — Receivables: FCL pending × (contract value / FCL contracted)
+  let totalRecv=0;
+  const recvRows=[];
+  data.forEach(r=>{
+    const id=g(r,hi,'contract').trim();
+    const valUsd=num((g(r,hi,'value ($)')||g(r,hi,'value')).replace(/[^0-9.]/g,''))*1e6;
+    const fclC=num(g(r,hi,'fcl contracted')), fclPd=num(g(r,hi,'fcl pending'));
+    if(fclC>0&&valUsd>0&&fclPd>0){
+      const recv=fclPd*(valUsd/fclC);
+      totalRecv+=recv;
+      recvRows.push({id,recv,fclPd});
+    }
+  });
+  recvRows.sort((a,b)=>b.recv-a.recv);
+  let recvHtml=totalRecv>0
+    ?`<div class="analytics-kpi">${fmtUsd(totalRecv)}</div><div class="analytics-kpi-sub">invoiced · awaiting payment</div>
+      <table class="mini-table"><thead><tr><th>Contract</th><th>FCL Pend.</th><th>Est. $</th></tr></thead><tbody>`
+      +recvRows.map(r=>`<tr><td class="contract-id" style="font-size:11px">${r.id}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${r.fclPd}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${fmtUsd(r.recv)}</td></tr>`).join('')
+      +'</tbody></table>'
+    :'<div class="none-msg">No outstanding receivables</div>';
+  document.getElementById('analytics-recv').innerHTML=recvHtml;
+
+  // 2 — Execution rate per contract (sorted worst → best)
+  const execRows=data.map(r=>({
+    id:g(r,hi,'contract').trim(),
+    rate:num(g(r,hi,'contracted mt'))>0?num(g(r,hi,'shipped mt'))/num(g(r,hi,'contracted mt'))*100:0,
+    cmt:num(g(r,hi,'contracted mt'))
+  })).filter(r=>r.cmt>0).sort((a,b)=>a.rate-b.rate);
+  const execHtml=`<table class="mini-table"><thead><tr><th>Contract</th><th></th><th>Rate</th></tr></thead><tbody>`
+    +execRows.map(r=>{
+      const pct=Math.round(r.rate), col=pct<20?'var(--red)':pct<50?'#c87f00':'var(--green)';
+      const cls=pct<20?'flag-red':pct<50?'flag-amber':'flag-green';
+      return `<tr><td class="contract-id" style="font-size:11px">${r.id}</td>
+        <td><div class="exec-bar-wrap"><div class="exec-bar-fill" style="width:${Math.min(pct,100)}%;background:${col}"></div></div></td>
+        <td class="${cls}">${pct}%</td></tr>`;
+    }).join('')+'</tbody></table>';
+  document.getElementById('analytics-exec').innerHTML=execHtml;
+
+  // 3 — Buyer MT concentration
+  const buyerMap={};
+  data.forEach(r=>{
+    const b=g(r,hi,'buyer').trim()||'Unknown';
+    if(!buyerMap[b]) buyerMap[b]={c:0,s:0};
+    buyerMap[b].c+=num(g(r,hi,'contracted mt'));
+    buyerMap[b].s+=num(g(r,hi,'shipped mt'));
+  });
+  const buyerRows=Object.entries(buyerMap)
+    .map(([b,d])=>({b,pending:d.c-d.s,pct:d.c>0?Math.round((d.c-d.s)/d.c*100):0}))
+    .sort((a,z)=>z.pending-a.pending);
+  const buyerHtml=`<table class="mini-table"><thead><tr><th>Buyer</th><th>Pending MT</th><th>Left</th></tr></thead><tbody>`
+    +buyerRows.map(r=>`<tr>
+      <td style="font-size:11.5px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.b}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${fmt(Math.round(r.pending))}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--grey-4)">${r.pct}%</td>
+    </tr>`).join('')+'</tbody></table>';
+  document.getElementById('analytics-buyer').innerHTML=buyerHtml;
+}
+
 async function loadData(){
   const btn=document.getElementById('refresh-btn'); btn.disabled=true; btn.textContent='↻ Loading...';
   try{
     const res=await fetch('/api/data?t='+Date.now());
     if(!res.ok) throw new Error('Server returned '+res.status);
     const {summary,contract}=await res.json();
-    renderMetrics(parseSummary(parseCSV(summary)));
     const {hi,data}=parseContracts(parseCSV(contract));
+    let uninvoicedMT=0;
+    data.forEach(r=>{ uninvoicedMT+=(num(g(r,hi,'fcl shipped'))-num(g(r,hi,'fcl invoiced')))*26; });
+    renderMetrics(parseSummary(parseCSV(summary)), uninvoicedMT);
     renderContracts(hi,data);
+    renderContractsMobile(hi,data);
+    renderAnalytics(hi,data);
     document.getElementById('loading').style.display='none';
     document.getElementById('error-msg').style.display='none';
     document.getElementById('dashboard').style.display='block';
