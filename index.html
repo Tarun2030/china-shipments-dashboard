@@ -101,7 +101,10 @@
   .flag-red { color:var(--red); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
   .flag-amber { color:var(--amber); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
   .flag-green { color:var(--green); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
-  .none-msg { font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--grey-3); }
+  .snapshot-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 16px; margin-top:14px; }
+  .snapshot-col-label { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding-bottom:4px; border-bottom:1px solid var(--grey-2); margin-bottom:6px; }
+  .snapshot-v { font-size:13px; font-weight:500; }
+  .snapshot-sub { font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--grey-4); margin:2px 0 10px; line-height:1.4; }
 
   .comm-stats { display:flex; gap:36px; flex-wrap:wrap; margin-bottom:16px; }
   .comm-stat-v { font-size:20px; font-weight:600; letter-spacing:-.01em; }
@@ -217,8 +220,8 @@
 
   <div class="analytics">
     <div class="analytics-panel">
-      <div class="analytics-title">Receivables Outstanding</div>
-      <div id="analytics-recv"></div>
+      <div class="analytics-title">Business Snapshot</div>
+      <div id="analytics-snapshot"></div>
     </div>
     <div class="analytics-panel">
       <div class="analytics-title">Execution Rate by Contract</div>
@@ -442,6 +445,7 @@ function toggleCard(idx){
 function parseCommission(rows){ if(rows.length<2)return{hi:{},data:[]};
   const hi={}; rows[0].forEach((h,i)=>{hi[(h||'').toLowerCase().trim()]=i;});
   const data=rows.slice(1).filter(r=>(r[hi['schepens no.']]||'').trim()!=='');
+  data.sort((a,b)=>num(g(b,hi,'variance ($)'))-num(g(a,hi,'variance ($)'))); // biggest problem first
   return{hi,data};
 }
 function getCommSignal(status){
@@ -458,15 +462,19 @@ function renderCommStats(hi,data){
     earned+=num(g(r,hi,'commission earned ($) as per qty paid'));
     variance+=num(g(r,hi,'variance ($)'));
   });
+  const rate=pct(earned,demanded);
+  const rateColor=rate<20?'var(--red)':rate<50?'#c87f00':'var(--green)';
   const stats=[
     {label:'Commission Demanded', val:fmtUsd(demanded)},
     {label:'Commission Earned (Paid)', val:fmtUsd(earned)},
     {label:'Outstanding Variance', val:fmtUsd(variance)},
+    {label:'Collection Rate', val:rate+'%', bar:rate, color:rateColor},
   ];
   const wrap=document.getElementById('comm-stats');
   wrap.innerHTML=stats.map(s=>`
-    <div><div class="comm-stat-v">${s.val}</div><div class="metric-label">${s.label}</div></div>`).join('');
+    <div><div class="comm-stat-v">${s.val}</div><div class="metric-label">${s.label}</div>${s.bar!=null?`<div class="exec-bar-wrap" style="width:90px;margin-top:6px"><div class="exec-bar-fill" style="width:0;background:${s.color}" data-grow="${Math.min(s.bar,100)}%"></div></div>`:''}</div>`).join('');
   flashChanged(wrap.children, stats.map(s=>s.val), prevCommStatVals);
+  growBars(wrap);
   prevCommStatVals=stats.map(s=>s.val);
 }
 function renderCommission(hi,data){
@@ -555,30 +563,49 @@ function switchTab(name){
   document.getElementById('tab-commission').classList.toggle('active', name==='commission');
 }
 
-function renderAnalytics(hi,data){
-  const fmtUsd=n=>n>=1e6?'$'+(n/1e6).toFixed(2)+'m':'$'+(n/1e3).toFixed(0)+'k';
-
-  // 1 — Receivables: FCL pending × (contract value / FCL contracted)
-  let totalRecv=0;
-  const recvRows=[];
+function renderAnalytics(hi,data,chi,cdata){
+  // 1 — Business Snapshot: combined bird's-eye view across Contracts + Commission,
+  // every number shows the inputs it came from rather than asserting a verdict.
+  let contractedMT=0, shippedMT=0, totalRecv=0;
   data.forEach(r=>{
-    const id=g(r,hi,'contract').trim();
+    contractedMT+=num(g(r,hi,'contracted mt'));
+    shippedMT+=num(g(r,hi,'shipped mt'));
     const valUsd=num((g(r,hi,'value ($)')||g(r,hi,'value')).replace(/[^0-9.]/g,''))*1e6;
     const fclC=num(g(r,hi,'fcl contracted')), fclPd=num(g(r,hi,'fcl pending'));
-    if(fclC>0&&valUsd>0&&fclPd>0){
-      const recv=fclPd*(valUsd/fclC);
-      totalRecv+=recv;
-      recvRows.push({id,recv,fclPd});
-    }
+    if(fclC>0&&valUsd>0&&fclPd>0) totalRecv+=fclPd*(valUsd/fclC);
   });
-  recvRows.sort((a,b)=>b.recv-a.recv);
-  let recvHtml=totalRecv>0
-    ?`<div class="analytics-kpi">${fmtUsd(totalRecv)}</div><div class="analytics-kpi-sub">invoiced · awaiting payment</div>
-      <table class="mini-table"><thead><tr><th>Contract</th><th>FCL Pend.</th><th>Est. $</th></tr></thead><tbody>`
-      +recvRows.map(r=>`<tr><td class="contract-id" style="font-size:11px">${r.id}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${r.fclPd}</td><td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${fmtUsd(r.recv)}</td></tr>`).join('')
-      +'</tbody></table>'
-    :'<div class="none-msg">No outstanding receivables</div>';
-  document.getElementById('analytics-recv').innerHTML=recvHtml;
+  const shipPct=pct(shippedMT,contractedMT);
+  const completeContracts=data.filter(r=>{
+    const c=num(g(r,hi,'contracted mt')), s=num(g(r,hi,'shipped mt'));
+    return c>0 && s>=c;
+  }).length;
+
+  let demanded=0, earned=0, variance=0;
+  cdata.forEach(r=>{
+    demanded+=num(g(r,chi,'commission demanded ($) as per mail'));
+    earned+=num(g(r,chi,'commission earned ($) as per qty paid'));
+    variance+=num(g(r,chi,'variance ($)'));
+  });
+  const collectPct=pct(earned,demanded);
+  const reconciled=cdata.filter(r=>(g(r,chi,'status')||'').toLowerCase().includes('paid')).length;
+  const totalOutstanding=totalRecv+variance;
+
+  document.getElementById('analytics-snapshot').innerHTML=`
+    <div class="analytics-kpi">${fmtUsd(totalOutstanding)}</div>
+    <div class="analytics-kpi-sub">Total $ outstanding = ${fmtUsd(totalRecv)} FCL pending + ${fmtUsd(variance)} commission variance</div>
+    <div class="snapshot-grid">
+      <div class="snapshot-col-label">Contracts</div>
+      <div class="snapshot-col-label">Commission</div>
+
+      <div><div class="snapshot-v">${shipPct}% shipped</div><div class="snapshot-sub">${fmt(shippedMT)} of ${fmt(contractedMT)} MT</div></div>
+      <div><div class="snapshot-v">${collectPct}% collected</div><div class="snapshot-sub">${fmtUsd(earned)} of ${fmtUsd(demanded)} demanded</div></div>
+
+      <div><div class="snapshot-v">${fmtUsd(totalRecv)} FCL pending</div><div class="snapshot-sub">invoiced, not yet paid</div></div>
+      <div><div class="snapshot-v">${fmtUsd(variance)} variance</div><div class="snapshot-sub">= ${fmtUsd(demanded)} demanded − ${fmtUsd(earned)} earned</div></div>
+
+      <div><div class="snapshot-v">${completeContracts} of ${data.length} complete</div><div class="snapshot-sub">fully shipped (MT ≥ contracted)</div></div>
+      <div><div class="snapshot-v">${reconciled} of ${cdata.length} reconciled</div><div class="snapshot-sub">status = shipped &amp; paid</div></div>
+    </div>`;
 
   // 2 — Execution rate per contract (sorted worst → best)
   const execRows=data.map(r=>({
@@ -631,8 +658,8 @@ async function loadData(){
     renderMetrics(parseSummary(parseCSV(summary)), uninvoicedMT);
     renderContracts(hi,data);
     renderContractsMobile(hi,data);
-    renderAnalytics(hi,data);
     const {hi:chi,data:cdata}=parseCommission(parseCSV(commission));
+    renderAnalytics(hi,data,chi,cdata);
     renderCommStats(chi,cdata);
     renderCommission(chi,cdata);
     renderCommissionMobile(chi,cdata);
