@@ -575,10 +575,11 @@ function renderAnalytics(hi,data,chi,cdata){
     if(fclC>0&&valUsd>0&&fclPd>0) totalRecv+=fclPd*(valUsd/fclC);
   });
   const shipPct=pct(shippedMT,contractedMT);
-  const completeContracts=data.filter(r=>{
+  const notStarted=data.filter(r=>{
     const c=num(g(r,hi,'contracted mt')), s=num(g(r,hi,'shipped mt'));
-    return c>0 && s>=c;
-  }).length;
+    return c>0 && s===0;
+  });
+  const notStartedMT=notStarted.reduce((sum,r)=>sum+num(g(r,hi,'contracted mt')),0);
 
   let demanded=0, earned=0, variance=0;
   cdata.forEach(r=>{
@@ -587,7 +588,11 @@ function renderAnalytics(hi,data,chi,cdata){
     variance+=num(g(r,chi,'variance ($)'));
   });
   const payableRate=pct(earned,demanded);
-  const reconciled=cdata.filter(r=>(g(r,chi,'status')||'').toLowerCase().includes('paid')).length;
+  // cdata is already sorted by variance descending (see parseCommission), so [0] is the single biggest dispute
+  const topDispute=cdata[0], topDisputeAmt=topDispute?num(g(topDispute,chi,'variance ($)')):0;
+  const topDisputeHtml=topDisputeAmt>0
+    ?`<div class="snapshot-v">${fmtUsd(topDisputeAmt)} biggest dispute</div><div class="snapshot-sub">${g(topDispute,chi,'schepens no.').trim()} — ${g(topDispute,chi,'buyer').trim()}</div>`
+    :`<div class="snapshot-v">No disputes</div><div class="snapshot-sub">demanded matches payable everywhere</div>`;
 
   document.getElementById('analytics-snapshot').innerHTML=`
     <div class="analytics-kpi">${fmtUsd(earned)}</div>
@@ -602,8 +607,8 @@ function renderAnalytics(hi,data,chi,cdata){
       <div><div class="snapshot-v">${fmtUsd(totalRecv)} receivable</div><div class="snapshot-sub">invoiced, not yet paid to us</div></div>
       <div><div class="snapshot-v">${fmtUsd(variance)} disputed</div><div class="snapshot-sub">demanded minus payable — not owed by us</div></div>
 
-      <div><div class="snapshot-v">${completeContracts} of ${data.length} contracts</div><div class="snapshot-sub">fully shipped (MT ≥ contracted)</div></div>
-      <div><div class="snapshot-v">${reconciled} of ${cdata.length} commission lines</div><div class="snapshot-sub">demanded = payable, no dispute</div></div>
+      <div><div class="snapshot-v">${notStarted.length} not started</div><div class="snapshot-sub">${fmt(notStartedMT)} MT not yet shipped</div></div>
+      <div>${topDisputeHtml}</div>
     </div>`;
 
   // 2 — Execution rate per contract (sorted worst → best)
