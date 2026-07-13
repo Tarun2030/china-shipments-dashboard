@@ -465,14 +465,14 @@ function renderCommStats(hi,data){
   const rate=pct(earned,demanded);
   const rateColor=rate<20?'var(--red)':rate<50?'#c87f00':'var(--green)';
   const stats=[
-    {label:'Commission Demanded', val:fmtUsd(demanded)},
-    {label:'Commission Earned (Paid)', val:fmtUsd(earned)},
-    {label:'Outstanding Variance', val:fmtUsd(variance)},
-    {label:'Collection Rate', val:rate+'%', bar:rate, color:rateColor},
+    {label:'Commission Demanded', val:fmtUsd(demanded), sub:'what the broker has asked for'},
+    {label:'Commission Payable', val:fmtUsd(earned), sub:'what we owe — calculated on qty already paid'},
+    {label:'Disputed Amount', val:fmtUsd(variance), sub:'demanded minus payable — not owed by us'},
+    {label:'Payable Rate', val:rate+'%', bar:rate, color:rateColor},
   ];
   const wrap=document.getElementById('comm-stats');
   wrap.innerHTML=stats.map(s=>`
-    <div><div class="comm-stat-v">${s.val}</div><div class="metric-label">${s.label}</div>${s.bar!=null?`<div class="exec-bar-wrap" style="width:90px;margin-top:6px"><div class="exec-bar-fill" style="width:0;background:${s.color}" data-grow="${Math.min(s.bar,100)}%"></div></div>`:''}</div>`).join('');
+    <div><div class="comm-stat-v">${s.val}</div><div class="metric-label">${s.label}</div>${s.sub?`<div class="snapshot-sub" style="margin:2px 0 0">${s.sub}</div>`:''}${s.bar!=null?`<div class="exec-bar-wrap" style="width:90px;margin-top:6px"><div class="exec-bar-fill" style="width:0;background:${s.color}" data-grow="${Math.min(s.bar,100)}%"></div></div>`:''}</div>`).join('');
   flashChanged(wrap.children, stats.map(s=>s.val), prevCommStatVals);
   growBars(wrap);
   prevCommStatVals=stats.map(s=>s.val);
@@ -586,25 +586,24 @@ function renderAnalytics(hi,data,chi,cdata){
     earned+=num(g(r,chi,'commission earned ($) as per qty paid'));
     variance+=num(g(r,chi,'variance ($)'));
   });
-  const collectPct=pct(earned,demanded);
+  const payableRate=pct(earned,demanded);
   const reconciled=cdata.filter(r=>(g(r,chi,'status')||'').toLowerCase().includes('paid')).length;
-  const totalOutstanding=totalRecv+variance;
 
   document.getElementById('analytics-snapshot').innerHTML=`
-    <div class="analytics-kpi">${fmtUsd(totalOutstanding)}</div>
-    <div class="analytics-kpi-sub">Total $ outstanding = ${fmtUsd(totalRecv)} FCL pending + ${fmtUsd(variance)} commission variance</div>
+    <div class="analytics-kpi">${fmtUsd(earned)}</div>
+    <div class="analytics-kpi-sub">Commission payable to the broker — calculated on qty already paid by buyers</div>
     <div class="snapshot-grid">
       <div class="snapshot-col-label">Contracts</div>
       <div class="snapshot-col-label">Commission</div>
 
       <div><div class="snapshot-v">${shipPct}% shipped</div><div class="snapshot-sub">${fmt(shippedMT)} of ${fmt(contractedMT)} MT</div></div>
-      <div><div class="snapshot-v">${collectPct}% collected</div><div class="snapshot-sub">${fmtUsd(earned)} of ${fmtUsd(demanded)} demanded</div></div>
+      <div><div class="snapshot-v">${payableRate}% of demand payable</div><div class="snapshot-sub">${fmtUsd(earned)} of ${fmtUsd(demanded)} demanded</div></div>
 
-      <div><div class="snapshot-v">${fmtUsd(totalRecv)} FCL pending</div><div class="snapshot-sub">invoiced, not yet paid</div></div>
-      <div><div class="snapshot-v">${fmtUsd(variance)} variance</div><div class="snapshot-sub">= ${fmtUsd(demanded)} demanded − ${fmtUsd(earned)} earned</div></div>
+      <div><div class="snapshot-v">${fmtUsd(totalRecv)} receivable</div><div class="snapshot-sub">invoiced, not yet paid to us</div></div>
+      <div><div class="snapshot-v">${fmtUsd(variance)} disputed</div><div class="snapshot-sub">demanded minus payable — not owed by us</div></div>
 
       <div><div class="snapshot-v">${completeContracts} of ${data.length} complete</div><div class="snapshot-sub">fully shipped (MT ≥ contracted)</div></div>
-      <div><div class="snapshot-v">${reconciled} of ${cdata.length} reconciled</div><div class="snapshot-sub">status = shipped &amp; paid</div></div>
+      <div><div class="snapshot-v">${reconciled} of ${cdata.length} reconciled</div><div class="snapshot-sub">demanded = payable, no dispute</div></div>
     </div>`;
 
   // 2 — Execution rate per contract (sorted worst → best)
