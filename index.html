@@ -602,8 +602,8 @@ function renderAnalytics(hi,data,chi,cdata){
       <div><div class="snapshot-v">${fmtUsd(totalRecv)} receivable</div><div class="snapshot-sub">invoiced, not yet paid to us</div></div>
       <div><div class="snapshot-v">${fmtUsd(variance)} disputed</div><div class="snapshot-sub">demanded minus payable — not owed by us</div></div>
 
-      <div><div class="snapshot-v">${completeContracts} of ${data.length} complete</div><div class="snapshot-sub">fully shipped (MT ≥ contracted)</div></div>
-      <div><div class="snapshot-v">${reconciled} of ${cdata.length} reconciled</div><div class="snapshot-sub">demanded = payable, no dispute</div></div>
+      <div><div class="snapshot-v">${completeContracts} of ${data.length} contracts</div><div class="snapshot-sub">fully shipped (MT ≥ contracted)</div></div>
+      <div><div class="snapshot-v">${reconciled} of ${cdata.length} commission lines</div><div class="snapshot-sub">demanded = payable, no dispute</div></div>
     </div>`;
 
   // 2 — Execution rate per contract (sorted worst → best)
