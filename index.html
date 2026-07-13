@@ -89,6 +89,14 @@
   .flag-green { color:var(--green); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
   .none-msg { font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--grey-3); }
 
+  .comm-stats { display:flex; gap:36px; flex-wrap:wrap; margin-bottom:16px; }
+  .comm-stat-v { font-size:20px; font-weight:600; letter-spacing:-.01em; }
+  .comm-status { display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.04em; padding:2px 7px; border-radius:2px; white-space:nowrap; }
+  .comm-status.paid { background:#e8f4e8; color:var(--green); }
+  .comm-status.partial { background:#fdf0e8; color:var(--amber); }
+  .comm-status.none { background:var(--grey-1); color:var(--grey-4); }
+  .comm-notes { font-size:11.5px; color:var(--grey-4); font-style:italic; }
+
   /* ── Mobile card components (hidden on desktop) ── */
   .contract-cards { display:none; padding:0 16px 32px; }
   .m-card { border:1px solid var(--grey-2); margin-bottom:10px; overflow:hidden; }
@@ -135,6 +143,11 @@
     .section-title { padding:0 16px 8px; margin-bottom:8px; }
     .contract-table { display:none; }
     .contract-cards { display:block !important; }
+
+    /* Commission section */
+    .comm-stats { padding:0 16px; gap:20px; }
+    .commission-table { display:none; }
+    .commission-cards { display:block !important; }
 
     /* Expand row (desktop) also single column on mobile if ever visible */
     .expand-grid { grid-template-columns:1fr; }
@@ -191,6 +204,20 @@
     <div class="contract-cards" id="contract-cards"></div>
   </div>
 
+  <div class="section">
+    <div class="section-title">Commission &amp; Brokerage &nbsp;—&nbsp; Live from Schepens Statement Sheet &nbsp;·&nbsp; Tap / click any row to expand notes</div>
+    <div class="comm-stats" id="comm-stats"></div>
+    <table class="contract-table commission-table">
+      <thead><tr>
+        <th style="width:30px"></th>
+        <th>Contract</th><th>Buyer</th><th>Qty (C / S / P)</th><th>Rate</th>
+        <th>Demanded</th><th>Earned</th><th>Variance</th><th>Status</th>
+      </tr></thead>
+      <tbody id="commission-tbody"></tbody>
+    </table>
+    <div class="commission-cards" id="commission-cards"></div>
+  </div>
+
   <div class="footer">
     <span>Data read live from your Google Sheet &nbsp;|&nbsp; Auto-refreshes every 5 minutes</span>
     <span class="countdown" id="countdown">Next refresh in 5:00</span>
@@ -214,6 +241,7 @@ function parseCSV(text){
 function num(v){ return parseFloat((v||'').toString().replace(/[^0-9.\-]/g,''))||0; }
 function fmt(n){ return n.toLocaleString('en-IN'); }
 function pct(a,b){ return b>0?Math.round(a/b*100):0; }
+function fmtUsd(n){ return n>=1e6?'$'+(n/1e6).toFixed(2)+'m':'$'+Math.round(n).toLocaleString('en-US'); }
 function getSignal(c,s,p,pd){
   if(s===0) return{label:'Not Started',color:'#999'};
   if(p>=c&&c>0) return{label:'Complete',color:'#1e6e2e'};
@@ -344,6 +372,112 @@ function toggleCard(idx){
   c.style.transform=open?'':'rotate(90deg)';
 }
 
+function parseCommission(rows){ if(rows.length<2)return{hi:{},data:[]};
+  const hi={}; rows[0].forEach((h,i)=>{hi[(h||'').toLowerCase().trim()]=i;});
+  const data=rows.slice(1).filter(r=>(r[hi['schepens no.']]||'').trim()!=='');
+  return{hi,data};
+}
+function commStatusClass(status){
+  const s=(status||'').toLowerCase();
+  if(s.includes('paid')) return 'paid';
+  if(s.includes('partial')) return 'partial';
+  return 'none';
+}
+function renderCommStats(hi,data){
+  let demanded=0,earned=0,variance=0;
+  data.forEach(r=>{
+    demanded+=num(g(r,hi,'commission demanded ($) as per mail'));
+    earned+=num(g(r,hi,'commission earned ($) as per qty paid'));
+    variance+=num(g(r,hi,'variance ($)'));
+  });
+  const stats=[
+    {label:'Commission Demanded', val:fmtUsd(demanded)},
+    {label:'Commission Earned (Paid)', val:fmtUsd(earned)},
+    {label:'Outstanding Variance', val:fmtUsd(variance)},
+  ];
+  document.getElementById('comm-stats').innerHTML=stats.map(s=>`
+    <div><div class="comm-stat-v">${s.val}</div><div class="metric-label">${s.label}</div></div>`).join('');
+}
+function renderCommission(hi,data){
+  let html='';
+  data.forEach((r,idx)=>{
+    const id=g(r,hi,'schepens no.').trim(), contractNo=g(r,hi,'china contract no.').trim();
+    const buyer=g(r,hi,'buyer').trim();
+    const cqty=num(g(r,hi,'contract qty (mt)')), sqty=num(g(r,hi,'qty shipped (mt)')), pqty=num(g(r,hi,'qty paid (mt)'));
+    const rate=g(r,hi,'commission ($/mt)').trim();
+    const demanded=g(r,hi,'commission demanded ($) as per mail').trim();
+    const earned=g(r,hi,'commission earned ($) as per qty paid').trim();
+    const variance=g(r,hi,'variance ($)').trim();
+    const status=g(r,hi,'status').trim(), notes=g(r,hi,'notes').trim();
+    const cls=commStatusClass(status);
+    html+=`
+    <tr class="data-row" id="comm-row-${idx}" onclick="toggleCommRow(${idx})">
+      <td><span class="chevron">▶</span></td>
+      <td><span class="contract-id">${id}</span></td>
+      <td><div class="buyer-cell">${buyer}</div></td>
+      <td class="mt-sub">${fmt(cqty)} / ${fmt(sqty)} / ${fmt(pqty)}</td>
+      <td class="mt-sub">${rate?'$'+rate:'—'}</td>
+      <td class="mt-sub">${demanded||'—'}</td>
+      <td class="mt-sub">${earned||'—'}</td>
+      <td class="mt-sub">${variance&&variance!=='-'?variance:'—'}</td>
+      <td><span class="comm-status ${cls}">${status||'—'}</span></td>
+    </tr>
+    <tr class="expand-row" id="comm-expand-${idx}"><td class="expand-cell" colspan="9">
+      <div class="expand-section-label">Notes</div>
+      <div class="expand-text comm-notes">${notes||'—'}${contractNo?'\n\nChina Contract No.: '+contractNo:''}</div>
+    </td></tr>`;
+  });
+  document.getElementById('commission-tbody').innerHTML=html;
+}
+function toggleCommRow(idx){
+  const dr=document.getElementById('comm-row-'+idx), er=document.getElementById('comm-expand-'+idx);
+  const open=dr.classList.contains('open');
+  dr.classList.toggle('open',!open); er.classList.toggle('show',!open);
+}
+function renderCommissionMobile(hi,data){
+  let html='';
+  data.forEach((r,idx)=>{
+    const id=g(r,hi,'schepens no.').trim(), contractNo=g(r,hi,'china contract no.').trim();
+    const buyer=g(r,hi,'buyer').trim();
+    const cqty=num(g(r,hi,'contract qty (mt)')), sqty=num(g(r,hi,'qty shipped (mt)')), pqty=num(g(r,hi,'qty paid (mt)'));
+    const demanded=g(r,hi,'commission demanded ($) as per mail').trim();
+    const earned=g(r,hi,'commission earned ($) as per qty paid').trim();
+    const variance=g(r,hi,'variance ($)').trim();
+    const status=g(r,hi,'status').trim(), notes=g(r,hi,'notes').trim();
+    const cls=commStatusClass(status);
+    html+=`
+    <div class="m-card">
+      <div class="m-card-hd" onclick="toggleCommCard(${idx})">
+        <div class="m-card-top">
+          <span class="contract-id">${id}</span>
+          <div style="display:flex;align-items:center;gap:9px">
+            <span class="comm-status ${cls}">${status||'—'}</span>
+            <span class="chevron" id="mcommchev-${idx}" style="transition:transform .2s">▶</span>
+          </div>
+        </div>
+        <div class="m-card-buyer">${buyer}</div>
+        <div class="m-stats">
+          <div><div class="m-stat-l">Qty (C/S/P)</div><div class="m-stat-v">${fmt(cqty)} / ${fmt(sqty)} / ${fmt(pqty)}</div></div>
+          <div><div class="m-stat-l">Demanded</div><div class="m-stat-v">${demanded||'—'}</div></div>
+          <div><div class="m-stat-l">Earned</div><div class="m-stat-v">${earned||'—'}</div></div>
+          <div><div class="m-stat-l">Variance</div><div class="m-stat-v">${variance&&variance!=='-'?variance:'—'}</div></div>
+        </div>
+      </div>
+      <div class="m-card-dtl" id="mcomm-${idx}">
+        <div class="expand-section-label">Notes</div>
+        <div class="expand-text comm-notes">${notes||'—'}${contractNo?'\n\nChina Contract No.: '+contractNo:''}</div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('commission-cards').innerHTML=html;
+}
+function toggleCommCard(idx){
+  const d=document.getElementById('mcomm-'+idx), c=document.getElementById('mcommchev-'+idx);
+  const open=d.classList.contains('open');
+  d.classList.toggle('open',!open);
+  c.style.transform=open?'':'rotate(90deg)';
+}
+
 function renderAnalytics(hi,data){
   const fmtUsd=n=>n>=1e6?'$'+(n/1e6).toFixed(2)+'m':'$'+(n/1e3).toFixed(0)+'k';
 
@@ -411,7 +545,7 @@ async function loadData(){
   try{
     const res=await fetch('/api/data?t='+Date.now());
     if(!res.ok) throw new Error('Server returned '+res.status);
-    const {summary,contract}=await res.json();
+    const {summary,contract,commission}=await res.json();
     const {hi,data}=parseContracts(parseCSV(contract));
     let uninvoicedMT=0;
     data.forEach(r=>{ uninvoicedMT+=(num(g(r,hi,'fcl shipped'))-num(g(r,hi,'fcl invoiced')))*26; });
@@ -419,6 +553,10 @@ async function loadData(){
     renderContracts(hi,data);
     renderContractsMobile(hi,data);
     renderAnalytics(hi,data);
+    const {hi:chi,data:cdata}=parseCommission(parseCSV(commission));
+    renderCommStats(chi,cdata);
+    renderCommission(chi,cdata);
+    renderCommissionMobile(chi,cdata);
     document.getElementById('loading').style.display='none';
     document.getElementById('error-msg').style.display='none';
     document.getElementById('dashboard').style.display='block';
