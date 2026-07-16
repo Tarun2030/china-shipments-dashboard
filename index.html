@@ -251,6 +251,12 @@
   <div class="section section-commission">
     <div class="section-title">Commission &amp; Brokerage &nbsp;—&nbsp; Live from Schepens Statement Sheet &nbsp;·&nbsp; Tap / click any row to expand notes</div>
     <div class="comm-stats" id="comm-stats"></div>
+    <div class="analytics-title" style="margin-top:6px">Payment Initiated &nbsp;—&nbsp; invoices currently in process</div>
+    <table class="mini-table" id="comm-processing-table" style="margin-bottom:24px">
+      <thead><tr><th>Contract</th><th>Buyer</th><th>Qty Paid (MT)</th><th>Amount</th></tr></thead>
+      <tbody id="comm-processing-tbody"></tbody>
+      <tfoot><tr id="comm-processing-total"></tr></tfoot>
+    </table>
     <table class="contract-table commission-table">
       <thead><tr>
         <th style="width:30px"></th>
@@ -477,6 +483,24 @@ function renderCommStats(hi,data){
   growBars(wrap);
   prevCommStatVals=stats.map(s=>s.val);
 }
+function renderCommProcessing(hi,data){
+  const rows=data.filter(r=>num(g(r,hi,'final payable ($)'))>0);
+  let totalQty=0,totalAmt=0;
+  const body=rows.map(r=>{
+    const id=g(r,hi,'schepens no.').trim(), buyer=g(r,hi,'buyer').trim();
+    const pqty=num(g(r,hi,'qty paid (mt)')), amt=num(g(r,hi,'final payable ($)'));
+    totalQty+=pqty; totalAmt+=amt;
+    return `<tr><td class="contract-id" style="font-size:11px">${id}</td>
+      <td style="font-size:11.5px">${buyer}</td>
+      <td class="mt-sub">${fmt(pqty)}</td>
+      <td class="mt-sub">${fmtUsd(amt)}</td></tr>`;
+  }).join('');
+  document.getElementById('comm-processing-tbody').innerHTML=body||'<tr><td colspan="4" class="mt-sub">No invoices currently in process</td></tr>';
+  document.getElementById('comm-processing-total').innerHTML=
+    `<td colspan="2" style="font-weight:600;font-size:11px">Total</td>
+     <td class="mt-sub" style="font-weight:600">${fmt(totalQty)}</td>
+     <td class="mt-sub" style="font-weight:600">${fmtUsd(totalAmt)}</td>`;
+}
 function renderCommission(hi,data){
   let html='';
   data.forEach((r,idx)=>{
@@ -665,6 +689,7 @@ async function loadData(){
     const {hi:chi,data:cdata}=parseCommission(parseCSV(commission));
     renderAnalytics(hi,data,chi,cdata);
     renderCommStats(chi,cdata);
+    renderCommProcessing(chi,cdata);
     renderCommission(chi,cdata);
     renderCommissionMobile(chi,cdata);
     document.getElementById('loading').style.display='none';
