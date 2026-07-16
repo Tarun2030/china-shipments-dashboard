@@ -2,8 +2,8 @@
 // Browser never talks to Google directly, so CORS can never block it.
 
 export default async function handler(req, res) {
-  const SUMMARY_URL    = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQdLQor2-Sr5lhUFaVza7jOaQHJ_hNjSYqdOWBAo9GaHA0zm6NBIVp-q_pluLnT-g/pub?gid=1183905827&single=true&output=csv';
-  const CONTRACT_URL   = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQdLQor2-Sr5lhUFaVza7jOaQHJ_hNjSYqdOWBAo9GaHA0zm6NBIVp-q_pluLnT-g/pub?gid=699343331&single=true&output=csv';
+  const SUMMARY_URL    = 'https://docs.google.com/spreadsheets/d/1jpCvCYpZiAAjqhf2cjfDAUw3YtQwFU22rL-Ci99nKAY/export?format=csv&gid=1183905827';
+  const CONTRACT_URL   = 'https://docs.google.com/spreadsheets/d/1jpCvCYpZiAAjqhf2cjfDAUw3YtQwFU22rL-Ci99nKAY/export?format=csv&gid=699343331';
   const COMMISSION_URL = 'https://docs.google.com/spreadsheets/d/1rqgHdoGKm2DlT3GRDGya1ktFLNm_69DJ/export?format=csv&gid=825128876';
 
   try {
