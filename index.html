@@ -504,18 +504,16 @@ function getCommSignal(status){
 }
 let prevCommStatVals=null;
 function renderCommStats(hi,data){
-  let demanded=0,earned=0,variance=0;
+  let demanded=0,earned=0;
   data.forEach(r=>{
     demanded+=num(g(r,hi,'commission demanded ($) as per mail'));
     earned+=num(g(r,hi,'commission earned ($) as per qty paid'));
-    variance+=num(g(r,hi,'variance ($)'));
   });
   const rate=pct(earned,demanded);
   const rateColor=rate<20?'var(--red)':rate<50?'#c87f00':'var(--green)';
   const stats=[
     {label:'Commission Demanded', val:fmtUsd(demanded), sub:'what the broker has asked for'},
     {label:'Commission Payable', val:fmtUsd(earned), sub:'what we owe — calculated on qty already paid'},
-    {label:'Disputed Amount', val:fmtUsd(variance), sub:'demanded minus payable — not owed by us'},
     {label:'Payable Rate', val:rate+'%', bar:rate, color:rateColor},
   ];
   const wrap=document.getElementById('comm-stats');
@@ -634,33 +632,19 @@ function switchTab(name){
 function renderAnalytics(hi,data,chi,cdata){
   // 1 — Business Snapshot: combined bird's-eye view across Contracts + Commission,
   // every number shows the inputs it came from rather than asserting a verdict.
-  let contractedMT=0, shippedMT=0, totalRecv=0;
+  let contractedMT=0, shippedMT=0;
   data.forEach(r=>{
     contractedMT+=num(g(r,hi,'contracted mt'));
     shippedMT+=num(g(r,hi,'shipped mt'));
-    const valUsd=num((g(r,hi,'value ($)')||g(r,hi,'value')).replace(/[^0-9.]/g,''))*1e6;
-    const fclC=num(g(r,hi,'fcl contracted')), fclPd=num(g(r,hi,'fcl pending'));
-    if(fclC>0&&valUsd>0&&fclPd>0) totalRecv+=fclPd*(valUsd/fclC);
   });
   const shipPct=pct(shippedMT,contractedMT);
-  const notStarted=data.filter(r=>{
-    const c=num(g(r,hi,'contracted mt')), s=num(g(r,hi,'shipped mt'));
-    return c>0 && s===0;
-  });
-  const notStartedMT=notStarted.reduce((sum,r)=>sum+num(g(r,hi,'contracted mt')),0);
 
-  let demanded=0, earned=0, variance=0;
+  let demanded=0, earned=0;
   cdata.forEach(r=>{
     demanded+=num(g(r,chi,'commission demanded ($) as per mail'));
     earned+=num(g(r,chi,'commission earned ($) as per qty paid'));
-    variance+=num(g(r,chi,'variance ($)'));
   });
   const payableRate=pct(earned,demanded);
-  // cdata is already sorted by variance descending (see parseCommission), so [0] is the single biggest dispute
-  const topDispute=cdata[0], topDisputeAmt=topDispute?num(g(topDispute,chi,'variance ($)')):0;
-  const topDisputeHtml=topDisputeAmt>0
-    ?`<div class="snapshot-v">${fmtUsd(topDisputeAmt)} biggest dispute</div><div class="snapshot-sub">${g(topDispute,chi,'schepens no.').trim()} — ${g(topDispute,chi,'buyer').trim()}</div>`
-    :`<div class="snapshot-v">No disputes</div><div class="snapshot-sub">demanded matches payable everywhere</div>`;
 
   document.getElementById('analytics-snapshot').innerHTML=`
     <div class="analytics-kpi">${fmtUsd(earned)}</div>
@@ -671,12 +655,6 @@ function renderAnalytics(hi,data,chi,cdata){
 
       <div><div class="snapshot-v">${shipPct}% shipped</div><div class="snapshot-sub">${fmt(shippedMT)} of ${fmt(contractedMT)} MT</div></div>
       <div><div class="snapshot-v">${payableRate}% of demand payable</div><div class="snapshot-sub">${fmtUsd(earned)} of ${fmtUsd(demanded)} demanded</div></div>
-
-      <div><div class="snapshot-v">${fmtUsd(totalRecv)} receivable</div><div class="snapshot-sub">invoiced, not yet paid to us</div></div>
-      <div><div class="snapshot-v">${fmtUsd(variance)} disputed</div><div class="snapshot-sub">demanded minus payable — not owed by us</div></div>
-
-      <div><div class="snapshot-v">${notStarted.length} not started</div><div class="snapshot-sub">${fmt(notStartedMT)} MT not yet shipped</div></div>
-      <div>${topDisputeHtml}</div>
     </div>`;
 
   // 2 — Execution rate per contract (sorted worst → best)
