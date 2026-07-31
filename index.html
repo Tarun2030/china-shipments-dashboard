@@ -39,7 +39,7 @@
   .metric-label { font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--grey-3); text-transform:uppercase; letter-spacing:.1em; margin-top:5px; }
   .metric-sub { font-size:11px; color:var(--grey-4); margin-top:2px; font-family:'IBM Plex Mono',monospace; }
   @keyframes value-flash { 0%{background:#eaf1fb;} 100%{background:transparent;} }
-  .metric-card.flash, .comm-stats > div.flash { animation:value-flash 1.2s var(--ease-out-quart); }
+  .metric-card.flash, .comm-stats > div.flash, .payments-made.flash { animation:value-flash 1.2s var(--ease-out-quart); }
 
   .section { padding:20px 32px 40px; }
   .section-title { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey-3); border-bottom:1px solid var(--grey-2); padding-bottom:7px; margin-bottom:14px; }
@@ -79,10 +79,26 @@
   .expand-section-label { font-family:'IBM Plex Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:.12em; color:var(--grey-3); margin-bottom:6px; }
   .expand-text { font-size:12px; line-height:1.7; color:#333; white-space:pre-wrap; }
 
+  .ctl-bar { display:flex; flex-wrap:wrap; gap:16px; margin-bottom:14px; }
+  .ctl-group { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .ctl-btn { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:5px 10px; cursor:pointer; transition:background .1s, color .1s, border-color .1s; }
+  .ctl-btn:hover { color:var(--black); border-color:var(--grey-3); }
+  .ctl-btn.active { color:#fff; background:var(--black); border-color:var(--black); }
+  .ctl-btn:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
+  .data-row:focus-visible, .m-card-hd:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
+  .copy-btn { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:3px 7px; cursor:pointer; white-space:nowrap; }
+  .copy-btn:hover { color:var(--black); border-color:var(--grey-3); }
+  .copy-btn:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
+  .copy-fb { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--green); margin-left:5px; }
+  .empty-state { padding:26px 10px; text-align:center; }
+  .empty-state a { color:var(--black); }
+
   #loading { padding:80px 32px; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--grey-3); letter-spacing:.05em; }
   .loading-dots::after { content:''; animation:dots 1.2s steps(4,end) infinite; }
   @keyframes dots { 0%,20%{content:'';} 40%{content:'.';} 60%{content:'..';} 80%,100%{content:'...';} }
   #error-msg { display:none; padding:40px 32px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--red); text-align:center; }
+  #error-msg.inline { align-items:center; justify-content:space-between; gap:14px; padding:10px 32px; text-align:left; border-bottom:1px solid var(--red); }
+  #error-msg .err-text { flex:1; }
   #dashboard { display:none; }
 
   .footer { padding:14px 32px; border-top:1px solid var(--grey-2); font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-3); display:flex; justify-content:space-between; }
@@ -111,6 +127,44 @@
   .comm-stat-v { font-size:20px; font-weight:600; letter-spacing:-.01em; }
   .comm-notes { font-size:11.5px; color:var(--grey-4); font-style:italic; }
 
+  /* Payments Made — WS-7 immutable payment ledger. Sits inside .section-commission but OUTSIDE the
+     .brief wrapper on purpose: this is an audit record, not the warm digest zone, so it stays
+     brutalist per .impeccable.md — near-black on white, sharp corners, color only as status signal. */
+  .pmt-panel { border:1px solid var(--black); margin-top:24px; padding:20px 22px 22px; }
+  .pmt-hd { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; border-bottom:1px solid var(--grey-2); padding-bottom:14px; margin-bottom:16px; }
+  .pmt-hd-label { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); }
+  .pmt-hd-amt { font-size:26px; font-weight:600; letter-spacing:-.01em; margin-top:4px; }
+  .pmt-warn { background:#fceaea; border:1px solid var(--red); color:var(--red); font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600; padding:10px 14px; margin-bottom:16px; }
+  .pmt-basis { margin-bottom:22px; }
+  .pmt-basis-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+  .pmt-basis-table th { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:6px 8px; text-align:left; border-bottom:1px solid var(--black); }
+  .pmt-basis-table td { padding:7px 8px; border-bottom:1px solid var(--grey-2); }
+  .pmt-basis-table tfoot td { border-bottom:none; border-top:1px solid var(--black); padding-top:9px; }
+  .pmt-note-tag { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--grey-4); }
+  .pmt-basis-cards { display:none; margin-top:8px; }
+  .pmt-line-card { border:1px solid var(--grey-2); padding:9px 11px; margin-bottom:6px; font-size:11.5px; }
+  .pmt-line-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+  .pmt-recon-row { border:1px solid var(--grey-2); padding:10px 12px; margin-bottom:8px; }
+  .pmt-recon-top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+  .pmt-recon-status { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
+  .pmt-status-match .pmt-recon-status { color:var(--green); }
+  .pmt-status-diverge { border-color:var(--red); }
+  .pmt-status-diverge .pmt-recon-status { color:var(--red); }
+  .pmt-status-no-match { border-color:var(--amber); }
+  .pmt-status-no-match .pmt-recon-status { color:var(--amber); }
+  .pmt-status-pending .pmt-recon-status { color:var(--grey-4); }
+  .pmt-recon-figs { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:6px 16px; }
+  .pmt-fig-l { font-family:'IBM Plex Mono',monospace; font-size:8.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--grey-3); }
+  .pmt-fig-v { font-size:11.5px; margin-top:1px; }
+  .pmt-recon-note { font-size:10.5px; color:var(--grey-4); font-style:italic; margin-top:6px; }
+  .pmt-audit { margin-top:18px; border-top:1px solid var(--grey-2); padding-top:12px; }
+  .pmt-audit summary { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); cursor:pointer; }
+  .pmt-audit summary:hover { color:var(--black); }
+  .pmt-audit-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px 20px; margin-top:12px; }
+  .paid-badge { font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--green); background:none; border:1px solid var(--green); padding:1px 5px; margin-left:6px; cursor:pointer; white-space:nowrap; vertical-align:middle; }
+  .paid-badge:hover { background:var(--green); color:#fff; }
+  .paid-badge:focus-visible { outline:2px solid var(--green); outline-offset:-2px; }
+
   /* "Brief" — the warm digest zone (Overview metrics/analytics + Commission stats).
      Scoped entirely through the existing color tokens (black, greys, red, amber, green), so
      everything underneath (metric cards, flags, exec bars, signal dots) re-tints for free. */
@@ -138,6 +192,8 @@
     content:''; width:6px; height:6px; border-radius:1px; background:var(--terracotta); flex-shrink:0;
   }
   .brief .mini-table tbody tr:hover td { background:var(--terracotta-soft); transition:background .12s; }
+  .brief #analytics-buyer tbody tr { cursor:pointer; }
+  .brief #analytics-buyer tbody tr:focus-visible { outline:2px solid var(--terracotta); outline-offset:-2px; }
   @keyframes value-flash-warm { 0%{background:var(--terracotta-soft);} 100%{background:transparent;} }
   .brief .metric-card.flash, .brief .comm-stats>div.flash { animation:value-flash-warm 1.2s var(--ease-out-quart); }
 
@@ -198,17 +254,29 @@
     .section-title { padding:0 16px 8px; margin-bottom:8px; }
     .contract-table { display:none; }
     .contract-cards { display:block !important; }
+    .ctl-bar { padding:0 16px; margin-bottom:10px; gap:10px; }
+    .ctl-btn { padding:4px 8px; font-size:8.5px; }
+    .copy-btn { padding:3px 6px; font-size:8px; }
 
     /* Commission section */
     .comm-stats { padding:0 16px; gap:20px; }
     .commission-table { display:none; }
     .commission-cards { display:block !important; margin-top:8px; }
 
+    /* Payments Made panel */
+    .pmt-panel { padding:14px 14px 16px; margin-top:16px; }
+    .pmt-hd-amt { font-size:21px; }
+    .pmt-basis-table { display:none; }
+    .pmt-basis-cards { display:block; }
+    .pmt-recon-figs { grid-template-columns:1fr; }
+    .pmt-audit-grid { grid-template-columns:1fr; }
+
     /* Expand row (desktop) also single column on mobile if ever visible */
     .expand-grid { grid-template-columns:1fr; }
 
     /* Footer */
     .footer { padding:10px 16px; flex-direction:column; gap:3px; font-size:9px; }
+    #error-msg.inline { padding:9px 16px; gap:10px; font-size:11px; }
   }
 
   /* ── First-load reveal (plays once, not on auto-refresh) ── */
@@ -275,11 +343,19 @@
 
   <div class="section section-contracts">
     <div class="section-title">Contract Status &nbsp;—&nbsp; Tap / click any row to expand detail</div>
+    <div class="ctl-bar" id="contract-controls">
+      <div class="ctl-group" id="buyer-filter-group" role="group" aria-label="Filter by buyer"></div>
+      <div class="ctl-group" id="sort-group" role="group" aria-label="Sort contracts">
+        <button class="ctl-btn active" data-sort="natural" onclick="setSort('natural')">Sheet Order</button>
+        <button class="ctl-btn" data-sort="exec-asc" onclick="setSort('exec-asc')">Exec % ↑</button>
+        <button class="ctl-btn" data-sort="pending-desc" onclick="setSort('pending-desc')">Pending MT ↓</button>
+      </div>
+    </div>
     <table class="contract-table">
       <thead><tr>
         <th style="width:30px"></th>
         <th>Contract</th><th>Buyer</th><th>Commodity / Route</th><th>Contracted</th>
-        <th>Shipped Progress</th><th>FCL Status</th><th>Payment</th><th>Signal</th>
+        <th>Shipped Progress</th><th>FCL Status</th><th>Payment</th><th>Signal</th><th style="width:60px"></th>
       </tr></thead>
       <tbody id="contract-tbody"></tbody>
     </table>
@@ -299,6 +375,7 @@
         <tfoot><tr id="comm-processing-total"></tr></tfoot>
       </table>
     </div>
+    <div class="payments-made" id="payments-made"></div>
     <table class="contract-table commission-table">
       <thead><tr>
         <th style="width:30px"></th>
@@ -318,7 +395,74 @@
 </div>
 
 <script>
-let countdownInterval=null, secs=300;
+// Refresh pacing. RETRY_SECS is the shorter interval used after a failed fetch, so a transient
+// error self-heals instead of freezing the countdown permanently.
+const REFRESH_SECS=300, RETRY_SECS=30;
+const MT_PER_FCL=26; // tonnes per FCL container — used to express uninvoiced containers as MT
+
+// ============================================================================
+// WS-7 — Immutable Payment Record. A real commission payment was remitted to the
+// broker (Schepens & Co) via HDFC Bank on 22/07/2026. This is transcribed VERBATIM
+// from the bank remittance advice and hardcoded on purpose: if the live Google
+// Sheet is later edited or corrected, the record of what was actually paid — and
+// the exact basis it was paid on — must NOT silently move with it. Never derive
+// or recompute these figures from the CSVs; only compare against them (see
+// reconcilePayment below). Bank account numbers are masked to last 4 digits only
+// — this dashboard is served on a public URL and shared with buyers.
+// ============================================================================
+function mkPaymentLine(contract,note,buyer,qtyMt,amountUsd){
+  return Object.freeze({contract,note,buyer,qtyMt,amountUsd,rateUsdPerMt:qtyMt?+(amountUsd/qtyMt).toFixed(4):0});
+}
+const PAYMENTS_MADE = Object.freeze([
+  Object.freeze({
+    id:'PMT-2026-07-22-1',
+    settlementAmountUsd:141660,
+    settlementDate:'2026-07-22',
+    creationDateTime:'2026-07-22T18:29:47+05:30',
+    userReference:'152FT01262030002',
+    uetr:'f829dc6b-91f7-408a-87e6-a275e1873671',
+    swiftReference:'swi04004-2026-07-22T13:05:05.11942.517814Z',
+    messageInputReference:'1835 260722hdfcinbb_finplus000426000006073',
+    messageType:'pacs.008.001.08 CBPRPlus FIToFICustomerCreditTransfer',
+    chargeBearer:'SHAR (Shared)',
+    serviceLevel:'G001',
+    networkStatus:'Network Ack',
+    remittanceInfo:'PAYMENT TWDS TRADE RELATED SERVICES COMMISSION ON EXPORTS',
+    debtor: Object.freeze({
+      name:'SATYAM BALAJEE RICE INDUSTRIES PRIV',
+      address:'Village Amaseoni, Post GSI Mandhar, Raipur, India',
+      agentBic:'HDFCINBBIDR',
+      acctMasked:'••••7938', // last 4 digits only — full account number is never stored here
+    }),
+    creditor: Object.freeze({
+      name:'SCHEPENS AND CO HONG KONG LIMITED',
+      address:'Unit 303 Mirror Tower, 61 Mody Road, Tsimshatsui East, Kowloon, Hong Kong',
+      agentBic:'SCBKHKHHXXX',
+      acctMasked:'••••1944', // last 4 digits only — full account number is never stored here
+    }),
+    statedTotals: Object.freeze({qtyMt:42780, amountUsd:141660}),
+    // Contract numbers here are WITHOUT the "HK" prefix, exactly as they appear in the payment
+    // document. baseContractNum() strips the prefix (and any -N statement-line suffix) from live
+    // Schepens Nos. so the two can be matched — see reconcilePayment().
+    lines: Object.freeze([
+      mkPaymentLine('2854',null,'Hunan Jinjian',5200,20800),
+      mkPaymentLine('2855',null,'Xiamen Youliang',6500,19500),
+      mkPaymentLine('2860',null,'Hunan Jinjian',10600,42400),
+      mkPaymentLine('2862',null,'Hunan Jinjian',2600,10400),
+      mkPaymentLine('2866',null,'Xiamen Port Commerce',5200,20800),
+      mkPaymentLine('2883','Note 1','Hunan Jinjian',2600,9100),
+      mkPaymentLine('2883','Note 2','Hunan Jinjian',2600,9100),
+      mkPaymentLine('2899','Note 1','Hunan Jinjian',3720,3720),
+      mkPaymentLine('2899','Note 2','Hunan Jinjian',1680,1680),
+      mkPaymentLine('2919',null,'Hunan Jinjian',2080,4160),
+    ]),
+  }),
+]);
+const PAID_CONTRACT_NUMS = new Set(PAYMENTS_MADE.flatMap(p=>p.lines.map(l=>l.contract)));
+
+let countdownInterval=null, secs=REFRESH_SECS, countdownLabel='Next refresh in ';
+let hasLoadedOnce=false, lastSuccessAt=null;
+const VALID_TABS=['overview','commission'];
 
 function parseCSV(text){
   const rows=[]; let row=[],f='',q=false;
@@ -335,6 +479,15 @@ function num(v){ return parseFloat((v||'').toString().replace(/[^0-9.\-]/g,''))|
 function fmt(n){ return n.toLocaleString('en-IN'); }
 function pct(a,b){ return b>0?Math.round(a/b*100):0; }
 function fmtUsd(n){ return n>=1e6?'$'+(n/1e6).toFixed(2)+'m':'$'+Math.round(n).toLocaleString('en-US'); }
+function esc(v){ return (v==null?'':String(v)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+// Shared red/amber/green banding for percent rates. Returns CSS tokens rather than literals so the
+// .brief zone's local token re-definitions retint these for free.
+function bandColor(p){ return p<20?'var(--red)':p<50?'var(--amber)':'var(--green)'; }
+function bandClass(p){ return p<20?'flag-red':p<50?'flag-amber':'flag-green'; }
+// Variance ($) = Demanded − Earned, always ≥0. A non-nil variance is a disputed gap (broker asked
+// for more than is payable) — flagged amber, never green (no gap is normal, not an achievement)
+// and never red (a dispute, not a realised loss).
+function varFlag(v){ return v&&v!=='-'&&num(v)>0?' flag-amber':''; }
 function getSignal(c,s,p,pd){
   if(s===0) return{label:'Not Started',color:'#999'};
   if(p>=c&&c>0) return{label:'Complete',color:'#1e6e2e'};
@@ -363,7 +516,7 @@ function renderMetrics(m, uninvoicedMT){
     {label:'Contracted',            val:(m['total contracted (operational)']?.val||'—')+' MT', sub:'$'+(m['total contracted value']?.val||'—')+'m'},
     {label:'Shipped So Far',        val:(m['shipped so far']?.val||'—')+' MT',  sub:m['shipped so far']?.extra||''},
     {label:'Pending Shipment',      val:(m['pending shipment']?.val||'—')+' MT', sub:m['pending shipment']?.extra||''},
-    {label:'Shipped, Not Invoiced', val:fmt(uninvoicedMT)+' MT', sub:'(FCL Shipped − FCL Invoiced) × 26'},
+    {label:'Shipped, Not Invoiced', val:fmt(uninvoicedMT)+' MT', sub:'(FCL Shipped − FCL Invoiced) × '+MT_PER_FCL},
     // Row 2 — FCL & Payment
     {label:'FCL Shipped',           val:m['fcl shipped']?.val||'—',  sub:'containers shipped'},
     {label:'FCL Invoiced',          val:m['fcl invoiced']?.val||'—', sub:'of '+(m['fcl shipped']?.val||'—')+' shipped'},
@@ -372,18 +525,36 @@ function renderMetrics(m, uninvoicedMT){
   ];
   const strip=document.getElementById('metrics-strip');
   strip.innerHTML=cards.map(c=>`
-    <div class="metric-card"><div class="metric-value">${c.val}</div>
-    <div class="metric-label">${c.label}</div>${c.sub?`<div class="metric-sub">${c.sub}</div>`:''}</div>`).join('');
+    <div class="metric-card"><div class="metric-value">${esc(c.val)}</div>
+    <div class="metric-label">${c.label}</div>${c.sub?`<div class="metric-sub">${esc(c.sub)}</div>`:''}</div>`).join('');
   flashChanged(strip.children, cards.map(c=>c.val), prevMetricVals);
   prevMetricVals=cards.map(c=>c.val);
 }
-// Highlights cards whose value changed since the last poll — skipped on first render.
+// Derives the trailing unit text from a rendered value string (e.g. "134,560 MT" -> "MT",
+// "$3.56m" -> "m", "42%" -> "%") so a delta can be expressed in the same units.
+function deltaSuffix(s){ const m=(s||'').match(/^[^0-9\-]*[\-0-9.,]+\s*(.*)$/); return m?m[1]:''; }
+function fmtDelta(delta,suffix){
+  const sign=delta>=0?'+':'−', abs=Math.abs(delta);
+  const numStr=Number.isInteger(abs)?fmt(abs):abs.toFixed(2).replace(/\.?0+$/,'');
+  return sign+numStr+(suffix?(suffix==='%'?suffix:' '+suffix):'');
+}
+// Highlights cards whose value changed since the last poll — skipped on first render (no baseline
+// to diff against). While flashing, briefly swaps the card's sub-label for the numeric delta
+// (parsed via num(), never string-diffed), then restores the sub-label once the flash animation ends.
 function flashChanged(els, newVals, prevVals){
   if(!prevVals) return;
   [...els].forEach((el,i)=>{
     if(newVals[i]!==prevVals[i]){
       el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
-      el.addEventListener('animationend',()=>el.classList.remove('flash'),{once:true});
+      const sub=el.querySelector('.metric-sub, .snapshot-sub');
+      const delta=sub?num(newVals[i])-num(prevVals[i]):0;
+      if(sub&&delta!==0){
+        const original=sub.textContent;
+        sub.textContent=fmtDelta(delta,deltaSuffix(newVals[i]));
+        el.addEventListener('animationend',()=>{ el.classList.remove('flash'); sub.textContent=original; },{once:true});
+      }else{
+        el.addEventListener('animationend',()=>el.classList.remove('flash'),{once:true});
+      }
     }
   });
 }
@@ -394,7 +565,56 @@ function growBars(root){
     bars.forEach(b=>{ b.style.width=b.getAttribute('data-grow'); });
   }));
 }
+let contractHi=null, contractData=[], contractBuyer='', contractSort='natural', contractBuyers=[], contractRenderedRows=[];
+function buildContractSummary(hi,r){
+  const id=g(r,hi,'contract').trim(), buyer=g(r,hi,'buyer').trim();
+  const route=(g(r,hi,'commodity / route')||g(r,hi,'commodity/route')).trim();
+  const cmt=num(g(r,hi,'contracted mt')), smt=num(g(r,hi,'shipped mt'));
+  const fclC=num(g(r,hi,'fcl contracted')), fclS=num(g(r,hi,'fcl shipped'));
+  const fclI=num(g(r,hi,'fcl invoiced')), fclP=num(g(r,hi,'fcl paid')), fclPd=num(g(r,hi,'fcl pending'));
+  const sp=pct(smt,cmt), sig=getSignal(fclC,fclS,fclP,fclPd);
+  return `${id} — ${buyer}\n${route}\n${fmt(smt)} / ${fmt(cmt)} MT shipped (${sp}%)\n`+
+    `FCL: ${fclC} contracted, ${fclS} shipped, ${fclI} invoiced, ${fclP} paid${fclPd>0?', '+fclPd+' pending':''}\n`+
+    `Payment signal: ${sig.label}`;
+}
+// Copy-to-clipboard for a contract row, with a graceful execCommand fallback for browsers/contexts
+// without navigator.clipboard, and brief inline text feedback (cleared on a plain timer — no
+// animation is used here, so it's unaffected by prefers-reduced-motion either way).
+function copyTextWithFeedback(text, fbId){
+  const el=document.getElementById(fbId);
+  const mark=()=>{ if(!el) return; el.textContent='Copied'; clearTimeout(el._fbTimer); el._fbTimer=setTimeout(()=>{el.textContent='';},1600); };
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(mark).catch(()=>fallbackCopy(text,mark));
+  }else{ fallbackCopy(text,mark); }
+}
+function fallbackCopy(text,cb){
+  try{
+    const ta=document.createElement('textarea');
+    ta.value=text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    cb();
+  }catch(e){ /* no clipboard access available in this context — silently give up */ }
+}
+function copyContractRow(idx,src){
+  const r=contractRenderedRows[idx]; if(!r) return;
+  copyTextWithFeedback(buildContractSummary(contractHi,r), (src==='m'?'copy-fb-m-':'copy-fb-')+idx);
+}
+// Enter/Space activation for elements that aren't native buttons (tr rows, card headers).
+// preventDefault stops Space from also scrolling the page. Ignores keys bubbled up from a nested
+// control (the copy button) so its own native Enter/Space activation isn't double-handled.
+function onExpandKey(e,fn){
+  if(e.target.closest('.copy-btn,.paid-badge')) return;
+  if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(); }
+}
 function renderContracts(hi,data){
+  contractRenderedRows=data;
+  const tbody=document.getElementById('contract-tbody');
+  if(data.length===0){
+    tbody.innerHTML=`<tr><td colspan="10" class="mt-sub empty-state">No contracts match this filter. <a href="#" onclick="resetContractFilters();return false;">Clear filter</a></td></tr>`;
+    return;
+  }
   let html='';
   data.forEach((r,idx)=>{
     const id=g(r,hi,'contract').trim(), buyer=g(r,hi,'buyer').trim();
@@ -403,30 +623,30 @@ function renderContracts(hi,data){
     const fin=(g(r,hi,'financial status (sheet)')||g(r,hi,'financial status')).trim();
     const terms=g(r,hi,'terms').trim();
     const cmt=num(g(r,hi,'contracted mt')), smt=num(g(r,hi,'shipped mt'));
-    const val=(g(r,hi,'value ($)')||g(r,hi,'value')).trim();
+    const val=(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value')).trim();
     const fclC=num(g(r,hi,'fcl contracted')), fclS=num(g(r,hi,'fcl shipped'));
     const fclI=num(g(r,hi,'fcl invoiced')), fclP=num(g(r,hi,'fcl paid')), fclPd=num(g(r,hi,'fcl pending'));
     const sp=pct(smt,cmt), sig=getSignal(fclC,fclS,fclP,fclPd);
     html+=`
-    <tr class="data-row" id="row-${idx}" onclick="toggleRow(${idx})">
+    <tr class="data-row" id="row-${idx}" tabindex="0" role="button" aria-expanded="false" onclick="toggleRow(${idx})" onkeydown="onExpandKey(event,()=>toggleRow(${idx}))">
       <td><span class="chevron">▶</span></td>
-      <td><span class="contract-id">${id}</span></td>
-      <td><div class="buyer-cell">${buyer}</div></td>
-      <td><div class="route-cell">${route}</div></td>
+      <td><span class="contract-id">${esc(id)}</span></td>
+      <td><div class="buyer-cell">${esc(buyer)}</div></td>
+      <td><div class="route-cell">${esc(route)}</div></td>
       <td><div class="mt-val">${fmt(cmt)} MT</div><div class="mt-sub">${val?'$'+val.replace(/[^0-9.]/g,'')+'m':'—'}</div></td>
       <td style="min-width:100px"><div class="progress-wrap"><div class="progress-fill" style="width:0" data-grow="${sp}%"></div></div><div class="progress-pct">${fmt(smt)} MT &nbsp;(${sp}%)</div></td>
       <td><div class="fcl-row"><span class="fcl-pill">${fclC} contracted</span><span class="fcl-pill">${fclS} shipped</span><span class="fcl-pill">${fclI} invoiced</span></div></td>
       <td><div class="fcl-row"><span class="fcl-pill paid">${fclP} paid</span>${fclPd>0?`<span class="fcl-pill pending-pay">${fclPd} pending</span>`:''}</div></td>
       <td><span class="signal" style="color:${sig.color}"><span class="signal-dot" style="background:${sig.color}"></span>${sig.label}</span></td>
+      <td><button class="copy-btn" onclick="event.stopPropagation();copyContractRow(${idx},'d')" onkeydown="event.stopPropagation()" title="Copy status summary">Copy</button><span class="copy-fb" id="copy-fb-${idx}"></span></td>
     </tr>
-    <tr class="expand-row" id="expand-${idx}"><td class="expand-cell" colspan="9">
+    <tr class="expand-row" id="expand-${idx}"><td class="expand-cell" colspan="10">
       <div class="expand-grid">
-        <div><div class="expand-section-label">Operational Status — From Emails</div><div class="expand-text">${ops||'—'}</div></div>
-        <div><div class="expand-section-label">Financial Status — From Sheet</div><div class="expand-text">${fin||'—'}${terms?'\n\nTerms: '+terms:''}</div></div>
+        <div><div class="expand-section-label">Operational Status — From Emails</div><div class="expand-text">${esc(ops)||'—'}</div></div>
+        <div><div class="expand-section-label">Financial Status — From Sheet</div><div class="expand-text">${esc(fin)||'—'}${terms?'\n\nTerms: '+esc(terms):''}</div></div>
       </div>
     </td></tr>`;
   });
-  const tbody=document.getElementById('contract-tbody');
   tbody.innerHTML=html;
   growBars(tbody);
 }
@@ -434,9 +654,15 @@ function toggleRow(idx){
   const dr=document.getElementById('row-'+idx), er=document.getElementById('expand-'+idx);
   const open=dr.classList.contains('open');
   dr.classList.toggle('open',!open); er.classList.toggle('show',!open);
+  dr.setAttribute('aria-expanded', String(!open));
 }
 
 function renderContractsMobile(hi,data){
+  const cards=document.getElementById('contract-cards');
+  if(data.length===0){
+    cards.innerHTML=`<div class="mt-sub empty-state">No contracts match this filter. <a href="#" onclick="resetContractFilters();return false;">Clear filter</a></div>`;
+    return;
+  }
   let html='';
   data.forEach((r,idx)=>{
     const id=g(r,hi,'contract').trim(), buyer=g(r,hi,'buyer').trim();
@@ -445,31 +671,33 @@ function renderContractsMobile(hi,data){
     const fin=(g(r,hi,'financial status (sheet)')||g(r,hi,'financial status')).trim();
     const terms=g(r,hi,'terms').trim();
     const cmt=num(g(r,hi,'contracted mt')), smt=num(g(r,hi,'shipped mt'));
-    const val=(g(r,hi,'value ($)')||g(r,hi,'value')).trim();
+    const val=(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value')).trim();
     const fclC=num(g(r,hi,'fcl contracted')), fclS=num(g(r,hi,'fcl shipped'));
     const fclI=num(g(r,hi,'fcl invoiced')), fclP=num(g(r,hi,'fcl paid')), fclPd=num(g(r,hi,'fcl pending'));
     const sp=pct(smt,cmt), sig=getSignal(fclC,fclS,fclP,fclPd);
     html+=`
     <div class="m-card">
-      <div class="m-card-hd" onclick="toggleCard(${idx})">
+      <div class="m-card-hd" id="mhd-${idx}" tabindex="0" role="button" aria-expanded="false" onclick="toggleCard(${idx})" onkeydown="onExpandKey(event,()=>toggleCard(${idx}))">
         <div class="m-card-top">
-          <span class="contract-id">${id}</span>
+          <span class="contract-id">${esc(id)}</span>
           <div style="display:flex;align-items:center;gap:9px">
+            <button class="copy-btn" onclick="event.stopPropagation();copyContractRow(${idx},'m')" onkeydown="event.stopPropagation()" title="Copy status summary">Copy</button>
             <span class="signal" style="color:${sig.color}"><span class="signal-dot" style="background:${sig.color}"></span>${sig.label}</span>
             <span class="chevron" id="mchev-${idx}" style="transition:transform .2s">▶</span>
           </div>
         </div>
-        <div class="m-card-buyer">${buyer}${route?` &nbsp;·&nbsp; <span style="font-size:10.5px">${route}</span>`:''}</div>
+        <div class="m-card-buyer">${esc(buyer)}${route?` &nbsp;·&nbsp; <span style="font-size:10.5px">${esc(route)}</span>`:''}</div>
         <div class="progress-wrap"><div class="progress-fill" style="width:0" data-grow="${sp}%"></div></div>
         <div class="progress-pct" style="margin-top:4px">${fmt(smt)} / ${fmt(cmt)} MT &nbsp;(${sp}%)</div>
         <div class="m-card-fcl">
           <span class="fcl-pill">${fclC} ctr</span><span class="fcl-pill">${fclS} shpd</span><span class="fcl-pill">${fclI} inv</span>
           <span class="fcl-pill paid">${fclP} paid</span>${fclPd>0?`<span class="fcl-pill pending-pay">${fclPd} pend</span>`:''}
         </div>
+        <div class="copy-fb" id="copy-fb-m-${idx}"></div>
       </div>
       <div class="m-card-dtl" id="mdetail-${idx}"><div class="m-card-dtl-inner">
-        ${ops?`<div class="expand-section-label">Operational — Emails</div><div class="expand-text" style="margin-bottom:14px">${ops}</div>`:''}
-        ${fin?`<div class="expand-section-label">Financial — Sheet</div><div class="expand-text">${fin}${terms?'\n\nTerms: '+terms:''}</div>`:''}
+        ${ops?`<div class="expand-section-label">Operational — Emails</div><div class="expand-text" style="margin-bottom:14px">${esc(ops)}</div>`:''}
+        ${fin?`<div class="expand-section-label">Financial — Sheet</div><div class="expand-text">${esc(fin)}${terms?'\n\nTerms: '+esc(terms):''}</div>`:''}
         <div class="m-stats">
           ${val?`<div><div class="m-stat-l">Contract Value</div><div class="m-stat-v">$${val.replace(/[^0-9.]/g,'')}m</div></div>`:''}
           <div><div class="m-stat-l">Contracted MT</div><div class="m-stat-v">${fmt(cmt)}</div></div>
@@ -479,15 +707,48 @@ function renderContractsMobile(hi,data){
       </div></div>
     </div>`;
   });
-  const cards=document.getElementById('contract-cards');
   cards.innerHTML=html;
   growBars(cards);
 }
 function toggleCard(idx){
-  const d=document.getElementById('mdetail-'+idx), c=document.getElementById('mchev-'+idx);
+  const d=document.getElementById('mdetail-'+idx), c=document.getElementById('mchev-'+idx), hd=document.getElementById('mhd-'+idx);
   const open=d.classList.contains('open');
   d.classList.toggle('open',!open);
   c.style.transform=open?'':'rotate(90deg)';
+  hd.setAttribute('aria-expanded', String(!open));
+}
+
+// Contract table filter/sort. Module-level state so a re-render is a pure function of it — no
+// refetch required — and so it survives the 5-minute auto-refresh (loadData repopulates
+// contractData/contractHi but never touches contractBuyer/contractSort).
+function renderContractControls(){
+  contractBuyers=[...new Set(contractData.map(r=>g(r,contractHi,'buyer').trim()).filter(Boolean))].sort();
+  const wrap=document.getElementById('buyer-filter-group');
+  wrap.innerHTML=`<button class="ctl-btn${contractBuyer===''?' active':''}" data-buyer="">All</button>`+
+    contractBuyers.map(b=>`<button class="ctl-btn${contractBuyer===b?' active':''}" data-buyer="${esc(b)}">${esc(b)}</button>`).join('');
+  document.querySelectorAll('#sort-group .ctl-btn').forEach(b=>b.classList.toggle('active', b.dataset.sort===contractSort));
+}
+function setBuyerFilter(name){ contractBuyer=name; applyContractFilterSort(); }
+function setSort(mode){ contractSort=mode; applyContractFilterSort(); }
+function resetContractFilters(){ contractBuyer=''; contractSort='natural'; applyContractFilterSort(); }
+function execPct(r){
+  const c=num(g(r,contractHi,'contracted mt')), s=num(g(r,contractHi,'shipped mt'));
+  return c>0?s/c*100:0;
+}
+function applyContractFilterSort(){
+  renderContractControls();
+  let rows=contractBuyer?contractData.filter(r=>g(r,contractHi,'buyer').trim()===contractBuyer):contractData.slice();
+  if(contractSort==='exec-asc') rows=rows.slice().sort((a,b)=>execPct(a)-execPct(b));
+  else if(contractSort==='pending-desc') rows=rows.slice().sort((a,b)=>num(g(b,contractHi,'pending mt'))-num(g(a,contractHi,'pending mt')));
+  renderContracts(contractHi,rows);
+  renderContractsMobile(contractHi,rows);
+}
+// Buyer MT Concentration drilldown (lives inside .brief) — activates the brutalist buyer filter
+// above and scrolls the Contract Status section into view.
+function goToBuyer(name){
+  setBuyerFilter(name);
+  const sec=document.querySelector('.section-contracts');
+  if(sec) sec.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
 }
 
 function parseCommission(rows){ if(rows.length<2)return{hi:{},data:[]};
@@ -510,7 +771,7 @@ function renderCommStats(hi,data){
     earned+=num(g(r,hi,'commission earned ($) as per qty paid'));
   });
   const rate=pct(earned,demanded);
-  const rateColor=rate<20?'var(--red)':rate<50?'#c87f00':'var(--green)';
+  const rateColor=bandColor(rate);
   const stats=[
     {label:'Commission Demanded', val:fmtUsd(demanded), sub:'what the broker has asked for'},
     {label:'Commission Payable', val:fmtUsd(earned), sub:'what we owe — calculated on qty already paid'},
@@ -532,8 +793,8 @@ function renderCommProcessing(hi,data){
   const body=rows.map(r=>{
     const id=g(r,hi,'schepens no.').trim(), buyer=g(r,hi,'buyer').trim();
     const pqty=num(g(r,hi,'qty paid (mt)')), amt=num(g(r,hi,'final payable ($)'));
-    return `<tr><td class="contract-id" style="font-size:11px">${id}</td>
-      <td style="font-size:11.5px">${buyer}</td>
+    return `<tr><td class="contract-id" style="font-size:11px">${esc(id)}</td>
+      <td style="font-size:11.5px">${esc(buyer)}</td>
       <td class="mt-sub">${fmt(pqty)}</td>
       <td class="mt-sub">${fmtUsd(amt)}</td></tr>`;
   }).join('');
@@ -543,7 +804,140 @@ function renderCommProcessing(hi,data){
      <td class="mt-sub" style="font-weight:600">${fmt(totalQty)}</td>
      <td class="mt-sub" style="font-weight:600">${fmtUsd(totalAmt)}</td>`;
 }
+
+// ---- WS-7 Payments Made: verification, reconciliation, rendering ----
+// Re-sums PAYMENTS_MADE's own line items and compares against its stated totals every render — if a
+// future appended payment has a typo, this fails loudly (see renderPaymentsMade's warnHtml) instead
+// of silently showing a wrong number.
+function verifyPaymentTotals(payment){
+  const computed=payment.lines.reduce((a,l)=>({qtyMt:a.qtyMt+l.qtyMt,amountUsd:a.amountUsd+l.amountUsd}),{qtyMt:0,amountUsd:0});
+  const ok=computed.qtyMt===payment.statedTotals.qtyMt&&computed.amountUsd===payment.statedTotals.amountUsd;
+  return{ok,computed,stated:payment.statedTotals};
+}
+// Strips the "HK" prefix and any trailing "-N" statement-line suffix from a Schepens No., so
+// HK2899-1 / HK2899-2 / a bare "HK2860" repeated across two statement lines all resolve to the same
+// base contract number the payment document uses (which has no HK prefix and no suffix at all).
+function baseContractNum(schepensNo){
+  return (schepensNo||'').toString().trim().replace(/^HK/i,'').replace(/-\d+$/,'');
+}
+function aggregateFrozenByContract(payment){
+  const map={};
+  payment.lines.forEach(l=>{
+    if(!map[l.contract]) map[l.contract]={qtyMt:0,amountUsd:0,buyers:new Set(),lineCount:0};
+    const m=map[l.contract]; m.qtyMt+=l.qtyMt; m.amountUsd+=l.amountUsd; m.buyers.add(l.buyer); m.lineCount++;
+  });
+  return map;
+}
+function aggregateLiveByContract(chi,cdata){
+  const map={};
+  cdata.forEach(r=>{
+    const sch=g(r,chi,'schepens no.').trim(); if(!sch) return;
+    const base=baseContractNum(sch);
+    if(!map[base]) map[base]={qtyPaidMt:0,earnedUsd:0,buyers:new Set()};
+    const m=map[base]; m.qtyPaidMt+=num(g(r,chi,'qty paid (mt)')); m.earnedUsd+=num(g(r,chi,'commission earned ($) as per qty paid'));
+    const b=g(r,chi,'buyer').trim(); if(b) m.buyers.add(b);
+  });
+  return map;
+}
+// Per-contract paid-vs-currently-payable. Never mutates PAYMENTS_MADE — only reads live data to
+// compare against it. Contracts with >1 frozen line (2883, 2899 here) are compared in aggregate
+// only: the payment document's "Note 1"/"Note 2" split does not correspond structurally to the live
+// sheet's own statement-line split, so asserting a line-level match would be a claim we can't back up.
+function reconcilePayment(payment,chi,cdata){
+  const frozen=aggregateFrozenByContract(payment);
+  const live=cdata?aggregateLiveByContract(chi,cdata):null;
+  return Object.keys(frozen).map(contract=>{
+    const f=frozen[contract], l=live?live[contract]:null;
+    let status,note='';
+    if(!live){ status='pending'; note='Live sheet not loaded this session — reconciliation unavailable.'; }
+    else if(!l){ status='no-match'; note='No live statement rows found for this contract number.'; }
+    else{
+      const qtyMatch=Math.abs(l.qtyPaidMt-f.qtyMt)<0.5, amtMatch=Math.abs(l.earnedUsd-f.amountUsd)<0.5;
+      status=(qtyMatch&&amtMatch)?'match':'diverge';
+    }
+    if(f.lineCount>1) note=(note?note+' ':'')+`Paid in ${f.lineCount} statement lines — aggregate compared; individual line correspondence with the live sheet is not established.`;
+    return{contract,buyer:[...f.buyers].join(' / '),frozenQtyMt:f.qtyMt,frozenAmountUsd:f.amountUsd,
+      liveQtyMt:l?l.qtyPaidMt:null,liveAmountUsd:l?l.earnedUsd:null,status,note};
+  });
+}
+function buildPaymentBasisText(payment){
+  const v=verifyPaymentTotals(payment);
+  const lines=payment.lines.map(l=>`${l.contract}${l.note?' ('+l.note+')':''} — ${l.buyer} — ${fmt(l.qtyMt)} MT @ $${l.rateUsdPerMt}/MT — ${fmtUsd(l.amountUsd)}`).join('\n');
+  return `COMMISSION PAYMENT — settled ${payment.settlementDate}\n`+
+    `Beneficiary: ${payment.creditor.name}\nSettlement Amount: ${fmtUsd(payment.settlementAmountUsd)}\n\n`+
+    `Basis (${payment.lines.length} line items):\n${lines}\n\n`+
+    `Totals: ${fmt(v.computed.qtyMt)} MT · ${fmtUsd(v.computed.amountUsd)}`+(v.ok?'':' — WARNING: totals do not verify against the stated record')+'\n\n'+
+    `UETR: ${payment.uetr}\nUser Reference: ${payment.userReference}\nSWIFT Reference: ${payment.swiftReference}\n`+
+    `Message Input Reference: ${payment.messageInputReference}\nDebtor Agent BIC: ${payment.debtor.agentBic}\nCreditor Agent BIC: ${payment.creditor.agentBic}\n`+
+    `Network Status: ${payment.networkStatus}\nRemittance Info: ${payment.remittanceInfo}`;
+}
+function copyPaymentBasis(idx){
+  const payment=PAYMENTS_MADE[idx]; if(!payment) return;
+  copyTextWithFeedback(buildPaymentBasisText(payment),'pmt-copy-fb-'+idx);
+}
+// Small brutalist indicator on a commission row covered by a recorded payment — links back to the
+// Payments Made panel rather than duplicating its detail inline.
+function paidBadge(schepensNo){
+  return PAID_CONTRACT_NUMS.has(baseContractNum(schepensNo))?
+    `<button class="paid-badge" onclick="event.stopPropagation();goToPaymentsMade()" onkeydown="event.stopPropagation()" title="Payment recorded — view in Payments Made">Paid</button>`:'';
+}
+function goToPaymentsMade(){
+  const sec=document.getElementById('payments-made'); if(!sec) return;
+  sec.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash');
+  sec.addEventListener('animationend',()=>sec.classList.remove('flash'),{once:true});
+}
+// Renders independently of live data (chi/cdata may be omitted entirely — e.g. on first load before
+// the sheet fetch resolves, or forever if it never does). The payment record itself never depends on
+// the CSVs; only the reconciliation section below it does, and degrades to a 'pending' status if data
+// isn't available yet rather than omitting the record.
+function renderPaymentsMade(chi,cdata){
+  const wrap=document.getElementById('payments-made'); if(!wrap) return;
+  wrap.innerHTML=PAYMENTS_MADE.map((payment,pIdx)=>{
+    const v=verifyPaymentTotals(payment);
+    const recon=reconcilePayment(payment,chi,cdata);
+    const warnHtml=v.ok?'':`<div class="pmt-warn" role="alert">⚠ TOTALS DO NOT VERIFY — computed ${fmt(v.computed.qtyMt)} MT / ${fmtUsd(v.computed.amountUsd)} vs stated ${fmt(v.stated.qtyMt)} MT / ${fmtUsd(v.stated.amountUsd)}. Do not rely on this record until corrected.</div>`;
+    const lineRows=payment.lines.map(l=>`<tr><td class="contract-id">${esc(l.contract)}${l.note?` <span class="pmt-note-tag">${esc(l.note)}</span>`:''}</td><td class="buyer-cell">${esc(l.buyer)}</td><td class="mt-sub">${fmt(l.qtyMt)}</td><td class="mt-sub">$${esc(l.rateUsdPerMt)}</td><td class="mt-sub" style="font-weight:500">${fmtUsd(l.amountUsd)}</td></tr>`).join('');
+    const lineCards=payment.lines.map(l=>`<div class="pmt-line-card"><div class="pmt-line-top"><span class="contract-id">${esc(l.contract)}${l.note?` <span class="pmt-note-tag">${esc(l.note)}</span>`:''}</span><span style="font-weight:500">${fmtUsd(l.amountUsd)}</span></div><div class="buyer-cell">${esc(l.buyer)}</div><div class="mt-sub">${fmt(l.qtyMt)} MT &nbsp;·&nbsp; $${esc(l.rateUsdPerMt)}/MT</div></div>`).join('');
+    const reconHtml=recon.map(r=>{
+      const label=r.status==='match'?'Matches live sheet':r.status==='diverge'?'DIVERGES from live sheet':r.status==='no-match'?'No live match found':'Live data not loaded';
+      return `<div class="pmt-recon-row pmt-status-${r.status}"><div class="pmt-recon-top"><span class="contract-id">${esc(r.contract)}</span><span class="buyer-cell">${esc(r.buyer)}</span><span class="pmt-recon-status">${esc(label)}</span></div>`+
+        `<div class="pmt-recon-figs"><div><div class="pmt-fig-l">Paid (this record)</div><div class="pmt-fig-v">${fmt(r.frozenQtyMt)} MT · ${fmtUsd(r.frozenAmountUsd)}</div></div>`+
+        `<div><div class="pmt-fig-l">Currently payable (live sheet)</div><div class="pmt-fig-v">${r.liveQtyMt!=null?fmt(r.liveQtyMt)+' MT · '+fmtUsd(r.liveAmountUsd):'—'}</div></div></div>`+
+        (r.note?`<div class="pmt-recon-note">${esc(r.note)}</div>`:'')+`</div>`;
+    }).join('');
+    const auditHtml=`<details class="pmt-audit"><summary>Audit references — UETR, SWIFT, bank codes</summary><div class="pmt-audit-grid">`+
+      `<div><div class="pmt-fig-l">UETR</div><div class="pmt-fig-v">${esc(payment.uetr)}</div></div>`+
+      `<div><div class="pmt-fig-l">User Reference</div><div class="pmt-fig-v">${esc(payment.userReference)}</div></div>`+
+      `<div><div class="pmt-fig-l">SWIFT Reference</div><div class="pmt-fig-v">${esc(payment.swiftReference)}</div></div>`+
+      `<div><div class="pmt-fig-l">Message Input Reference</div><div class="pmt-fig-v">${esc(payment.messageInputReference)}</div></div>`+
+      `<div><div class="pmt-fig-l">Message Type</div><div class="pmt-fig-v">${esc(payment.messageType)}</div></div>`+
+      `<div><div class="pmt-fig-l">Network Status</div><div class="pmt-fig-v">${esc(payment.networkStatus)}</div></div>`+
+      `<div><div class="pmt-fig-l">Charge Bearer / Service Level</div><div class="pmt-fig-v">${esc(payment.chargeBearer)} / ${esc(payment.serviceLevel)}</div></div>`+
+      `<div><div class="pmt-fig-l">Debtor</div><div class="pmt-fig-v">${esc(payment.debtor.name)}<br>${esc(payment.debtor.address)}<br>BIC ${esc(payment.debtor.agentBic)} · Acct ${esc(payment.debtor.acctMasked)}</div></div>`+
+      `<div><div class="pmt-fig-l">Creditor</div><div class="pmt-fig-v">${esc(payment.creditor.name)}<br>${esc(payment.creditor.address)}<br>BIC ${esc(payment.creditor.agentBic)} · Acct ${esc(payment.creditor.acctMasked)}</div></div>`+
+      `<div><div class="pmt-fig-l">Remittance Info</div><div class="pmt-fig-v">${esc(payment.remittanceInfo)}</div></div>`+
+      `</div></details>`;
+    return `<div class="pmt-panel">`+
+      `<div class="pmt-hd"><div><div class="pmt-hd-label">Payment Made — Commission Remitted</div><div class="pmt-hd-amt">${fmtUsd(payment.settlementAmountUsd)}</div><div class="mt-sub">Settled ${esc(payment.settlementDate)} · to ${esc(payment.creditor.name)}</div></div>`+
+      `<div><button class="copy-btn" onclick="copyPaymentBasis(${pIdx})" title="Copy full payment basis as text">Copy Basis</button><span class="copy-fb" id="pmt-copy-fb-${pIdx}"></span></div></div>`+
+      warnHtml+
+      `<div class="pmt-basis"><div class="expand-section-label">Payment Basis — ${payment.lines.length} line items</div>`+
+      `<table class="pmt-basis-table"><thead><tr><th>Contract</th><th>Buyer</th><th>Qty (MT)</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${lineRows}</tbody>`+
+      `<tfoot><tr><td colspan="2" style="font-weight:600">Verified Total</td><td style="font-weight:600">${fmt(v.computed.qtyMt)}</td><td></td><td style="font-weight:600">${fmtUsd(v.computed.amountUsd)}</td></tr></tfoot></table>`+
+      `<div class="pmt-basis-cards">${lineCards}</div></div>`+
+      `<div class="pmt-recon"><div class="expand-section-label">Reconciliation — Paid vs. Currently Payable (Live Sheet)</div>${reconHtml}</div>`+
+      auditHtml+
+      `</div>`;
+  }).join('');
+}
+
 function renderCommission(hi,data){
+  const tbody=document.getElementById('commission-tbody');
+  if(data.length===0){
+    tbody.innerHTML=`<tr><td colspan="9" class="mt-sub empty-state">No commission records available</td></tr>`;
+    return;
+  }
   let html='';
   data.forEach((r,idx)=>{
     const id=g(r,hi,'schepens no.').trim(), contractNo=g(r,hi,'china contract no.').trim();
@@ -556,30 +950,36 @@ function renderCommission(hi,data){
     const status=g(r,hi,'status').trim(), notes=g(r,hi,'notes').trim();
     const csig=getCommSignal(status);
     html+=`
-    <tr class="data-row" id="comm-row-${idx}" onclick="toggleCommRow(${idx})">
+    <tr class="data-row" id="comm-row-${idx}" tabindex="0" role="button" aria-expanded="false" onclick="toggleCommRow(${idx})" onkeydown="onExpandKey(event,()=>toggleCommRow(${idx}))">
       <td><span class="chevron">▶</span></td>
-      <td><span class="contract-id">${id}</span></td>
-      <td><div class="buyer-cell">${buyer}</div></td>
-      <td class="mt-sub">${fmt(cqty)} / ${fmt(sqty)} / ${fmt(pqty)}</td>
-      <td class="mt-sub">${rate?'$'+rate:'—'}</td>
-      <td class="mt-sub">${demanded||'—'}</td>
-      <td class="mt-sub">${earned||'—'}</td>
-      <td class="mt-sub">${variance&&variance!=='-'?variance:'—'}</td>
-      <td><span class="signal" style="color:${csig.color}"><span class="signal-dot" style="background:${csig.color}"></span>${csig.label}</span></td>
+      <td><span class="contract-id">${esc(id)}</span>${paidBadge(id)}</td>
+      <td><div class="buyer-cell">${esc(buyer)}</div></td>
+      <td class="mt-sub" title="Contracted / Shipped / Paid">${fmt(cqty)} / ${fmt(sqty)} / ${fmt(pqty)}</td>
+      <td class="mt-sub">${rate?'$'+esc(rate):'—'}</td>
+      <td class="mt-sub">${esc(demanded)||'—'}</td>
+      <td class="mt-sub">${esc(earned)||'—'}</td>
+      <td class="mt-sub${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</td>
+      <td><span class="signal" style="color:${csig.color}"><span class="signal-dot" style="background:${csig.color}"></span>${esc(csig.label)}</span></td>
     </tr>
     <tr class="expand-row" id="comm-expand-${idx}"><td class="expand-cell" colspan="9">
       <div class="expand-section-label">Notes</div>
-      <div class="expand-text comm-notes">${notes||'—'}${contractNo?'\n\nChina Contract No.: '+contractNo:''}</div>
+      <div class="expand-text comm-notes">${esc(notes)||'—'}${contractNo?'\n\nChina Contract No.: '+esc(contractNo):''}</div>
     </td></tr>`;
   });
-  document.getElementById('commission-tbody').innerHTML=html;
+  tbody.innerHTML=html;
 }
 function toggleCommRow(idx){
   const dr=document.getElementById('comm-row-'+idx), er=document.getElementById('comm-expand-'+idx);
   const open=dr.classList.contains('open');
   dr.classList.toggle('open',!open); er.classList.toggle('show',!open);
+  dr.setAttribute('aria-expanded', String(!open));
 }
 function renderCommissionMobile(hi,data){
+  const wrap=document.getElementById('commission-cards');
+  if(data.length===0){
+    wrap.innerHTML=`<div class="mt-sub empty-state">No commission records available</div>`;
+    return;
+  }
   let html='';
   data.forEach((r,idx)=>{
     const id=g(r,hi,'schepens no.').trim(), contractNo=g(r,hi,'china contract no.').trim();
@@ -592,41 +992,49 @@ function renderCommissionMobile(hi,data){
     const csig=getCommSignal(status);
     html+=`
     <div class="m-card">
-      <div class="m-card-hd" onclick="toggleCommCard(${idx})">
+      <div class="m-card-hd" id="mcommhd-${idx}" tabindex="0" role="button" aria-expanded="false" onclick="toggleCommCard(${idx})" onkeydown="onExpandKey(event,()=>toggleCommCard(${idx}))">
         <div class="m-card-top">
-          <span class="contract-id">${id}</span>
+          <span class="contract-id">${esc(id)}${paidBadge(id)}</span>
           <div style="display:flex;align-items:center;gap:9px">
-            <span class="signal" style="color:${csig.color}"><span class="signal-dot" style="background:${csig.color}"></span>${csig.label}</span>
+            <span class="signal" style="color:${csig.color}"><span class="signal-dot" style="background:${csig.color}"></span>${esc(csig.label)}</span>
             <span class="chevron" id="mcommchev-${idx}" style="transition:transform .2s">▶</span>
           </div>
         </div>
-        <div class="m-card-buyer">${buyer}</div>
+        <div class="m-card-buyer">${esc(buyer)}</div>
         <div class="m-stats">
-          <div><div class="m-stat-l">Qty (C/S/P)</div><div class="m-stat-v">${fmt(cqty)} / ${fmt(sqty)} / ${fmt(pqty)}</div></div>
-          <div><div class="m-stat-l">Demanded</div><div class="m-stat-v">${demanded||'—'}</div></div>
-          <div><div class="m-stat-l">Earned</div><div class="m-stat-v">${earned||'—'}</div></div>
-          <div><div class="m-stat-l">Variance</div><div class="m-stat-v">${variance&&variance!=='-'?variance:'—'}</div></div>
+          <div><div class="m-stat-l">Qty (C/S/P)</div><div class="m-stat-v" title="Contracted / Shipped / Paid">${fmt(cqty)} / ${fmt(sqty)} / ${fmt(pqty)}</div></div>
+          <div><div class="m-stat-l">Demanded</div><div class="m-stat-v">${esc(demanded)||'—'}</div></div>
+          <div><div class="m-stat-l">Earned</div><div class="m-stat-v">${esc(earned)||'—'}</div></div>
+          <div><div class="m-stat-l">Variance</div><div class="m-stat-v${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</div></div>
         </div>
       </div>
       <div class="m-card-dtl" id="mcomm-${idx}"><div class="m-card-dtl-inner">
         <div class="expand-section-label">Notes</div>
-        <div class="expand-text comm-notes">${notes||'—'}${contractNo?'\n\nChina Contract No.: '+contractNo:''}</div>
+        <div class="expand-text comm-notes">${esc(notes)||'—'}${contractNo?'\n\nChina Contract No.: '+esc(contractNo):''}</div>
       </div></div>
     </div>`;
   });
-  document.getElementById('commission-cards').innerHTML=html;
+  wrap.innerHTML=html;
 }
 function toggleCommCard(idx){
-  const d=document.getElementById('mcomm-'+idx), c=document.getElementById('mcommchev-'+idx);
+  const d=document.getElementById('mcomm-'+idx), c=document.getElementById('mcommchev-'+idx), hd=document.getElementById('mcommhd-'+idx);
   const open=d.classList.contains('open');
   d.classList.toggle('open',!open);
   c.style.transform=open?'':'rotate(90deg)';
+  hd.setAttribute('aria-expanded', String(!open));
 }
 
-function switchTab(name){
+function switchTab(name, skipHash){
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
   document.getElementById('tab-overview').classList.toggle('active', name==='overview');
   document.getElementById('tab-commission').classList.toggle('active', name==='commission');
+  if(!skipHash) location.hash=name;
+}
+// Tab-level URL state only — deep-links into individual rows aren't safe since Schepens No. isn't
+// a unique row key (see parseCommission). Unknown/stale hashes fall back to Overview silently.
+function tabFromHash(){
+  const h=(location.hash||'').replace('#','');
+  return VALID_TABS.includes(h)?h:'overview';
 }
 
 function renderAnalytics(hi,data,chi,cdata){
@@ -665,9 +1073,8 @@ function renderAnalytics(hi,data,chi,cdata){
   })).filter(r=>r.cmt>0).sort((a,b)=>a.rate-b.rate);
   const execHtml=`<table class="mini-table"><thead><tr><th>Contract</th><th></th><th>Rate</th></tr></thead><tbody>`
     +execRows.map(r=>{
-      const pct=Math.round(r.rate), col=pct<20?'var(--red)':pct<50?'#c87f00':'var(--green)';
-      const cls=pct<20?'flag-red':pct<50?'flag-amber':'flag-green';
-      return `<tr><td class="contract-id" style="font-size:11px">${r.id}</td>
+      const pct=Math.round(r.rate), col=bandColor(pct), cls=bandClass(pct);
+      return `<tr><td class="contract-id" style="font-size:11px">${esc(r.id)}</td>
         <td><div class="exec-bar-wrap"><div class="exec-bar-fill" style="width:0;background:${col}" data-grow="${Math.min(pct,100)}%"></div></div></td>
         <td class="${cls}">${pct}%</td></tr>`;
     }).join('')+'</tbody></table>';
@@ -687,8 +1094,8 @@ function renderAnalytics(hi,data,chi,cdata){
     .map(([b,d])=>({b,contracted:d.c,pending:d.c-d.s,pct:d.c>0?Math.round((d.c-d.s)/d.c*100):0}))
     .sort((a,z)=>z.pending-a.pending);
   const buyerHtml=`<table class="mini-table"><thead><tr><th>Buyer</th><th>Contracted</th><th>Pending MT</th><th>% Remaining</th></tr></thead><tbody>`
-    +buyerRows.map(r=>`<tr>
-      <td style="font-size:11.5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.b}</td>
+    +buyerRows.map(r=>`<tr tabindex="0" role="button" data-buyer="${esc(r.b)}" aria-label="Filter contracts by ${esc(r.b)}">
+      <td style="font-size:11.5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.b)}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${fmt(Math.round(r.contracted))}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${fmt(Math.round(r.pending))}</td>
       <td style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--grey-4)">${r.pct}%</td>
@@ -704,18 +1111,19 @@ async function loadData(){
     const {summary,contract,commission}=await res.json();
     const {hi,data}=parseContracts(parseCSV(contract));
     let uninvoicedMT=0;
-    data.forEach(r=>{ uninvoicedMT+=(num(g(r,hi,'fcl shipped'))-num(g(r,hi,'fcl invoiced')))*26; });
+    data.forEach(r=>{ uninvoicedMT+=(num(g(r,hi,'fcl shipped'))-num(g(r,hi,'fcl invoiced')))*MT_PER_FCL; });
     renderMetrics(parseSummary(parseCSV(summary)), uninvoicedMT);
-    renderContracts(hi,data);
-    renderContractsMobile(hi,data);
+    contractHi=hi; contractData=data;
+    applyContractFilterSort(); // re-applies any filter/sort already set — a refresh must not reset it
     const {hi:chi,data:cdata}=parseCommission(parseCSV(commission));
     renderAnalytics(hi,data,chi,cdata);
     renderCommStats(chi,cdata);
     renderCommProcessing(chi,cdata);
     renderCommission(chi,cdata);
     renderCommissionMobile(chi,cdata);
+    renderPaymentsMade(chi,cdata); // re-render with live data so reconciliation can move off 'pending'
     document.getElementById('loading').style.display='none';
-    document.getElementById('error-msg').style.display='none';
+    const em=document.getElementById('error-msg'); em.style.display='none'; em.classList.remove('inline');
     const dash=document.getElementById('dashboard');
     const firstLoad=dash.style.display!=='block';
     dash.style.display='block';
@@ -724,20 +1132,52 @@ async function loadData(){
     document.getElementById('last-updated').innerHTML='Last updated<br>'+
       now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' &nbsp;'+
       now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-    secs=300; clearInterval(countdownInterval); startCountdown();
+    hasLoadedOnce=true; lastSuccessAt=now;
+    secs=REFRESH_SECS; countdownLabel='Next refresh in '; clearInterval(countdownInterval); startCountdown();
   }catch(e){
+    const em=document.getElementById('error-msg');
     document.getElementById('loading').style.display='none';
-    document.getElementById('error-msg').style.display='block';
-    document.getElementById('error-msg').textContent='Could not load data: '+e.message;
+    if(hasLoadedOnce){
+      // Data is already on screen — keep it and mark it stale rather than blanking the brief.
+      const stamp=lastSuccessAt?lastSuccessAt.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}):'—';
+      em.classList.add('inline');
+      em.innerHTML=`<span class="err-text">Refresh failed (${esc(e.message)}) — showing data from ${stamp}</span>`+
+        `<button class="refresh-btn" onclick="loadData()">↻ Retry</button>`;
+      em.style.display='flex';
+    }else{
+      em.classList.remove('inline');
+      em.innerHTML=`<div>Could not load data: ${esc(e.message)}</div>`+
+        `<button class="refresh-btn" style="margin-top:14px" onclick="loadData()">↻ Retry</button>`;
+      em.style.display='block';
+    }
+    secs=RETRY_SECS; countdownLabel='Retrying in '; clearInterval(countdownInterval); startCountdown();
   }
   btn.disabled=false; btn.textContent='↻ Refresh';
 }
 function startCountdown(){
   countdownInterval=setInterval(()=>{ secs--; const m=Math.floor(secs/60),s=secs%60;
-    document.getElementById('countdown').textContent='Next refresh in '+m+':'+String(s).padStart(2,'0');
+    document.getElementById('countdown').textContent=countdownLabel+m+':'+String(s).padStart(2,'0');
     if(secs<=0){clearInterval(countdownInterval);loadData();}
   },1000);
 }
+// Delegated listeners — attached once to static containers, so they keep working across every
+// re-render (renderContractControls/renderAnalytics only ever replace innerHTML, never these nodes).
+document.getElementById('buyer-filter-group').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-buyer]'); if(!btn) return;
+  setBuyerFilter(btn.dataset.buyer);
+});
+document.getElementById('analytics-buyer').addEventListener('click',e=>{
+  const row=e.target.closest('tr[data-buyer]'); if(!row) return;
+  goToBuyer(row.dataset.buyer);
+});
+document.getElementById('analytics-buyer').addEventListener('keydown',e=>{
+  if(e.key!=='Enter'&&e.key!==' ') return;
+  const row=e.target.closest('tr[data-buyer]'); if(!row) return;
+  e.preventDefault(); goToBuyer(row.dataset.buyer);
+});
+window.addEventListener('hashchange',()=>switchTab(tabFromHash(),true));
+switchTab(tabFromHash(),true);
+renderPaymentsMade(); // frozen payment record — paints immediately, independent of the sheet fetch below
 loadData();
 </script>
 </body>
