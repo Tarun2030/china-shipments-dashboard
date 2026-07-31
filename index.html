@@ -197,6 +197,67 @@
   @keyframes value-flash-warm { 0%{background:var(--terracotta-soft);} 100%{background:transparent;} }
   .brief .metric-card.flash, .brief .comm-stats>div.flash { animation:value-flash-warm 1.2s var(--ease-out-quart); }
 
+  /* ── Cockpit shell ──────────────────────────────────────────────────────────
+     The page itself never scrolls on desktop. Header, tabs and footer are pinned; the body is a
+     two-pane split whose panes scroll independently. Matches the "trading-desk brief" identity:
+     everything on one view, drill in for detail rather than scrolling for it. */
+  html { height:100%; }
+  body { height:100dvh; overflow:hidden; }
+  #dashboard.ready { display:flex; flex-direction:column; height:100dvh; }
+  .tab-panel.active { display:flex; flex-direction:column; flex:1; min-height:0; }
+  .split { flex:1; display:grid; grid-template-columns:minmax(290px,32%) 1fr; min-height:0; }
+  .pane { min-height:0; overflow-y:auto; overscroll-behavior:contain; }
+  .pane-list { border-right:1px solid var(--black); }
+
+  /* Master list — one compact two-line row per record */
+  .lst-hd { position:sticky; top:0; background:#fff; z-index:5; border-bottom:1px solid var(--black); padding:10px 14px 9px; }
+  .lst-count { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); margin-bottom:7px; }
+  .lst-row { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--grey-2); cursor:pointer; transition:background .1s; }
+  .lst-row:hover { background:var(--grey-1); }
+  .lst-row.sel { background:var(--black); color:#fff; }
+  .lst-row.sel .lst-sub, .lst-row.sel .lst-pct { color:var(--grey-2); }
+  .lst-row.sel .lst-mini { background:var(--grey-4); }
+  .lst-row:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
+  .lst-main { flex:1; min-width:0; }
+  .lst-top { display:flex; align-items:center; gap:7px; }
+  .lst-id { font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:500; white-space:nowrap; }
+  .lst-sub { font-size:10.5px; color:var(--grey-4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+  .lst-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .lst-mini { width:44px; height:4px; background:var(--grey-2); }
+  .lst-mini-fill { height:4px; transition:width .5s var(--ease-out-quart); }
+  .lst-pct { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); min-width:32px; text-align:right; }
+
+  /* Detail surface — analytics by default, one record once something is selected */
+  .dtl { padding:18px 24px 30px; }
+  .dtl-hd { border-bottom:1px solid var(--black); padding-bottom:11px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }
+  .dtl-id { font-family:'IBM Plex Mono',monospace; font-size:17px; font-weight:500; letter-spacing:-.01em; }
+  .dtl-buyer { font-size:12px; color:var(--grey-4); margin-top:4px; line-height:1.5; }
+  .dtl-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:13px 20px; margin-bottom:18px; }
+  .dtl-l { font-family:'IBM Plex Mono',monospace; font-size:8.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:3px; }
+  .dtl-v { font-size:14px; font-weight:500; }
+  .dtl-hint { padding:22px 24px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--grey-3); letter-spacing:.04em; border-top:1px solid var(--grey-2); }
+
+  /* Folds — native <details> so keyboard + a11y come free. Forced open on desktop by syncFolds(). */
+  .fold { border-bottom:1px solid var(--grey-2); }
+  .fold:last-child { border-bottom:none; }
+  .fold > summary { list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .fold > summary::-webkit-details-marker { display:none; }
+  .fold-sum { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); font-weight:400; letter-spacing:0; text-transform:none; white-space:nowrap; }
+  .fold-body { padding-top:12px; }
+  /* A fold's title reuses .analytics-title for the terracotta marker, but must not carry its own
+     rule/spacing inside a flex <summary>. */
+  .fold > summary .analytics-title { border-bottom:none; padding-bottom:0; margin-bottom:0; }
+  .brief-rail .comm-stats { margin-bottom:0; }
+
+  /* Slim variant of the warm zone for the pinned KPI rail */
+  .brief-rail { margin:0; border-radius:0; border-left:none; border-right:none; border-top:none; padding:14px 24px 12px; }
+  .brief-rail .metrics { border-bottom:none; }
+  .brief-rail .metric-card { padding:8px 14px 8px 0; border-bottom:none !important; }
+  .brief-rail .metric-card:nth-child(4n) { border-right:1px solid var(--grey-2); }
+  .brief-rail .metric-card:last-child { border-right:none; }
+  .brief-rail .metric-value { font-size:20px; }
+  .brief-rail .metrics { grid-template-columns:repeat(8,1fr); }
+
   /* ── Mobile card components (hidden on desktop) ── */
   .contract-cards { display:none; padding:0 16px 32px; }
   .commission-cards { display:none; padding:0 16px 32px; }
@@ -216,6 +277,27 @@
   /* ── Mobile layout overrides ── */
   @media(max-width:680px){
     body { font-size:12px; }
+
+    /* Unwind the cockpit: a phone gets normal page scroll, numbers first, everything else folded.
+       The detail pane is ordered above the list so the reading order matches desktop; on a phone
+       record detail comes from the existing expanding cards, not the detail pane. */
+    html, body { height:auto; }
+    body { overflow:auto; }
+    #dashboard.ready { display:block; height:auto; }
+    .tab-panel.active { display:block; }
+    .split { display:flex; flex-direction:column; }
+    .pane { overflow:visible; }
+    .pane-detail { order:1; }
+    .pane-list { order:2; border-right:none; }
+    .lst, .lst-hd, .dtl-hint { display:none; }
+    .dtl { padding:0; }
+    .fold > summary { padding:13px 16px; }
+    .fold-body { padding-top:0; }
+    .brief-rail { padding:12px 16px 10px; }
+    .brief-rail .metrics { grid-template-columns:repeat(2,1fr); }
+    .brief-rail .metric-card { padding:11px 12px; border-right:1px solid var(--grey-2) !important; }
+    .brief-rail .metric-card:nth-child(2n) { border-right:none !important; }
+    .brief-rail .metric-value { font-size:17px; }
 
     /* Brief (warm zone) */
     .brief { margin:14px 16px 20px; padding:16px 16px 14px; border-radius:14px; }
@@ -284,11 +366,10 @@
   @keyframes fade-up { from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
   #dashboard.show .header { animation:fade-only .3s var(--ease-out-quart) both; }
   #dashboard.show .tabs { animation:fade-only .3s var(--ease-out-quart) both; animation-delay:10ms; }
-  #dashboard.show .metrics { animation:fade-up .45s var(--ease-out-quart) both; animation-delay:20ms; }
-  #dashboard.show .analytics { animation:fade-up .45s var(--ease-out-quart) both; animation-delay:80ms; }
-  #dashboard.show .section-contracts { animation:fade-up .45s var(--ease-out-quart) both; animation-delay:140ms; }
-  #dashboard.show .section-commission { animation:fade-up .45s var(--ease-out-quart) both; animation-delay:200ms; }
-  #dashboard.show .footer { animation:fade-up .45s var(--ease-out-quart) both; animation-delay:260ms; }
+  #dashboard.show .brief-rail { animation:fade-up .45s var(--ease-out-quart) both; animation-delay:20ms; }
+  #dashboard.show .pane-list { animation:fade-up .45s var(--ease-out-quart) both; animation-delay:90ms; }
+  #dashboard.show .pane-detail { animation:fade-up .45s var(--ease-out-quart) both; animation-delay:150ms; }
+  #dashboard.show .footer { animation:fade-up .45s var(--ease-out-quart) both; animation-delay:210ms; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -322,70 +403,66 @@
   </nav>
 
   <div class="tab-panel active" id="tab-overview">
-  <div class="brief">
-    <div class="metrics" id="metrics-strip"></div>
-
-    <div class="analytics">
-      <div class="analytics-panel">
-        <div class="analytics-title">Business Snapshot</div>
-        <div id="analytics-snapshot"></div>
+    <div class="brief brief-rail"><div class="metrics" id="metrics-strip"></div></div>
+    <div class="split">
+      <div class="pane pane-list">
+        <div class="lst-hd">
+          <div class="lst-count" id="contract-count">Contracts</div>
+          <div class="ctl-bar" id="contract-controls">
+            <div class="ctl-group" id="buyer-filter-group" role="group" aria-label="Filter by buyer"></div>
+            <div class="ctl-group" id="sort-group" role="group" aria-label="Sort contracts">
+              <button class="ctl-btn active" data-sort="natural" onclick="setSort('natural')">Sheet Order</button>
+              <button class="ctl-btn" data-sort="exec-asc" onclick="setSort('exec-asc')">Exec % ↑</button>
+              <button class="ctl-btn" data-sort="pending-desc" onclick="setSort('pending-desc')">Pending MT ↓</button>
+            </div>
+          </div>
+        </div>
+        <div class="lst" id="contract-list" role="listbox" aria-label="Contracts"></div>
+        <div class="contract-cards" id="contract-cards"></div>
       </div>
-      <div class="analytics-panel">
-        <div class="analytics-title">Execution Rate by Contract</div>
-        <div id="analytics-exec"></div>
-      </div>
-      <div class="analytics-panel">
-        <div class="analytics-title">Buyer MT Concentration</div>
-        <div id="analytics-buyer"></div>
+      <div class="pane pane-detail">
+        <div id="contract-detail"></div>
+        <div id="overview-default">
+          <div class="brief">
+            <details class="fold" open><summary><span class="analytics-title">Business Snapshot</span><span class="fold-sum" id="fs-snapshot"></span></summary><div class="fold-body" id="analytics-snapshot"></div></details>
+            <details class="fold" open><summary><span class="analytics-title">Execution Rate by Contract</span><span class="fold-sum" id="fs-exec"></span></summary><div class="fold-body" id="analytics-exec"></div></details>
+            <details class="fold" open><summary><span class="analytics-title">Buyer MT Concentration</span><span class="fold-sum" id="fs-buyer"></span></summary><div class="fold-body" id="analytics-buyer"></div></details>
+          </div>
+          <div class="dtl-hint">Select a contract to see its full operational and financial detail here.</div>
+        </div>
       </div>
     </div>
-  </div>
-
-  <div class="section section-contracts">
-    <div class="section-title">Contract Status &nbsp;—&nbsp; Tap / click any row to expand detail</div>
-    <div class="ctl-bar" id="contract-controls">
-      <div class="ctl-group" id="buyer-filter-group" role="group" aria-label="Filter by buyer"></div>
-      <div class="ctl-group" id="sort-group" role="group" aria-label="Sort contracts">
-        <button class="ctl-btn active" data-sort="natural" onclick="setSort('natural')">Sheet Order</button>
-        <button class="ctl-btn" data-sort="exec-asc" onclick="setSort('exec-asc')">Exec % ↑</button>
-        <button class="ctl-btn" data-sort="pending-desc" onclick="setSort('pending-desc')">Pending MT ↓</button>
-      </div>
-    </div>
-    <table class="contract-table">
-      <thead><tr>
-        <th style="width:30px"></th>
-        <th>Contract</th><th>Buyer</th><th>Commodity / Route</th><th>Contracted</th>
-        <th>Shipped Progress</th><th>FCL Status</th><th>Payment</th><th>Signal</th><th style="width:60px"></th>
-      </tr></thead>
-      <tbody id="contract-tbody"></tbody>
-    </table>
-    <div class="contract-cards" id="contract-cards"></div>
-  </div>
   </div>
 
   <div class="tab-panel" id="tab-commission">
-  <div class="section section-commission">
-    <div class="brief">
-      <div class="section-title">Commission &amp; Brokerage &nbsp;—&nbsp; Live from Schepens Statement Sheet &nbsp;·&nbsp; Tap / click any row to expand notes</div>
-      <div class="comm-stats" id="comm-stats"></div>
-      <div class="analytics-title" style="margin-top:6px">Payment Initiated &nbsp;—&nbsp; invoices currently in process</div>
-      <table class="mini-table" id="comm-processing-table">
-        <thead><tr><th>Contract</th><th>Buyer</th><th>Qty Paid (MT)</th><th>Amount</th></tr></thead>
-        <tbody id="comm-processing-tbody"></tbody>
-        <tfoot><tr id="comm-processing-total"></tr></tfoot>
-      </table>
+    <div class="brief brief-rail"><div class="comm-stats" id="comm-stats"></div></div>
+    <div class="split">
+      <div class="pane pane-list">
+        <div class="lst-hd"><div class="lst-count" id="comm-count">Commission — Schepens statement</div></div>
+        <div class="lst" id="commission-list" role="listbox" aria-label="Commission records"></div>
+        <div class="commission-cards" id="commission-cards"></div>
+      </div>
+      <div class="pane pane-detail">
+        <div id="commission-detail"></div>
+        <div id="commission-default">
+          <div class="brief">
+            <details class="fold" open><summary><span class="analytics-title">Payment Initiated</span><span class="fold-sum" id="fs-proc"></span></summary>
+              <div class="fold-body">
+                <table class="mini-table" id="comm-processing-table">
+                  <thead><tr><th>Contract</th><th>Buyer</th><th>Qty Paid (MT)</th><th>Amount</th></tr></thead>
+                  <tbody id="comm-processing-tbody"></tbody>
+                  <tfoot><tr id="comm-processing-total"></tr></tfoot>
+                </table>
+              </div>
+            </details>
+          </div>
+          <details class="fold" open><summary style="padding:14px 24px 10px"><span class="section-title" style="border:none;padding:0;margin:0">Payments Made</span><span class="fold-sum" id="fs-pmt"></span></summary>
+            <div class="fold-body" style="padding-top:0"><div class="payments-made" id="payments-made"></div></div>
+          </details>
+          <div class="dtl-hint">Select a commission record to see its notes and figures here.</div>
+        </div>
+      </div>
     </div>
-    <div class="payments-made" id="payments-made"></div>
-    <table class="contract-table commission-table">
-      <thead><tr>
-        <th style="width:30px"></th>
-        <th>Contract</th><th>Buyer</th><th>Qty (C / S / P)</th><th>Rate</th>
-        <th>Demanded</th><th>Earned</th><th>Variance</th><th>Status</th>
-      </tr></thead>
-      <tbody id="commission-tbody"></tbody>
-    </table>
-    <div class="commission-cards" id="commission-cards"></div>
-  </div>
   </div>
 
   <div class="footer">
@@ -559,6 +636,8 @@ function flashChanged(els, newVals, prevVals){
   });
 }
 // Bars render at width:0 with a data-grow target, then grow in on the next frame.
+// Digest line rendered beside a fold's title.
+function setFold(id,text){ const el=document.getElementById(id); if(el) el.textContent=text; }
 function growBars(root){
   const bars=root.querySelectorAll('[data-grow]');
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
@@ -566,6 +645,10 @@ function growBars(root){
   }));
 }
 let contractHi=null, contractData=[], contractBuyer='', contractSort='natural', contractBuyers=[], contractRenderedRows=[];
+// Master/detail selection. Contracts key on the contract ID so a filter, sort or auto-refresh that
+// reorders the list keeps the same record open; commission keys on id+position because Schepens No.
+// repeats across rows.
+let selContractId=null, selCommKey=null, commHi=null, commRenderedRows=[];
 function buildContractSummary(hi,r){
   const id=g(r,hi,'contract').trim(), buyer=g(r,hi,'buyer').trim();
   const route=(g(r,hi,'commodity / route')||g(r,hi,'commodity/route')).trim();
@@ -608,53 +691,92 @@ function onExpandKey(e,fn){
   if(e.target.closest('.copy-btn,.paid-badge')) return;
   if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(); }
 }
-function renderContracts(hi,data){
+// Master list — one compact row per contract. Selection is keyed on the contract ID rather than
+// the row index so it survives filtering, sorting and the 5-minute auto-refresh reordering the list.
+function renderContractList(hi,data){
   contractRenderedRows=data;
-  const tbody=document.getElementById('contract-tbody');
+  const lst=document.getElementById('contract-list');
+  document.getElementById('contract-count').textContent=
+    data.length+(data.length===1?' contract':' contracts')+(contractBuyer?' · '+contractBuyer:'');
   if(data.length===0){
-    tbody.innerHTML=`<tr><td colspan="10" class="mt-sub empty-state">No contracts match this filter. <a href="#" onclick="resetContractFilters();return false;">Clear filter</a></td></tr>`;
-    return;
+    lst.innerHTML=`<div class="mt-sub empty-state">No contracts match this filter. <a href="#" onclick="resetContractFilters();return false;">Clear filter</a></div>`;
+    clearContractDetail(); return;
   }
-  let html='';
-  data.forEach((r,idx)=>{
+  const selIdx=selContractId?data.findIndex(r=>g(r,hi,'contract').trim()===selContractId):-1;
+  lst.innerHTML=data.map((r,idx)=>{
     const id=g(r,hi,'contract').trim(), buyer=g(r,hi,'buyer').trim();
-    const route=(g(r,hi,'commodity / route')||g(r,hi,'commodity/route')).trim();
-    const ops=(g(r,hi,'operational status (emails)')||g(r,hi,'operational status')).trim();
-    const fin=(g(r,hi,'financial status (sheet)')||g(r,hi,'financial status')).trim();
-    const terms=g(r,hi,'terms').trim();
     const cmt=num(g(r,hi,'contracted mt')), smt=num(g(r,hi,'shipped mt'));
-    const val=(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value')).trim();
     const fclC=num(g(r,hi,'fcl contracted')), fclS=num(g(r,hi,'fcl shipped'));
-    const fclI=num(g(r,hi,'fcl invoiced')), fclP=num(g(r,hi,'fcl paid')), fclPd=num(g(r,hi,'fcl pending'));
+    const fclP=num(g(r,hi,'fcl paid')), fclPd=num(g(r,hi,'fcl pending'));
     const sp=pct(smt,cmt), sig=getSignal(fclC,fclS,fclP,fclPd);
-    html+=`
-    <tr class="data-row" id="row-${idx}" tabindex="0" role="button" aria-expanded="false" onclick="toggleRow(${idx})" onkeydown="onExpandKey(event,()=>toggleRow(${idx}))">
-      <td><span class="chevron">▶</span></td>
-      <td><span class="contract-id">${esc(id)}</span></td>
-      <td><div class="buyer-cell">${esc(buyer)}</div></td>
-      <td><div class="route-cell">${esc(route)}</div></td>
-      <td><div class="mt-val">${fmt(cmt)} MT</div><div class="mt-sub">${val?'$'+val.replace(/[^0-9.]/g,'')+'m':'—'}</div></td>
-      <td style="min-width:100px"><div class="progress-wrap"><div class="progress-fill" style="width:0" data-grow="${sp}%"></div></div><div class="progress-pct">${fmt(smt)} MT &nbsp;(${sp}%)</div></td>
-      <td><div class="fcl-row"><span class="fcl-pill">${fclC} contracted</span><span class="fcl-pill">${fclS} shipped</span><span class="fcl-pill">${fclI} invoiced</span></div></td>
-      <td><div class="fcl-row"><span class="fcl-pill paid">${fclP} paid</span>${fclPd>0?`<span class="fcl-pill pending-pay">${fclPd} pending</span>`:''}</div></td>
-      <td><span class="signal" style="color:${sig.color}"><span class="signal-dot" style="background:${sig.color}"></span>${sig.label}</span></td>
-      <td><button class="copy-btn" onclick="event.stopPropagation();copyContractRow(${idx},'d')" onkeydown="event.stopPropagation()" title="Copy status summary">Copy</button><span class="copy-fb" id="copy-fb-${idx}"></span></td>
-    </tr>
-    <tr class="expand-row" id="expand-${idx}"><td class="expand-cell" colspan="10">
-      <div class="expand-grid">
-        <div><div class="expand-section-label">Operational Status — From Emails</div><div class="expand-text">${esc(ops)||'—'}</div></div>
-        <div><div class="expand-section-label">Financial Status — From Sheet</div><div class="expand-text">${esc(fin)||'—'}${terms?'\n\nTerms: '+esc(terms):''}</div></div>
+    return `<div class="lst-row${idx===selIdx?' sel':''}" role="option" aria-selected="${idx===selIdx}" tabindex="0" onclick="selectContract(${idx})" onkeydown="onExpandKey(event,()=>selectContract(${idx}))">
+      <div class="lst-main">
+        <div class="lst-top"><span class="lst-id">${esc(id)}</span><span class="signal-dot" style="background:${sig.color}" title="${esc(sig.label)}"></span></div>
+        <div class="lst-sub">${esc(buyer)}</div>
       </div>
-    </td></tr>`;
-  });
-  tbody.innerHTML=html;
-  growBars(tbody);
+      <div class="lst-right">
+        <div class="lst-mini"><div class="lst-mini-fill" style="width:0;background:${bandColor(sp)}" data-grow="${Math.min(sp,100)}%"></div></div>
+        <span class="lst-pct">${sp}%</span>
+      </div>
+    </div>`;
+  }).join('');
+  growBars(lst);
+  if(selIdx>=0) renderContractDetail(selIdx); else clearContractDetail();
 }
-function toggleRow(idx){
-  const dr=document.getElementById('row-'+idx), er=document.getElementById('expand-'+idx);
-  const open=dr.classList.contains('open');
-  dr.classList.toggle('open',!open); er.classList.toggle('show',!open);
-  dr.setAttribute('aria-expanded', String(!open));
+function selectContract(idx){
+  const r=contractRenderedRows[idx]; if(!r) return;
+  selContractId=g(r,contractHi,'contract').trim();
+  document.querySelectorAll('#contract-list .lst-row').forEach((el,i)=>{
+    el.classList.toggle('sel',i===idx); el.setAttribute('aria-selected',String(i===idx));
+  });
+  renderContractDetail(idx);
+}
+function clearContractDetail(){
+  const d=document.getElementById('contract-detail'); if(d) d.innerHTML='';
+  const o=document.getElementById('overview-default'); if(o) o.style.display='';
+}
+function renderContractDetail(idx){
+  const hi=contractHi, r=contractRenderedRows[idx];
+  if(!r||!hi) return clearContractDetail();
+  const id=g(r,hi,'contract').trim(), buyer=g(r,hi,'buyer').trim();
+  const route=(g(r,hi,'commodity / route')||g(r,hi,'commodity/route')).trim();
+  const ops=(g(r,hi,'operational status (emails)')||g(r,hi,'operational status')).trim();
+  const fin=(g(r,hi,'financial status (sheet)')||g(r,hi,'financial status')).trim();
+  const terms=g(r,hi,'terms').trim();
+  const cmt=num(g(r,hi,'contracted mt')), smt=num(g(r,hi,'shipped mt')), pmt=num(g(r,hi,'pending mt'));
+  const val=(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value')).trim();
+  const fclC=num(g(r,hi,'fcl contracted')), fclS=num(g(r,hi,'fcl shipped'));
+  const fclI=num(g(r,hi,'fcl invoiced')), fclP=num(g(r,hi,'fcl paid')), fclPd=num(g(r,hi,'fcl pending'));
+  const sp=pct(smt,cmt), sig=getSignal(fclC,fclS,fclP,fclPd);
+  document.getElementById('overview-default').style.display='none';
+  const el=document.getElementById('contract-detail');
+  el.innerHTML=`<div class="dtl">
+    <div class="dtl-hd">
+      <div><div class="dtl-id">${esc(id)}</div><div class="dtl-buyer">${esc(buyer)}${route?' &nbsp;·&nbsp; '+esc(route):''}</div></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <span class="signal" style="color:${sig.color}"><span class="signal-dot" style="background:${sig.color}"></span>${sig.label}</span>
+        <button class="copy-btn" onclick="copyContractRow(${idx},'d')" title="Copy status summary">Copy</button>
+        <span class="copy-fb" id="copy-fb-${idx}"></span>
+      </div>
+    </div>
+    <div class="dtl-grid">
+      <div><div class="dtl-l">Contracted</div><div class="dtl-v">${fmt(cmt)} MT</div></div>
+      <div><div class="dtl-l">Value</div><div class="dtl-v">${val?'$'+esc(val.replace(/[^0-9.]/g,''))+'m':'—'}</div></div>
+      <div><div class="dtl-l">Shipped</div><div class="dtl-v">${fmt(smt)} MT</div></div>
+      <div><div class="dtl-l">Pending</div><div class="dtl-v">${fmt(pmt||Math.max(cmt-smt,0))} MT</div></div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" style="width:0" data-grow="${sp}%"></div></div>
+    <div class="progress-pct">${fmt(smt)} of ${fmt(cmt)} MT shipped &nbsp;(${sp}%)</div>
+    <div class="fcl-row" style="margin:15px 0 20px">
+      <span class="fcl-pill">${fclC} contracted</span><span class="fcl-pill">${fclS} shipped</span><span class="fcl-pill">${fclI} invoiced</span>
+      <span class="fcl-pill paid">${fclP} paid</span>${fclPd>0?`<span class="fcl-pill pending-pay">${fclPd} pending</span>`:''}
+    </div>
+    <div class="expand-section-label">Operational Status — From Emails</div>
+    <div class="expand-text" style="margin-bottom:17px">${esc(ops)||'—'}</div>
+    <div class="expand-section-label">Financial Status — From Sheet</div>
+    <div class="expand-text">${esc(fin)||'—'}${terms?'\n\nTerms: '+esc(terms):''}</div>
+  </div>`;
+  growBars(el);
 }
 
 function renderContractsMobile(hi,data){
@@ -740,15 +862,28 @@ function applyContractFilterSort(){
   let rows=contractBuyer?contractData.filter(r=>g(r,contractHi,'buyer').trim()===contractBuyer):contractData.slice();
   if(contractSort==='exec-asc') rows=rows.slice().sort((a,b)=>execPct(a)-execPct(b));
   else if(contractSort==='pending-desc') rows=rows.slice().sort((a,b)=>num(g(b,contractHi,'pending mt'))-num(g(a,contractHi,'pending mt')));
-  renderContracts(contractHi,rows);
+  renderContractList(contractHi,rows);
   renderContractsMobile(contractHi,rows);
 }
 // Buyer MT Concentration drilldown (lives inside .brief) — activates the brutalist buyer filter
 // above and scrolls the Contract Status section into view.
 function goToBuyer(name){
   setBuyerFilter(name);
-  const sec=document.querySelector('.section-contracts');
-  if(sec) sec.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  // Desktop: the list is its own scroll pane, so bring it back to the top rather than scrolling the
+  // page (which no longer scrolls). Mobile: the list sits below, so scroll it into view as before.
+  const pane=document.querySelector('#tab-overview .pane-list');
+  if(!pane) return;
+  const smooth=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(isNarrow()) pane.scrollIntoView({behavior:smooth?'smooth':'auto',block:'start'});
+  else pane.scrollTo({top:0,behavior:smooth?'smooth':'auto'});
+}
+// Folds are native <details>. On a wide screen every fold is forced open so the detail pane reads as
+// one continuous panel; on a phone they collapse so the numbers come first and everything else is a
+// tap away. Re-run on resize so rotating the phone doesn't strand the layout in the wrong mode.
+function isNarrow(){ return matchMedia('(max-width:680px)').matches; }
+function syncFolds(){
+  const wide=!isNarrow();
+  document.querySelectorAll('details.fold').forEach(d=>{ if(wide) d.open=true; else if(d.dataset.userSet!=='1') d.open=false; });
 }
 
 function parseCommission(rows){ if(rows.length<2)return{hi:{},data:[]};
@@ -799,6 +934,7 @@ function renderCommProcessing(hi,data){
       <td class="mt-sub">${fmtUsd(amt)}</td></tr>`;
   }).join('');
   document.getElementById('comm-processing-tbody').innerHTML=body||'<tr><td colspan="4" class="mt-sub">No invoices currently in process</td></tr>';
+  setFold('fs-proc', rows.length+' in process · '+fmtUsd(totalAmt));
   document.getElementById('comm-processing-total').innerHTML=
     `<td colspan="2" style="font-weight:600;font-size:11px">Total</td>
      <td class="mt-sub" style="font-weight:600">${fmt(totalQty)}</td>
@@ -883,6 +1019,8 @@ function paidBadge(schepensNo){
 }
 function goToPaymentsMade(){
   const sec=document.getElementById('payments-made'); if(!sec) return;
+  clearCommDetail();                                    // the panel lives on the default surface
+  const fold=sec.closest('details.fold'); if(fold) fold.open=true;
   sec.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
   sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash');
   sec.addEventListener('animationend',()=>sec.classList.remove('flash'),{once:true});
@@ -893,6 +1031,7 @@ function goToPaymentsMade(){
 // isn't available yet rather than omitting the record.
 function renderPaymentsMade(chi,cdata){
   const wrap=document.getElementById('payments-made'); if(!wrap) return;
+  setFold('fs-pmt', PAYMENTS_MADE.map(p=>fmtUsd(p.statedTotals.amountUsd)).join(' · ')+' remitted');
   wrap.innerHTML=PAYMENTS_MADE.map((payment,pIdx)=>{
     const v=verifyPaymentTotals(payment);
     const recon=reconcilePayment(payment,chi,cdata);
@@ -932,47 +1071,78 @@ function renderPaymentsMade(chi,cdata){
   }).join('');
 }
 
-function renderCommission(hi,data){
-  const tbody=document.getElementById('commission-tbody');
+// Commission master list. Schepens No. is NOT unique (HK2860, HK2899-1 and HK2899-2 each appear
+// twice), so selection is keyed on id+position rather than id alone.
+function renderCommissionList(hi,data){
+  commHi=hi; commRenderedRows=data;
+  const lst=document.getElementById('commission-list');
+  document.getElementById('comm-count').textContent=
+    data.length+(data.length===1?' record':' records')+' · Schepens statement';
   if(data.length===0){
-    tbody.innerHTML=`<tr><td colspan="9" class="mt-sub empty-state">No commission records available</td></tr>`;
-    return;
+    lst.innerHTML=`<div class="mt-sub empty-state">No commission records available</div>`;
+    clearCommDetail(); return;
   }
-  let html='';
-  data.forEach((r,idx)=>{
-    const id=g(r,hi,'schepens no.').trim(), contractNo=g(r,hi,'china contract no.').trim();
-    const buyer=g(r,hi,'buyer').trim();
-    const cqty=num(g(r,hi,'contract qty (mt)')), sqty=num(g(r,hi,'qty shipped (mt)')), pqty=num(g(r,hi,'qty paid (mt)'));
-    const rate=g(r,hi,'commission ($/mt)').trim();
-    const demanded=g(r,hi,'commission demanded ($) as per mail').trim();
-    const earned=g(r,hi,'commission earned ($) as per qty paid').trim();
-    const variance=g(r,hi,'variance ($)').trim();
-    const status=g(r,hi,'status').trim(), notes=g(r,hi,'notes').trim();
+  const selIdx=selCommKey?data.findIndex((r,i)=>g(r,hi,'schepens no.').trim()+'|'+i===selCommKey):-1;
+  lst.innerHTML=data.map((r,idx)=>{
+    const id=g(r,hi,'schepens no.').trim(), buyer=g(r,hi,'buyer').trim();
+    const variance=g(r,hi,'variance ($)').trim(), status=g(r,hi,'status').trim();
     const csig=getCommSignal(status);
-    html+=`
-    <tr class="data-row" id="comm-row-${idx}" tabindex="0" role="button" aria-expanded="false" onclick="toggleCommRow(${idx})" onkeydown="onExpandKey(event,()=>toggleCommRow(${idx}))">
-      <td><span class="chevron">▶</span></td>
-      <td><span class="contract-id">${esc(id)}</span>${paidBadge(id)}</td>
-      <td><div class="buyer-cell">${esc(buyer)}</div></td>
-      <td class="mt-sub" title="Contracted / Shipped / Paid">${fmt(cqty)} / ${fmt(sqty)} / ${fmt(pqty)}</td>
-      <td class="mt-sub">${rate?'$'+esc(rate):'—'}</td>
-      <td class="mt-sub">${esc(demanded)||'—'}</td>
-      <td class="mt-sub">${esc(earned)||'—'}</td>
-      <td class="mt-sub${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</td>
-      <td><span class="signal" style="color:${csig.color}"><span class="signal-dot" style="background:${csig.color}"></span>${esc(csig.label)}</span></td>
-    </tr>
-    <tr class="expand-row" id="comm-expand-${idx}"><td class="expand-cell" colspan="9">
-      <div class="expand-section-label">Notes</div>
-      <div class="expand-text comm-notes">${esc(notes)||'—'}${contractNo?'\n\nChina Contract No.: '+esc(contractNo):''}</div>
-    </td></tr>`;
-  });
-  tbody.innerHTML=html;
+    return `<div class="lst-row${idx===selIdx?' sel':''}" role="option" aria-selected="${idx===selIdx}" tabindex="0" onclick="selectComm(${idx})" onkeydown="onExpandKey(event,()=>selectComm(${idx}))">
+      <div class="lst-main">
+        <div class="lst-top"><span class="lst-id">${esc(id)}</span><span class="signal-dot" style="background:${csig.color}" title="${esc(csig.label)}"></span>${paidBadge(id)}</div>
+        <div class="lst-sub">${esc(buyer)}</div>
+      </div>
+      <div class="lst-right"><span class="lst-pct${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</span></div>
+    </div>`;
+  }).join('');
+  if(selIdx>=0) renderCommissionDetail(selIdx); else clearCommDetail();
 }
-function toggleCommRow(idx){
-  const dr=document.getElementById('comm-row-'+idx), er=document.getElementById('comm-expand-'+idx);
-  const open=dr.classList.contains('open');
-  dr.classList.toggle('open',!open); er.classList.toggle('show',!open);
-  dr.setAttribute('aria-expanded', String(!open));
+function selectComm(idx){
+  const r=commRenderedRows[idx]; if(!r) return;
+  selCommKey=g(r,commHi,'schepens no.').trim()+'|'+idx;
+  document.querySelectorAll('#commission-list .lst-row').forEach((el,i)=>{
+    el.classList.toggle('sel',i===idx); el.setAttribute('aria-selected',String(i===idx));
+  });
+  renderCommissionDetail(idx);
+}
+function clearCommDetail(){
+  const d=document.getElementById('commission-detail'); if(d) d.innerHTML='';
+  const o=document.getElementById('commission-default'); if(o) o.style.display='';
+}
+function renderCommissionDetail(idx){
+  const hi=commHi, r=commRenderedRows[idx];
+  if(!r||!hi) return clearCommDetail();
+  const id=g(r,hi,'schepens no.').trim(), contractNo=g(r,hi,'china contract no.').trim();
+  const buyer=g(r,hi,'buyer').trim();
+  const cqty=num(g(r,hi,'contract qty (mt)')), sqty=num(g(r,hi,'qty shipped (mt)')), pqty=num(g(r,hi,'qty paid (mt)'));
+  const rate=g(r,hi,'commission ($/mt)').trim();
+  const demanded=g(r,hi,'commission demanded ($) as per mail').trim();
+  const earned=g(r,hi,'commission earned ($) as per qty paid').trim();
+  const variance=g(r,hi,'variance ($)').trim();
+  const status=g(r,hi,'status').trim(), notes=g(r,hi,'notes').trim();
+  const csig=getCommSignal(status);
+  document.getElementById('commission-default').style.display='none';
+  document.getElementById('commission-detail').innerHTML=`<div class="dtl">
+    <div class="dtl-hd">
+      <div><div class="dtl-id">${esc(id)}</div><div class="dtl-buyer">${esc(buyer)}${contractNo?'<br>China Contract No.: '+esc(contractNo):''}</div></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <span class="signal" style="color:${csig.color}"><span class="signal-dot" style="background:${csig.color}"></span>${esc(csig.label)}</span>${paidBadge(id)}
+      </div>
+    </div>
+    <div class="dtl-grid">
+      <div><div class="dtl-l">Contract Qty</div><div class="dtl-v">${fmt(cqty)} MT</div></div>
+      <div><div class="dtl-l">Shipped</div><div class="dtl-v">${fmt(sqty)} MT</div></div>
+      <div><div class="dtl-l">Paid</div><div class="dtl-v">${fmt(pqty)} MT</div></div>
+      <div><div class="dtl-l">Rate</div><div class="dtl-v">${rate?'$'+esc(rate)+'/MT':'—'}</div></div>
+    </div>
+    <div class="dtl-grid">
+      <div><div class="dtl-l">Demanded</div><div class="dtl-v">${esc(demanded)||'—'}</div></div>
+      <div><div class="dtl-l">Earned / payable</div><div class="dtl-v">${esc(earned)||'—'}</div></div>
+      <div><div class="dtl-l">Variance</div><div class="dtl-v${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</div></div>
+    </div>
+    <div class="expand-section-label">Notes</div>
+    <div class="expand-text comm-notes">${esc(notes)||'—'}</div>
+  </div>`;
 }
 function renderCommissionMobile(hi,data){
   const wrap=document.getElementById('commission-cards');
@@ -1101,6 +1271,13 @@ function renderAnalytics(hi,data,chi,cdata){
       <td style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--grey-4)">${r.pct}%</td>
     </tr>`).join('')+'</tbody></table>';
   document.getElementById('analytics-buyer').innerHTML=buyerHtml;
+
+  // One-line digests shown next to each fold title. On a phone the folds start closed, so these are
+  // the whole story until Tarun taps in.
+  setFold('fs-snapshot', fmtUsd(earned)+' payable');
+  const below=execRows.filter(r=>r.rate<20).length;
+  setFold('fs-exec', below?below+' below 20%':'all above 20%');
+  setFold('fs-buyer', buyerRows.length+(buyerRows.length===1?' buyer':' buyers'));
 }
 
 async function loadData(){
@@ -1119,15 +1296,15 @@ async function loadData(){
     renderAnalytics(hi,data,chi,cdata);
     renderCommStats(chi,cdata);
     renderCommProcessing(chi,cdata);
-    renderCommission(chi,cdata);
+    renderCommissionList(chi,cdata);
     renderCommissionMobile(chi,cdata);
     renderPaymentsMade(chi,cdata); // re-render with live data so reconciliation can move off 'pending'
     document.getElementById('loading').style.display='none';
     const em=document.getElementById('error-msg'); em.style.display='none'; em.classList.remove('inline');
     const dash=document.getElementById('dashboard');
-    const firstLoad=dash.style.display!=='block';
-    dash.style.display='block';
-    if(firstLoad) dash.classList.add('show');
+    const firstLoad=!dash.classList.contains('ready');
+    dash.style.display='flex'; dash.classList.add('ready');
+    if(firstLoad){ dash.classList.add('show'); syncFolds(); }
     const now=new Date();
     document.getElementById('last-updated').innerHTML='Last updated<br>'+
       now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' &nbsp;'+
@@ -1176,7 +1353,20 @@ document.getElementById('analytics-buyer').addEventListener('keydown',e=>{
   e.preventDefault(); goToBuyer(row.dataset.buyer);
 });
 window.addEventListener('hashchange',()=>switchTab(tabFromHash(),true));
+// Remember folds the user opened/closed by hand so a resize doesn't undo their choice.
+document.querySelectorAll('details.fold').forEach(d=>d.addEventListener('toggle',()=>{ if(isNarrow()) d.dataset.userSet='1'; }));
+let _rzTimer=null;
+window.addEventListener('resize',()=>{
+  clearTimeout(_rzTimer);
+  _rzTimer=setTimeout(()=>{
+    // Crossing into phone width drops any master/detail selection — on a phone, record detail comes
+    // from the expanding cards, not the detail pane, so a stale selection would hide the defaults.
+    if(isNarrow()){ selContractId=null; selCommKey=null; clearContractDetail(); clearCommDetail(); }
+    syncFolds();
+  },150);
+});
 switchTab(tabFromHash(),true);
+syncFolds();
 renderPaymentsMade(); // frozen payment record — paints immediately, independent of the sheet fetch below
 loadData();
 </script>
