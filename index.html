@@ -4,26 +4,60 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>China Shipments — Live Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,600;6..96,700&family=Schibsted+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
   :root {
-    --black:#1a1a1a; --grey-1:#f4f4f4; --grey-2:#e8e8e8; --grey-3:#aaa; --grey-4:#666;
-    --green:#1e6e2e; --amber:#8a5c00; --red:#b52a2a; --blue:#1a4a8a;
+    --font-ui:'Schibsted Grotesk',system-ui,sans-serif;
+    --font-num:'Spline Sans Mono',ui-monospace,monospace;
+    --font-display:'Bodoni Moda',Georgia,serif;
+    /* Ground is warm paper, not white. Neutrals are tinted toward the paper hue so nothing reads as
+       cold grey sitting on a warm sheet. */
+    --paper:oklch(97.6% 0.009 78); --paper-2:oklch(95.2% 0.012 76); --paper-3:oklch(92.6% 0.015 74);
+    --ink:oklch(26% 0.017 70); --ink-2:oklch(47% 0.014 70); --ink-3:oklch(64% 0.012 74);
+    --rule:oklch(89% 0.012 74); --rule-strong:oklch(76% 0.014 72);
+    /* Accent is RARE: the one lead figure per view, and selection. Never decoration. */
+    --accent:oklch(53% 0.15 38); --accent-soft:oklch(93% 0.032 42);
+    /* Status only. */
+    --green:oklch(48% 0.11 150); --amber:oklch(56% 0.12 68); --red:oklch(50% 0.17 27); --blue:oklch(46% 0.07 250);
+    /* Aliases keep the pre-existing rules working against the new palette. */
+    --black:oklch(26% 0.017 70); --grey-1:oklch(95.2% 0.012 76); --grey-2:oklch(89% 0.012 74);
+    --grey-3:oklch(64% 0.012 74); --grey-4:oklch(47% 0.014 70);
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
     --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   }
-  body { font-family:'IBM Plex Sans',sans-serif; background:#fff; color:var(--black); font-size:13px; line-height:1.5; }
+  body { font-family:var(--font-ui); background:var(--paper); color:var(--ink); font-size:13px; line-height:1.5;
+    -webkit-font-smoothing:antialiased; }
+  /* Every figure on the page shares one rhythm: mono, tabular, so columns of numbers line up. */
+  .num, .kpi-v, .lst-pct, .lst-id, .metric-value, .comm-stat-v, .analytics-kpi, .dtl-v, .dtl-id, .m-stat-v {
+    font-family:var(--font-num); font-variant-numeric:tabular-nums; letter-spacing:-.015em; }
 
-  .header { padding:18px 32px; border-bottom:2px solid var(--black); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:100; }
-  .header-left .title { font-size:14px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; }
-  .header-left .subtitle { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); margin-top:3px; }
+  /* KPI — one lead figure carries the accent, the rest are ink. Grouped by whitespace, not boxes. */
+  .kpi { padding:0 var(--s5) 0 0; }
+  .kpi-l { font-family:var(--font-num); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:var(--s2); white-space:nowrap; }
+  .kpi-v { font-size:21px; font-weight:500; line-height:1.05; color:var(--ink); }
+  .kpi-s { font-size:11px; color:var(--ink-2); margin-top:5px; line-height:1.45; }
+  .kpi-lead { padding-right:var(--s6); }
+  .kpi-lead .kpi-v { font-family:var(--font-display); font-size:52px; font-weight:600; color:var(--accent);
+    letter-spacing:-.02em; line-height:.95; font-variant-numeric:tabular-nums lining-nums; }
+  .kpi-lead .kpi-l { color:var(--ink-2); }
+
+  /* Status chip — the only other place colour is allowed. */
+  .chip { display:inline-block; font-family:var(--font-num); font-size:9px; letter-spacing:.09em; text-transform:uppercase;
+    padding:2px 6px; border:1px solid currentColor; margin-right:6px; vertical-align:1px; }
+  .chip-ok { color:var(--green); } .chip-due { color:var(--amber); } .chip-alert { color:var(--red); }
+
+  .header { padding:18px 32px; border-bottom:1px solid var(--rule-strong); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--paper); z-index:100; }
+  .header-left .title { font-family:var(--font-display); font-size:19px; font-weight:600; text-transform:none; letter-spacing:-.01em; }
+  .header-left .subtitle { font-family:var(--font-num); font-size:10px; color:var(--grey-4); margin-top:3px; }
   .header-right { display:flex; align-items:center; gap:14px; }
-  .last-updated { font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--grey-4); text-align:right; }
-  .refresh-btn { font-family:'IBM Plex Mono',monospace; font-size:10px; background:var(--black); color:#fff; border:none; padding:6px 14px; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; transition:opacity .15s, transform .1s var(--ease-out-quart); }
+  .last-updated { font-family:var(--font-num); font-size:10.5px; color:var(--grey-4); text-align:right; }
+  .refresh-btn { font-family:var(--font-num); font-size:10px; background:var(--black); color:var(--paper); border:none; padding:6px 14px; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; transition:opacity .15s, transform .1s var(--ease-out-quart); }
   .refresh-btn:hover { opacity:.75; } .refresh-btn:active { transform:scale(.96); } .refresh-btn:disabled { opacity:.4; cursor:not-allowed; }
 
-  .tabs { display:flex; border-bottom:1px solid var(--black); background:#fff; }
-  .tab-btn { font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  .tabs { display:flex; border-bottom:1px solid var(--black); background:var(--paper); }
+  .tab-btn { font-family:var(--font-num); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
     color:var(--grey-4); background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-1px;
     padding:12px 20px; cursor:pointer; transition:color .15s, border-color .15s; }
   .tab-btn:hover { color:var(--black); }
@@ -31,37 +65,34 @@
   .tab-panel { display:none; }
   .tab-panel.active { display:block; }
 
-  .metrics { display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--grey-2); }
-  .metric-card { padding:18px 20px; border-right:1px solid var(--grey-2); border-bottom:1px solid var(--grey-2); }
-  .metric-card:nth-child(4n) { border-right:none; }
-  .metric-card:nth-child(n+5) { border-bottom:none; }
+  .metrics, .comm-stats { display:flex; align-items:flex-start; gap:var(--s5); flex-wrap:wrap; margin:0; padding:0; border:none; }
   .metric-value { font-size:24px; font-weight:600; line-height:1.1; letter-spacing:-.01em; }
-  .metric-label { font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--grey-3); text-transform:uppercase; letter-spacing:.1em; margin-top:5px; }
-  .metric-sub { font-size:11px; color:var(--grey-4); margin-top:2px; font-family:'IBM Plex Mono',monospace; }
+  .metric-label { font-family:var(--font-num); font-size:9.5px; color:var(--grey-3); text-transform:uppercase; letter-spacing:.1em; margin-top:5px; }
+  .metric-sub { font-size:11px; color:var(--grey-4); margin-top:2px; font-family:var(--font-num); }
   @keyframes value-flash { 0%{background:#eaf1fb;} 100%{background:transparent;} }
-  .metric-card.flash, .comm-stats > div.flash, .payments-made.flash { animation:value-flash 1.2s var(--ease-out-quart); }
+  .kpi.flash, .comm-stats > div.flash, .payments-made.flash { animation:value-flash 1.2s var(--ease-out-quart); }
 
   .section { padding:20px 32px 40px; }
-  .section-title { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey-3); border-bottom:1px solid var(--grey-2); padding-bottom:7px; margin-bottom:14px; }
+  .section-title { font-family:var(--font-num); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey-3); border-bottom:1px solid var(--grey-2); padding-bottom:7px; margin-bottom:14px; }
 
   .contract-table { width:100%; border-collapse:collapse; font-size:12.5px; }
   .commission-table { margin-top:24px; }
-  .contract-table thead th { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding:8px 10px; text-align:left; border-bottom:1px solid var(--black); white-space:nowrap; }
+  .contract-table thead th { font-family:var(--font-num); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding:8px 10px; text-align:left; border-bottom:1px solid var(--black); white-space:nowrap; }
   .contract-table tbody tr.data-row { border-bottom:1px solid var(--grey-2); cursor:pointer; transition:background .1s; }
   .contract-table tbody tr.data-row:hover, .contract-table tbody tr.data-row.open { background:var(--grey-1); }
   .contract-table td { padding:11px 10px; vertical-align:middle; }
 
-  .contract-id { font-family:'IBM Plex Mono',monospace; font-weight:500; font-size:12px; color:var(--black); white-space:nowrap; }
+  .contract-id { font-family:var(--font-num); font-weight:500; font-size:12px; color:var(--black); white-space:nowrap; }
   .buyer-cell { font-size:11.5px; color:var(--grey-4); max-width:130px; }
   .route-cell { font-size:11.5px; color:var(--black); max-width:150px; line-height:1.4; }
-  .mt-val { font-weight:500; } .mt-sub { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); }
+  .mt-val { font-weight:500; } .mt-sub { font-family:var(--font-num); font-size:10px; color:var(--grey-4); }
 
   .progress-wrap { background:var(--grey-2); height:5px; width:100%; min-width:70px; }
   .progress-fill { background:var(--black); height:5px; transition:width .5s var(--ease-out-quart); }
-  .progress-pct { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); margin-top:4px; }
+  .progress-pct { font-family:var(--font-num); font-size:10px; color:var(--grey-4); margin-top:4px; }
 
   .fcl-row { display:flex; gap:4px; flex-wrap:wrap; }
-  .fcl-pill { font-family:'IBM Plex Mono',monospace; font-size:9.5px; padding:2px 5px; background:var(--grey-1); border:1px solid var(--grey-2); white-space:nowrap; }
+  .fcl-pill { font-family:var(--font-num); font-size:9.5px; padding:2px 5px; background:var(--grey-1); border:1px solid var(--grey-2); white-space:nowrap; }
   .fcl-pill.paid { background:#e8f4e8; border-color:#b8d8b8; color:var(--green); }
   .fcl-pill.pending-pay { background:#fdf0e8; border-color:#f0cca8; color:var(--amber); }
 
@@ -76,52 +107,53 @@
   tr.expand-row.show .expand-cell { animation:expand-fade .32s var(--ease-out-quart) both; }
   .expand-cell { padding:14px 14px 18px 36px; background:var(--grey-1); border-bottom:1px solid var(--grey-2); }
   .expand-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
-  .expand-section-label { font-family:'IBM Plex Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:.12em; color:var(--grey-3); margin-bottom:6px; }
+  .expand-section-label { font-family:var(--font-num); font-size:9px; text-transform:uppercase; letter-spacing:.12em; color:var(--grey-3); margin-bottom:6px; }
   .expand-text { font-size:12px; line-height:1.7; color:#333; white-space:pre-wrap; }
 
   .ctl-bar { display:flex; flex-wrap:wrap; gap:16px; margin-bottom:14px; }
   .ctl-group { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .ctl-btn { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:5px 10px; cursor:pointer; transition:background .1s, color .1s, border-color .1s; }
+  .ctl-btn { font-family:var(--font-num); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:5px 10px; cursor:pointer; transition:background .1s, color .1s, border-color .1s; }
   .ctl-btn:hover { color:var(--black); border-color:var(--grey-3); }
-  .ctl-btn.active { color:#fff; background:var(--black); border-color:var(--black); }
+  .ctl-btn.active { color:var(--paper); background:var(--black); border-color:var(--black); }
   .ctl-btn:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
   .data-row:focus-visible, .m-card-hd:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
-  .copy-btn { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:3px 7px; cursor:pointer; white-space:nowrap; }
+  .copy-btn { font-family:var(--font-num); font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:3px 7px; cursor:pointer; white-space:nowrap; }
   .copy-btn:hover { color:var(--black); border-color:var(--grey-3); }
   .copy-btn:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
-  .copy-fb { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--green); margin-left:5px; }
+  .copy-fb { font-family:var(--font-num); font-size:9px; color:var(--green); margin-left:5px; }
   .empty-state { padding:26px 10px; text-align:center; }
   .empty-state a { color:var(--black); }
 
-  #loading { padding:80px 32px; text-align:center; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--grey-3); letter-spacing:.05em; }
+  #loading { padding:80px 32px; text-align:center; font-family:var(--font-num); font-size:12px; color:var(--grey-3); letter-spacing:.05em; }
   .loading-dots::after { content:''; animation:dots 1.2s steps(4,end) infinite; }
   @keyframes dots { 0%,20%{content:'';} 40%{content:'.';} 60%{content:'..';} 80%,100%{content:'...';} }
-  #error-msg { display:none; padding:40px 32px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--red); text-align:center; }
+  #error-msg { display:none; padding:40px 32px; font-family:var(--font-num); font-size:12px; color:var(--red); text-align:center; }
   #error-msg.inline { align-items:center; justify-content:space-between; gap:14px; padding:10px 32px; text-align:left; border-bottom:1px solid var(--red); }
   #error-msg .err-text { flex:1; }
   #dashboard { display:none; }
 
-  .footer { padding:14px 32px; border-top:1px solid var(--grey-2); font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-3); display:flex; justify-content:space-between; }
+  .footer { padding:14px 32px; border-top:1px solid var(--grey-2); font-family:var(--font-num); font-size:10px; color:var(--grey-3); display:flex; justify-content:space-between; }
   .countdown { color:var(--grey-4); }
 
   .analytics { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid var(--grey-2); }
-  .analytics-panel { padding:20px 24px; border-right:1px solid var(--grey-2); }
+  .analytics-panel { padding:var(--s5) 0; }
   .analytics-panel:last-child { border-right:none; }
-  .analytics-title { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey-3); border-bottom:1px solid var(--grey-2); padding-bottom:7px; margin-bottom:14px; }
-  .analytics-kpi { font-size:22px; font-weight:600; letter-spacing:-.01em; line-height:1.1; }
-  .analytics-kpi-sub { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); margin:3px 0 12px; }
+  .analytics-title { font-family:var(--font-num); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3); padding-bottom:0; margin-bottom:0; }
+  .analytics-kpi { font-family:var(--font-display); font-size:40px; font-weight:600; letter-spacing:-.02em;
+    line-height:1; color:var(--accent); font-variant-numeric:tabular-nums lining-nums; }
+  .analytics-kpi-sub { font-family:var(--font-num); font-size:10px; color:var(--grey-4); margin:3px 0 12px; }
   .mini-table { width:100%; border-collapse:collapse; font-size:11.5px; margin-top:2px; }
-  .mini-table th { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:4px 6px; text-align:left; border-bottom:1px solid var(--grey-2); white-space:nowrap; }
+  .mini-table th { font-family:var(--font-num); font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:4px 6px; text-align:left; border-bottom:1px solid var(--grey-2); white-space:nowrap; }
   .mini-table td { padding:5px 6px; border-bottom:1px solid var(--grey-1); vertical-align:middle; }
   .exec-bar-wrap { background:var(--grey-2); height:4px; width:56px; display:inline-block; vertical-align:middle; }
   .exec-bar-fill { height:4px; transition:width .5s var(--ease-out-quart); }
-  .flag-red { color:var(--red); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
-  .flag-amber { color:var(--amber); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
-  .flag-green { color:var(--green); font-weight:600; font-family:'IBM Plex Mono',monospace; font-size:10.5px; }
+  .flag-red { color:var(--red); font-weight:600; font-family:var(--font-num); font-size:10.5px; }
+  .flag-amber { color:var(--amber); font-weight:600; font-family:var(--font-num); font-size:10.5px; }
+  .flag-green { color:var(--green); font-weight:600; font-family:var(--font-num); font-size:10.5px; }
   .snapshot-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 16px; margin-top:14px; }
-  .snapshot-col-label { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding-bottom:4px; border-bottom:1px solid var(--grey-2); margin-bottom:6px; }
+  .snapshot-col-label { font-family:var(--font-num); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding-bottom:4px; border-bottom:1px solid var(--grey-2); margin-bottom:6px; }
   .snapshot-v { font-size:13px; font-weight:500; }
-  .snapshot-sub { font-family:'IBM Plex Mono',monospace; font-size:9.5px; color:var(--grey-4); margin:2px 0 10px; line-height:1.4; }
+  .snapshot-sub { font-family:var(--font-num); font-size:9.5px; color:var(--grey-4); margin:2px 0 10px; line-height:1.4; }
 
   .comm-stats { display:flex; gap:36px; flex-wrap:wrap; margin-bottom:16px; }
   .comm-stat-v { font-size:20px; font-weight:600; letter-spacing:-.01em; }
@@ -132,21 +164,21 @@
      brutalist per .impeccable.md — near-black on white, sharp corners, color only as status signal. */
   .pmt-panel { border:1px solid var(--black); margin-top:24px; padding:20px 22px 22px; }
   .pmt-hd { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; border-bottom:1px solid var(--grey-2); padding-bottom:14px; margin-bottom:16px; }
-  .pmt-hd-label { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); }
+  .pmt-hd-label { font-family:var(--font-num); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); }
   .pmt-hd-amt { font-size:26px; font-weight:600; letter-spacing:-.01em; margin-top:4px; }
-  .pmt-warn { background:#fceaea; border:1px solid var(--red); color:var(--red); font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600; padding:10px 14px; margin-bottom:16px; }
+  .pmt-warn { background:#fceaea; border:1px solid var(--red); color:var(--red); font-family:var(--font-num); font-size:11.5px; font-weight:600; padding:10px 14px; margin-bottom:16px; }
   .pmt-basis { margin-bottom:22px; }
   .pmt-basis-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
-  .pmt-basis-table th { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:6px 8px; text-align:left; border-bottom:1px solid var(--black); }
+  .pmt-basis-table th { font-family:var(--font-num); font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:6px 8px; text-align:left; border-bottom:1px solid var(--black); }
   .pmt-basis-table td { padding:7px 8px; border-bottom:1px solid var(--grey-2); }
   .pmt-basis-table tfoot td { border-bottom:none; border-top:1px solid var(--black); padding-top:9px; }
-  .pmt-note-tag { font-family:'IBM Plex Mono',monospace; font-size:9px; color:var(--grey-4); }
+  .pmt-note-tag { font-family:var(--font-num); font-size:9px; color:var(--grey-4); }
   .pmt-basis-cards { display:none; margin-top:8px; }
   .pmt-line-card { border:1px solid var(--grey-2); padding:9px 11px; margin-bottom:6px; font-size:11.5px; }
   .pmt-line-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
   .pmt-recon-row { border:1px solid var(--grey-2); padding:10px 12px; margin-bottom:8px; }
   .pmt-recon-top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
-  .pmt-recon-status { font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
+  .pmt-recon-status { font-family:var(--font-num); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
   .pmt-status-match .pmt-recon-status { color:var(--green); }
   .pmt-status-diverge { border-color:var(--red); }
   .pmt-status-diverge .pmt-recon-status { color:var(--red); }
@@ -154,48 +186,33 @@
   .pmt-status-no-match .pmt-recon-status { color:var(--amber); }
   .pmt-status-pending .pmt-recon-status { color:var(--grey-4); }
   .pmt-recon-figs { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:6px 16px; }
-  .pmt-fig-l { font-family:'IBM Plex Mono',monospace; font-size:8.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--grey-3); }
+  .pmt-fig-l { font-family:var(--font-num); font-size:8.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--grey-3); }
   .pmt-fig-v { font-size:11.5px; margin-top:1px; }
   .pmt-recon-note { font-size:10.5px; color:var(--grey-4); font-style:italic; margin-top:6px; }
   .pmt-audit { margin-top:18px; border-top:1px solid var(--grey-2); padding-top:12px; }
-  .pmt-audit summary { font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); cursor:pointer; }
+  .pmt-audit summary { font-family:var(--font-num); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); cursor:pointer; }
   .pmt-audit summary:hover { color:var(--black); }
   .pmt-audit-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px 20px; margin-top:12px; }
-  .paid-badge { font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--green); background:none; border:1px solid var(--green); padding:1px 5px; margin-left:6px; cursor:pointer; white-space:nowrap; vertical-align:middle; }
-  .paid-badge:hover { background:var(--green); color:#fff; }
+  .paid-badge { font-family:var(--font-num); font-size:8.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--green); background:none; border:1px solid var(--green); padding:1px 5px; margin-left:6px; cursor:pointer; white-space:nowrap; vertical-align:middle; }
+  .paid-badge:hover { background:var(--green); color:var(--paper); }
   .paid-badge:focus-visible { outline:2px solid var(--green); outline-offset:-2px; }
 
   /* "Brief" — the warm digest zone (Overview metrics/analytics + Commission stats).
      Scoped entirely through the existing color tokens (black, greys, red, amber, green), so
      everything underneath (metric cards, flags, exec bars, signal dots) re-tints for free. */
-  .brief {
-    --black:oklch(27% 0.028 262); --grey-1:oklch(93% 0.018 70); --grey-2:oklch(88% 0.022 65);
-    --grey-3:oklch(58% 0.018 70); --grey-4:oklch(46% 0.022 262);
-    --terracotta:oklch(58% 0.15 35); --terracotta-soft:oklch(91% 0.04 40);
-    --green:oklch(52% 0.1 150); --amber:oklch(62% 0.13 65); --red:oklch(53% 0.16 25); --blue:oklch(46% 0.022 262);
-    background:oklch(97% 0.014 75); color:var(--black);
-    border:1px solid var(--grey-2); border-radius:18px;
-    margin:24px 32px; padding:26px 28px 22px;
-  }
-  .brief .analytics { border-bottom:none; margin-top:6px; }
-  .brief .metrics { border-bottom:1px solid var(--grey-2); }
-  .brief .metric-card:nth-child(n+5) { background:color-mix(in oklch, var(--terracotta) 6%, transparent); }
-  .brief .metric-value { font-family:'Bricolage Grotesque',sans-serif; font-size:29px; font-weight:700; color:var(--terracotta); letter-spacing:-.015em; }
-  .brief .metric-label { color:var(--grey-4); }
-  .brief .metric-sub { color:var(--grey-3); }
-  .brief .analytics-kpi { font-family:'Bricolage Grotesque',sans-serif; font-size:26px; font-weight:700; color:var(--terracotta); }
-  .brief .analytics-kpi-sub { color:var(--grey-4); }
-  .brief .comm-stat-v { font-family:'Bricolage Grotesque',sans-serif; font-size:23px; font-weight:700; color:var(--terracotta); }
-  .brief .snapshot-v { color:var(--black); }
+  /* The digest surfaces no longer carry their own palette — the whole page is warm paper now, so the
+     only thing left of the old warm zone is the small square that marks a section title. Colour on
+     figures is gone: it was decoration, and decoration was the problem. */
+  .brief { background:transparent; border:none; border-radius:0; margin:0; padding:0; }
   .brief .analytics-title, .brief .section-title { display:flex; align-items:center; gap:7px; }
   .brief .analytics-title::before, .brief .section-title::before {
-    content:''; width:6px; height:6px; border-radius:1px; background:var(--terracotta); flex-shrink:0;
+    content:''; width:5px; height:5px; background:var(--accent); flex-shrink:0;
   }
-  .brief .mini-table tbody tr:hover td { background:var(--terracotta-soft); transition:background .12s; }
+  .brief .mini-table tbody tr:hover td { background:var(--paper-2); transition:background .12s; }
   .brief #analytics-buyer tbody tr { cursor:pointer; }
-  .brief #analytics-buyer tbody tr:focus-visible { outline:2px solid var(--terracotta); outline-offset:-2px; }
-  @keyframes value-flash-warm { 0%{background:var(--terracotta-soft);} 100%{background:transparent;} }
-  .brief .metric-card.flash, .brief .comm-stats>div.flash { animation:value-flash-warm 1.2s var(--ease-out-quart); }
+  .brief #analytics-buyer tbody tr:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+  @keyframes value-flash-warm { 0%{background:var(--accent-soft);} 100%{background:transparent;} }
+  .kpi.flash, .brief .comm-stats>div.flash { animation:value-flash-warm 1.2s var(--ease-out-quart); }
 
   /* ── Cockpit shell ──────────────────────────────────────────────────────────
      The page itself never scrolls on desktop. Header, tabs and footer are pinned; the body is a
@@ -207,42 +224,42 @@
   .tab-panel.active { display:flex; flex-direction:column; flex:1; min-height:0; }
   .split { flex:1; display:grid; grid-template-columns:minmax(290px,32%) 1fr; min-height:0; }
   .pane { min-height:0; overflow-y:auto; overscroll-behavior:contain; }
-  .pane-list { border-right:1px solid var(--black); }
+  .pane-list { border-right:1px solid var(--rule); background:var(--paper-2); }
 
   /* Master list — one compact two-line row per record */
-  .lst-hd { position:sticky; top:0; background:#fff; z-index:5; border-bottom:1px solid var(--black); padding:10px 14px 9px; }
-  .lst-count { font-family:'IBM Plex Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); margin-bottom:7px; }
+  .lst-hd { position:sticky; top:0; background:var(--paper); z-index:5; border-bottom:1px solid var(--black); padding:10px 14px 9px; }
+  .lst-count { font-family:var(--font-num); font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); margin-bottom:7px; }
   .lst-row { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--grey-2); cursor:pointer; transition:background .1s; }
   .lst-row:hover { background:var(--grey-1); }
-  .lst-row.sel { background:var(--black); color:#fff; }
+  .lst-row.sel { background:var(--ink); color:var(--paper); }
   .lst-row.sel .lst-sub, .lst-row.sel .lst-pct { color:var(--grey-2); }
   .lst-row.sel .lst-mini { background:var(--grey-4); }
   .lst-row:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
   .lst-main { flex:1; min-width:0; }
   .lst-top { display:flex; align-items:center; gap:7px; }
-  .lst-id { font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:500; white-space:nowrap; }
+  .lst-id { font-family:var(--font-num); font-size:11.5px; font-weight:500; white-space:nowrap; }
   .lst-sub { font-size:10.5px; color:var(--grey-4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
   .lst-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
   .lst-mini { width:44px; height:4px; background:var(--grey-2); }
   .lst-mini-fill { height:4px; transition:width .5s var(--ease-out-quart); }
-  .lst-pct { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); min-width:32px; text-align:right; }
+  .lst-pct { font-family:var(--font-num); font-size:10px; color:var(--grey-4); min-width:32px; text-align:right; }
 
   /* Detail surface — analytics by default, one record once something is selected */
   .dtl { padding:18px 24px 30px; }
   .dtl-hd { border-bottom:1px solid var(--black); padding-bottom:11px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }
-  .dtl-id { font-family:'IBM Plex Mono',monospace; font-size:17px; font-weight:500; letter-spacing:-.01em; }
+  .dtl-id { font-family:var(--font-num); font-size:17px; font-weight:500; letter-spacing:-.01em; }
   .dtl-buyer { font-size:12px; color:var(--grey-4); margin-top:4px; line-height:1.5; }
   .dtl-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:13px 20px; margin-bottom:18px; }
-  .dtl-l { font-family:'IBM Plex Mono',monospace; font-size:8.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:3px; }
+  .dtl-l { font-family:var(--font-num); font-size:8.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:3px; }
   .dtl-v { font-size:14px; font-weight:500; }
-  .dtl-hint { padding:22px 24px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--grey-3); letter-spacing:.04em; border-top:1px solid var(--grey-2); }
+  .dtl-hint { padding:22px 24px; font-family:var(--font-num); font-size:10.5px; color:var(--grey-3); letter-spacing:.04em; border-top:1px solid var(--grey-2); }
 
   /* Folds — native <details> so keyboard + a11y come free. Forced open on desktop by syncFolds(). */
   .fold { border-bottom:1px solid var(--grey-2); }
   .fold:last-child { border-bottom:none; }
   .fold > summary { list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px; }
   .fold > summary::-webkit-details-marker { display:none; }
-  .fold-sum { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--grey-4); font-weight:400; letter-spacing:0; text-transform:none; white-space:nowrap; }
+  .fold-sum { font-family:var(--font-num); font-size:10px; color:var(--grey-4); font-weight:400; letter-spacing:0; text-transform:none; white-space:nowrap; }
   .fold-body { padding-top:12px; }
   /* A fold's title reuses .analytics-title for the terracotta marker, but must not carry its own
      rule/spacing inside a flex <summary>. */
@@ -250,13 +267,10 @@
   .brief-rail .comm-stats { margin-bottom:0; }
 
   /* Slim variant of the warm zone for the pinned KPI rail */
-  .brief-rail { margin:0; border-radius:0; border-left:none; border-right:none; border-top:none; padding:14px 24px 12px; }
-  .brief-rail .metrics { border-bottom:none; }
-  .brief-rail .metric-card { padding:8px 14px 8px 0; border-bottom:none !important; }
-  .brief-rail .metric-card:nth-child(4n) { border-right:1px solid var(--grey-2); }
-  .brief-rail .metric-card:last-child { border-right:none; }
-  .brief-rail .metric-value { font-size:20px; }
-  .brief-rail .metrics { grid-template-columns:repeat(8,1fr); }
+  /* Pinned KPI rail — figures separated by space and one hairline, never by boxes. */
+  .brief-rail { margin:0; padding:var(--s5) var(--s5) var(--s4); border:none; border-bottom:1px solid var(--rule); background:var(--paper-2); }
+  .brief-rail .metrics, .brief-rail .comm-stats { gap:var(--s5) var(--s6); align-items:baseline; }
+  .brief-rail .kpi-lead { padding-right:var(--s6); margin-right:var(--s2); border-right:1px solid var(--rule); align-self:stretch; }
 
   /* ── Mobile card components (hidden on desktop) ── */
   .contract-cards { display:none; padding:0 16px 32px; }
@@ -271,7 +285,7 @@
   .m-card-dtl.open { grid-template-rows:1fr; }
   .m-card-dtl-inner { overflow:hidden; background:var(--grey-1); border-top:1px solid var(--grey-2); padding:14px 14px 16px; }
   .m-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:14px; }
-  .m-stat-l { font-family:'IBM Plex Mono',monospace; font-size:8.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:2px; }
+  .m-stat-l { font-family:var(--font-num); font-size:8.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:2px; }
   .m-stat-v { font-size:12px; font-weight:500; }
 
   /* ── Mobile layout overrides ── */
@@ -293,18 +307,16 @@
     .dtl { padding:0; }
     .fold > summary { padding:13px 16px; }
     .fold-body { padding-top:0; }
-    .brief-rail { padding:12px 16px 10px; }
-    .brief-rail .metrics { grid-template-columns:repeat(2,1fr); }
-    .brief-rail .metric-card { padding:11px 12px; border-right:1px solid var(--grey-2) !important; }
-    .brief-rail .metric-card:nth-child(2n) { border-right:none !important; }
-    .brief-rail .metric-value { font-size:17px; }
+    .brief-rail { padding:var(--s4) var(--s4) var(--s3); }
+    .brief-rail .metrics, .brief-rail .comm-stats { display:grid; grid-template-columns:1fr 1fr; gap:var(--s4) var(--s3); }
+    .kpi { padding-right:0; }
+    .kpi-lead { grid-column:1/-1; padding-right:0; }
+    .kpi-lead .kpi-v { font-size:32px; }
+    .kpi-v { font-size:17px; }
+    .kpi-l { font-size:8.5px; }
 
     /* Brief (warm zone) */
-    .brief { margin:14px 16px 20px; padding:16px 16px 14px; border-radius:14px; }
-    .brief .metric-value { font-size:20px; }
-    .brief .analytics-kpi { font-size:20px; }
-    .brief .comm-stat-v { font-size:18px; }
-    .brief .comm-stats { padding:0; }
+    .brief .analytics-kpi { font-size:26px; }
 
     /* Header */
     .header { padding:11px 16px; }
@@ -315,10 +327,7 @@
     .tab-btn { padding:9px 14px; font-size:9.5px; }
 
     /* Metrics: 2-column grid (mirrors desktop 4x2) */
-    .metrics { display:grid; grid-template-columns:repeat(2,1fr); }
-    .metric-card { flex:unset; width:auto; padding:13px 14px; border-right:1px solid var(--grey-2) !important; border-bottom:1px solid var(--grey-2) !important; }
-    .metric-card:nth-child(2n) { border-right:none !important; }
-    .metric-card:nth-child(n+7) { border-bottom:none !important; }
+
     .metric-value { font-size:18px; }
     .metric-label { font-size:8px; }
     .metric-sub { font-size:10px; }
@@ -446,7 +455,7 @@
         <div id="commission-detail"></div>
         <div id="commission-default">
           <div class="brief">
-            <details class="fold" open><summary><span class="analytics-title">Payment Initiated</span><span class="fold-sum" id="fs-proc"></span></summary>
+            <details class="fold" open><summary><span class="analytics-title">Commission payable by invoice</span><span class="fold-sum" id="fs-proc"></span></summary>
               <div class="fold-body">
                 <table class="mini-table" id="comm-processing-table">
                   <thead><tr><th>Contract</th><th>Buyer</th><th>Qty Paid (MT)</th><th>Amount</th></tr></thead>
@@ -587,23 +596,28 @@ function parseContracts(rows){ if(rows.length<2)return{hi:{},data:[]};
 function g(r,hi,name){ return hi[name]!=null?(r[hi[name]]!=null?r[hi[name]].toString():''):''; }
 
 let prevMetricVals=null;
+// Sheet values arrive as bare strings ("134560"); run them back through fmt() so every figure on the
+// rail is grouped the same way. mv() returns a number, mt() a formatted "134,560 MT".
+function mv(m,k){ return num(m[k]?.val||''); }
+function mt(m,k){ const v=m[k]?.val; return v?fmt(num(v))+' MT':'—'; }
 function renderMetrics(m, uninvoicedMT){
+  const contracted=mv(m,'total contracted (operational)'), shipped=mv(m,'shipped so far');
+  const shipPct=pct(shipped,contracted);
   const cards=[
-    // Row 1 — Volume
-    {label:'Contracted',            val:(m['total contracted (operational)']?.val||'—')+' MT', sub:'$'+(m['total contracted value']?.val||'—')+'m'},
-    {label:'Shipped So Far',        val:(m['shipped so far']?.val||'—')+' MT',  sub:m['shipped so far']?.extra||''},
-    {label:'Pending Shipment',      val:(m['pending shipment']?.val||'—')+' MT', sub:m['pending shipment']?.extra||''},
-    {label:'Shipped, Not Invoiced', val:fmt(uninvoicedMT)+' MT', sub:'(FCL Shipped − FCL Invoiced) × '+MT_PER_FCL},
-    // Row 2 — FCL & Payment
-    {label:'FCL Shipped',           val:m['fcl shipped']?.val||'—',  sub:'containers shipped'},
-    {label:'FCL Invoiced',          val:m['fcl invoiced']?.val||'—', sub:'of '+(m['fcl shipped']?.val||'—')+' shipped'},
-    {label:'FCL Paid',              val:m['fcl paid']?.val||'—',     sub:m['fcl paid']?.extra||''},
-    {label:'Payment Pending',       val:m['fcl payment pending']?.val||'—', sub:'FCL awaiting collection'},
+    // Lead — the question this tab exists to answer: has what we sold actually moved?
+    {lead:true, label:'Shipped of contracted', val:shipPct+'%',
+     sub:fmt(shipped)+' of '+fmt(contracted)+' MT · $'+(m['total contracted value']?.val||'—')+'m contracted'},
+    {label:'Pending shipment',      val:mt(m,'pending shipment'), sub:'still to move'},
+    {label:'Shipped, not invoiced', val:fmt(uninvoicedMT)+' MT',  sub:'(FCL shipped − invoiced) × '+MT_PER_FCL},
+    {label:'FCL shipped',           val:fmt(mv(m,'fcl shipped')),  sub:'containers'},
+    {label:'FCL invoiced',          val:fmt(mv(m,'fcl invoiced')), sub:'of '+fmt(mv(m,'fcl shipped'))+' shipped'},
+    {label:'FCL paid',              val:fmt(mv(m,'fcl paid')),     sub:m['fcl paid']?.extra||''},
+    {label:'Payment pending',       val:fmt(mv(m,'fcl payment pending')), sub:'FCL awaiting collection'},
   ];
   const strip=document.getElementById('metrics-strip');
   strip.innerHTML=cards.map(c=>`
-    <div class="metric-card"><div class="metric-value">${esc(c.val)}</div>
-    <div class="metric-label">${c.label}</div>${c.sub?`<div class="metric-sub">${esc(c.sub)}</div>`:''}</div>`).join('');
+    <div class="kpi${c.lead?' kpi-lead':''}"><div class="kpi-l">${esc(c.label)}</div>
+    <div class="kpi-v num">${esc(c.val)}</div>${c.sub?`<div class="kpi-s">${esc(c.sub)}</div>`:''}</div>`).join('');
   flashChanged(strip.children, cards.map(c=>c.val), prevMetricVals);
   prevMetricVals=cards.map(c=>c.val);
 }
@@ -899,25 +913,43 @@ function getCommSignal(status){
   return{label:status||'—',color:'#666'};
 }
 let prevCommStatVals=null;
-function renderCommStats(hi,data){
+// The broker position. Payable is live from the sheet; paid is the frozen remittance record. The
+// number that actually matters is the difference between them — and it carries forward on its own:
+// when new shipments push payable above what has already been remitted, outstanding goes positive
+// again without anyone editing the payment record.
+function commissionPosition(hi,data){
   let demanded=0,earned=0;
-  data.forEach(r=>{
+  (data||[]).forEach(r=>{
     demanded+=num(g(r,hi,'commission demanded ($) as per mail'));
     earned+=num(g(r,hi,'commission earned ($) as per qty paid'));
   });
-  const rate=pct(earned,demanded);
-  const rateColor=bandColor(rate);
-  const stats=[
-    {label:'Commission Demanded', val:fmtUsd(demanded), sub:'what the broker has asked for'},
-    {label:'Commission Payable', val:fmtUsd(earned), sub:'what we owe — calculated on qty already paid'},
-    {label:'Payable Rate', val:rate+'%', bar:rate, color:rateColor},
-  ];
+  const paid=PAYMENTS_MADE.reduce((s,p)=>s+p.settlementAmountUsd,0);
+  const outstanding=earned-paid;
+  const last=PAYMENTS_MADE.slice().sort((a,b)=>a.settlementDate<b.settlementDate?1:-1)[0]||null;
+  // A sub-$1 gap is rounding, not a debt.
+  return {demanded,earned,paid,outstanding,last,settled:Math.abs(outstanding)<1};
+}
+function fmtDate(iso){
+  const d=new Date(iso+'T00:00:00');
+  return isNaN(d.getTime())?iso:d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+}
+function renderCommStats(hi,data){
+  const p=commissionPosition(hi,data);
+  const state=p.settled?'ok':(p.outstanding>0?'due':'ok');
+  const label=p.settled?'Settled':(p.outstanding>0?'Due':'Overpaid');
   const wrap=document.getElementById('comm-stats');
-  wrap.innerHTML=stats.map(s=>`
-    <div><div class="comm-stat-v">${s.val}</div><div class="metric-label">${s.label}</div>${s.sub?`<div class="snapshot-sub" style="margin:2px 0 0">${s.sub}</div>`:''}${s.bar!=null?`<div class="exec-bar-wrap" style="width:90px;margin-top:6px"><div class="exec-bar-fill" style="width:0;background:${s.color}" data-grow="${Math.min(s.bar,100)}%"></div></div>`:''}</div>`).join('');
-  flashChanged(wrap.children, stats.map(s=>s.val), prevCommStatVals);
-  growBars(wrap);
-  prevCommStatVals=stats.map(s=>s.val);
+  wrap.innerHTML=`
+    <div class="kpi kpi-lead">
+      <div class="kpi-l">Outstanding to broker</div>
+      <div class="kpi-v num">${fmtUsd(Math.max(p.outstanding,0))}</div>
+      <div class="kpi-s"><span class="chip chip-${state}">${label}</span>${p.last?` last paid <span class="num">${esc(fmtDate(p.last.settlementDate))}</span>`:''}</div>
+    </div>
+    <div class="kpi"><div class="kpi-l">Payable to date</div><div class="kpi-v num">${fmtUsd(p.earned)}</div><div class="kpi-s">earned on qty buyers have paid</div></div>
+    <div class="kpi"><div class="kpi-l">Paid</div><div class="kpi-v num">${fmtUsd(p.paid)}</div><div class="kpi-s">${PAYMENTS_MADE.length} remittance${PAYMENTS_MADE.length===1?'':'s'} on record</div></div>
+    <div class="kpi"><div class="kpi-l">Demanded</div><div class="kpi-v num">${fmtUsd(p.demanded)}</div><div class="kpi-s">what the broker asked for</div></div>`;
+  const vals=[p.outstanding,p.earned,p.paid,p.demanded].map(String);
+  flashChanged(wrap.children, vals, prevCommStatVals);
+  prevCommStatVals=vals;
 }
 function renderCommProcessing(hi,data){
   // Line items: only invoices with an active commission payment. Totals: full sheet (incl. $0-commission rows),
@@ -934,7 +966,8 @@ function renderCommProcessing(hi,data){
       <td class="mt-sub">${fmtUsd(amt)}</td></tr>`;
   }).join('');
   document.getElementById('comm-processing-tbody').innerHTML=body||'<tr><td colspan="4" class="mt-sub">No invoices currently in process</td></tr>';
-  setFold('fs-proc', rows.length+' in process · '+fmtUsd(totalAmt));
+  const covered=PAYMENTS_MADE.reduce((s,p)=>s+p.settlementAmountUsd,0)>=totalAmt-1;
+  setFold('fs-proc', rows.length+' invoices · '+fmtUsd(totalAmt)+(covered?' · settled':' · unsettled'));
   document.getElementById('comm-processing-total').innerHTML=
     `<td colspan="2" style="font-weight:600;font-size:11px">Total</td>
      <td class="mt-sub" style="font-weight:600">${fmt(totalQty)}</td>
@@ -1217,16 +1250,13 @@ function renderAnalytics(hi,data,chi,cdata){
   });
   const shipPct=pct(shippedMT,contractedMT);
 
-  let demanded=0, earned=0;
-  cdata.forEach(r=>{
-    demanded+=num(g(r,chi,'commission demanded ($) as per mail'));
-    earned+=num(g(r,chi,'commission earned ($) as per qty paid'));
-  });
+  const cp=commissionPosition(chi,cdata);
+  const demanded=cp.demanded, earned=cp.earned;
   const payableRate=pct(earned,demanded);
 
   document.getElementById('analytics-snapshot').innerHTML=`
-    <div class="analytics-kpi">${fmtUsd(earned)}</div>
-    <div class="analytics-kpi-sub">Commission payable to the broker — calculated on qty already paid by buyers</div>
+    <div class="analytics-kpi num">${fmtUsd(Math.max(cp.outstanding,0))}</div>
+    <div class="analytics-kpi-sub">Still owed to the broker — commission earned less what has already been remitted${cp.last?`. <span class="chip chip-${cp.settled?'ok':'due'}">${cp.settled?'Settled':'Due'}</span> last paid <span class="num">${esc(fmtDate(cp.last.settlementDate))}</span> · <span class="num">${fmtUsd(cp.paid)}</span>`:''}</div>
     <div class="snapshot-grid">
       <div class="snapshot-col-label">Contracts</div>
       <div class="snapshot-col-label">Commission</div>
@@ -1266,15 +1296,15 @@ function renderAnalytics(hi,data,chi,cdata){
   const buyerHtml=`<table class="mini-table"><thead><tr><th>Buyer</th><th>Contracted</th><th>Pending MT</th><th>% Remaining</th></tr></thead><tbody>`
     +buyerRows.map(r=>`<tr tabindex="0" role="button" data-buyer="${esc(r.b)}" aria-label="Filter contracts by ${esc(r.b)}">
       <td style="font-size:11.5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.b)}</td>
-      <td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${fmt(Math.round(r.contracted))}</td>
-      <td style="font-family:'IBM Plex Mono',monospace;font-size:10px">${fmt(Math.round(r.pending))}</td>
-      <td style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--grey-4)">${r.pct}%</td>
+      <td style="font-family:var(--font-num);font-size:10px">${fmt(Math.round(r.contracted))}</td>
+      <td style="font-family:var(--font-num);font-size:10px">${fmt(Math.round(r.pending))}</td>
+      <td style="font-family:var(--font-num);font-size:10px;color:var(--grey-4)">${r.pct}%</td>
     </tr>`).join('')+'</tbody></table>';
   document.getElementById('analytics-buyer').innerHTML=buyerHtml;
 
   // One-line digests shown next to each fold title. On a phone the folds start closed, so these are
   // the whole story until Tarun taps in.
-  setFold('fs-snapshot', fmtUsd(earned)+' payable');
+  setFold('fs-snapshot', cp.settled?'settled · nothing owed':fmtUsd(Math.max(cp.outstanding,0))+' still owed');
   const below=execRows.filter(r=>r.rate<20).length;
   setFold('fs-exec', below?below+' below 20%':'all above 20%');
   setFold('fs-buyer', buyerRows.length+(buyerRows.length===1?' buyer':' buyers'));
