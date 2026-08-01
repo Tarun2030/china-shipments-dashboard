@@ -64,6 +64,9 @@
   .kpi-lead .kpi-v { font-family:var(--font-display); font-size:var(--t-display); font-weight:600; color:var(--accent);
     letter-spacing:-.02em; line-height:.95; font-variant-numeric:tabular-nums lining-nums; }
   .kpi-lead .kpi-l { color:var(--ink-2); }
+  /* Accent on this figure means money is owed. A settled position is deliberately ink, so the
+     all-clear is legible at a glance without reading the number. */
+  .kpi-lead.is-settled .kpi-v { color:var(--ink); }
 
   /* FCL pipeline — shipped → invoiced → paid → pending are stages of ONE funnel, not four peer KPIs,
      so they render as a connected sequence rather than a row of cards: hairline arrows carry the
@@ -677,7 +680,10 @@ function parseCSV(text){
   return rows;
 }
 function num(v){ return parseFloat((v||'').toString().replace(/[^0-9.\-]/g,''))||0; }
-function fmt(n){ return n.toLocaleString('en-IN'); }
+// One grouping convention across the page. USD is conventionally grouped in thousands, so tonnage
+// follows it rather than sitting in lakh grouping beside Western-grouped dollars on the same line.
+// Revert to 'en-IN' here alone if lakh grouping is preferred for MT figures.
+function fmt(n){ return n.toLocaleString('en-US'); }
 function pct(a,b){ return b>0?Math.round(a/b*100):0; }
 function fmtUsd(n){ return n>=1e6?'$'+(n/1e6).toFixed(2)+'m':'$'+Math.round(n).toLocaleString('en-US'); }
 function esc(v){ return (v==null?'':String(v)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -1157,16 +1163,23 @@ function fmtDate(iso){
   const d=new Date(iso+'T00:00:00');
   return isNaN(d.getTime())?iso:d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
 }
+// When the position is square, the answer to "do I owe the broker anything?" is a word, not a number
+// — a 52px "$0" makes nothing the loudest thing on the tab. The hero states the position instead, and
+// drops the accent: terracotta here means money is owed, so an ink hero is itself the all-clear.
+// The overpaid branch shows the real figure; Math.max(outstanding,0) used to floor it to "$0".
 function renderCommStats(hi,data){
   const p=commissionPosition(hi,data);
-  const state=p.settled?'ok':(p.outstanding>0?'due':'ok');
-  const label=p.settled?'Settled':(p.outstanding>0?'Due':'Overpaid');
+  const over=!p.settled&&p.outstanding<0;
+  const heroLbl=p.settled?'Broker position':(over?'Overpaid to broker':'Outstanding to broker');
+  const heroVal=p.settled?'Settled':fmtUsd(Math.abs(p.outstanding));
   const wrap=document.getElementById('comm-stats');
   wrap.innerHTML=`
-    <div class="kpi kpi-lead">
-      <div class="kpi-l">Outstanding to broker</div>
-      <div class="kpi-v num">${fmtUsd(Math.max(p.outstanding,0))}</div>
-      <div class="kpi-s"><span class="chip chip-${state}">${label}</span>${p.last?` last paid <span class="num">${esc(fmtDate(p.last.settlementDate))}</span>`:''}</div>
+    <div class="kpi kpi-lead${p.settled?' is-settled':''}">
+      <div class="kpi-l">${heroLbl}</div>
+      <div class="kpi-v${p.settled?'':' num'}">${heroVal}</div>
+      <div class="kpi-s">${p.settled
+        ?`nothing outstanding · <span class="num">${fmtUsd(p.paid)}</span> paid${p.last?` <span class="num">${esc(fmtDate(p.last.settlementDate))}</span>`:''}`
+        :`<span class="chip chip-${over?'ok':'due'}">${over?'Overpaid':'Due'}</span>${p.last?` last paid <span class="num">${esc(fmtDate(p.last.settlementDate))}</span>`:''}`}</div>
     </div>
     <div class="kpi"><div class="kpi-l">Payable to date</div><div class="kpi-v num">${fmtUsd(p.earned)}</div><div class="kpi-s">earned on qty buyers have paid</div></div>
     <div class="kpi"><div class="kpi-l">Paid</div><div class="kpi-v num">${fmtUsd(p.paid)}</div><div class="kpi-s">${PAYMENTS_MADE.length} remittance${PAYMENTS_MADE.length===1?'':'s'} on record</div></div>
@@ -1517,10 +1530,14 @@ function onTabKeydown(e){
 function renderAnalytics(hi,data,chi,cdata){
   // 1 — Business Snapshot: combined bird's-eye view across Contracts + Commission,
   // every number shows the inputs it came from rather than asserting a verdict.
-  let contractedMT=0, shippedMT=0;
+  let contractedMT=0, shippedMT=0, bookValM=0;
+  const buyerSet=new Set();
   data.forEach(r=>{
     contractedMT+=num(g(r,hi,'contracted mt'));
     shippedMT+=num(g(r,hi,'shipped mt'));
+    // 'value m ($)' is already denominated in millions, so it is summed as-is rather than via fmtUsd.
+    bookValM+=num(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value'));
+    const b=g(r,hi,'buyer').trim(); if(b) buyerSet.add(b);
   });
   const shipPct=pct(shippedMT,contractedMT);
 
@@ -1541,7 +1558,7 @@ function renderAnalytics(hi,data,chi,cdata){
       <div><div class="snapshot-v">${shipPct}% shipped</div><div class="snapshot-sub">${fmt(shippedMT)} of ${fmt(contractedMT)} MT</div></div>
       <div><div class="snapshot-v">${payableRate}% of demand payable</div><div class="snapshot-sub">${fmtUsd(earned)} of ${fmtUsd(demanded)} demanded</div></div>
 
-      <div></div>
+      <div><div class="snapshot-v">${data.length} contract${data.length===1?'':'s'} · $${bookValM.toFixed(2)}m</div><div class="snapshot-sub">across ${buyerSet.size} buyer${buyerSet.size===1?'':'s'}</div></div>
       <div><div class="snapshot-v">${cp.settled?'Nothing outstanding':cp.outstanding>0?fmtUsd(cp.outstanding)+' still owed':fmtUsd(-cp.outstanding)+' overpaid'}</div><div class="snapshot-sub">${cp.last?`<span class="chip chip-${cp.settled?'ok':'due'}">${cp.settled?'Settled':'Due'}</span> last paid ${esc(fmtDate(cp.last.settlementDate))} · ${fmtUsd(cp.paid)} paid`:'no remittance on record'}</div></div>
     </div>`;
 
