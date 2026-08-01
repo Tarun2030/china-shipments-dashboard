@@ -73,7 +73,10 @@
      flow, and ink steps down a shade per stage (full ink → ink-2 → ink-2 → ink-3) so the eye reads
      "receding into not-yet-done" left to right, without spending colour on it. Subordinate in size to
      both the hero % and the ordinary kpi figures around it (--t-lg, not --t-xl/--t-display). */
-  .fcl-pipe { flex-basis:100%; }
+  /* The pipeline used to be forced onto its own row (flex-basis:100%), which left the rail's top band
+     55% empty and pushed the contract list below the fold. It sits inline instead, filling the space
+     the hero and pending figure were leaving behind, separated by the same hairline the hero uses. */
+  .fcl-pipe { flex:1 1 auto; min-width:0; padding-left:var(--s5); border-left:1px solid var(--rule); align-self:stretch; }
   .fcl-seq { display:flex; align-items:center; flex-wrap:wrap; gap:var(--s2) 0; margin-top:var(--s2); }
   .fcl-stage { display:flex; flex-direction:column; }
   .fcl-stage-v { font-size:var(--t-lg); font-weight:500; color:var(--ink); line-height:1.1; }
@@ -195,7 +198,12 @@
   .mini-table { width:100%; border-collapse:collapse; font-size:var(--t-sm); margin-top:2px; }
   .mini-table th { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:var(--s1) 6px; text-align:left; border-bottom:1px solid var(--grey-2); white-space:nowrap; }
   .mini-table td { padding:5px 6px; border-bottom:1px solid var(--grey-1); vertical-align:middle; }
-  .exec-bar-wrap { background:var(--grey-2); height:4px; width:56px; display:inline-block; vertical-align:middle; }
+  .exec-bar-wrap { background:var(--grey-2); height:4px; width:100%; min-width:60px; display:block; }
+  /* Column widths stop the bar floating in the middle of a full-width table: the name and rate take
+     only what they need and the bar absorbs everything left over. */
+  #analytics-exec .mini-table td:first-child, #analytics-exec .mini-table th:first-child { width:1%; white-space:nowrap; padding-right:var(--s3); }
+  #analytics-exec .mini-table td:last-child, #analytics-exec .mini-table th:last-child { width:1%; white-space:nowrap; text-align:right; padding-left:var(--s3); }
+  #analytics-exec .mini-table td:nth-child(2) { width:auto; }
   .exec-bar-fill { height:4px; transition:width .5s var(--ease-out-quart); }
   .flag-red { color:var(--red); font-weight:600; font-family:var(--font-num); font-size:var(--t-sm); }
   .flag-amber { color:var(--amber); font-weight:600; font-family:var(--font-num); font-size:var(--t-sm); }
@@ -285,7 +293,7 @@
   .lst-count { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); margin-bottom:7px; }
   /* Reading affordance for the master/detail pattern — lives at the top of the list it belongs to,
      rather than trailing below the detail pane's analytics as a stray footer (its old position). */
-  .lst-hint { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.04em; color:var(--ink-3); margin-top:7px; }
+  .lst-hint { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.04em; color:var(--ink-3); margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .lst-row { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--grey-2); cursor:pointer; transition:background .1s; }
   .lst-row:hover { background:var(--grey-1); }
   .lst-row.sel { background:var(--ink); color:var(--paper); }
@@ -534,7 +542,7 @@
               <button class="ctl-btn" data-sort="pending-desc" onclick="setSort('pending-desc')">Pending <abbr title="Metric Tonnes">MT</abbr> ↓</button>
             </div>
           </div>
-          <div class="lst-hint">Select a contract below for its full operational and financial detail.</div>
+          <div class="lst-hint">Select a contract for full detail</div>
         </div>
         <div class="lst" id="contract-list" role="listbox" aria-label="Contracts"></div>
         <div class="contract-cards" id="contract-cards"></div>
@@ -558,7 +566,7 @@
       <div class="pane pane-list">
         <div class="lst-hd">
           <div class="lst-count" id="comm-count">Commission — <abbr title="Schepens &amp; Co, the Hong Kong freight/customs broker handling these shipments">Schepens</abbr> statement</div>
-          <div class="lst-hint">Select a record below for its notes and figures.</div>
+          <div class="lst-hint">Select a record for notes and figures</div>
         </div>
         <div class="lst" id="commission-list" role="listbox" aria-label="Commission records"></div>
         <div class="commission-cards" id="commission-cards"></div>
@@ -1540,6 +1548,14 @@ function renderAnalytics(hi,data,chi,cdata){
     const b=g(r,hi,'buyer').trim(); if(b) buyerSet.add(b);
   });
   const shipPct=pct(shippedMT,contractedMT);
+  // Execution rows are needed by the snapshot below as well as by panel 2, so they are derived here
+  // rather than inside panel 2's own block.
+  const execRows=data.map(r=>({
+    id:g(r,hi,'contract').trim(),
+    rate:num(g(r,hi,'contracted mt'))>0?num(g(r,hi,'shipped mt'))/num(g(r,hi,'contracted mt'))*100:0,
+    cmt:num(g(r,hi,'contracted mt'))
+  })).filter(r=>r.cmt>0).sort((a,b)=>a.rate-b.rate);
+  const stalled=execRows.filter(r=>r.rate<20), worst=execRows[0];
 
   const cp=commissionPosition(chi,cdata);
   const demanded=cp.demanded, earned=cp.earned;
@@ -1555,19 +1571,14 @@ function renderAnalytics(hi,data,chi,cdata){
       <div class="snapshot-col-label">Contracts</div>
       <div class="snapshot-col-label">Commission</div>
 
-      <div><div class="snapshot-v">${shipPct}% shipped</div><div class="snapshot-sub">${fmt(shippedMT)} of ${fmt(contractedMT)} MT</div></div>
+      <div><div class="snapshot-v">${data.length} contract${data.length===1?'':'s'} · $${bookValM.toFixed(2)}m</div><div class="snapshot-sub">across ${buyerSet.size} buyer${buyerSet.size===1?'':'s'}</div></div>
       <div><div class="snapshot-v">${payableRate}% of demand payable</div><div class="snapshot-sub">${fmtUsd(earned)} of ${fmtUsd(demanded)} demanded</div></div>
 
-      <div><div class="snapshot-v">${data.length} contract${data.length===1?'':'s'} · $${bookValM.toFixed(2)}m</div><div class="snapshot-sub">across ${buyerSet.size} buyer${buyerSet.size===1?'':'s'}</div></div>
+      <div><div class="snapshot-v">${stalled.length?stalled.length+' barely started':'all contracts moving'}</div><div class="snapshot-sub">${worst?`slowest ${esc(worst.id)} at ${Math.round(worst.rate)}%`:'no execution data'}</div></div>
       <div><div class="snapshot-v">${cp.settled?'Nothing outstanding':cp.outstanding>0?fmtUsd(cp.outstanding)+' still owed':fmtUsd(-cp.outstanding)+' overpaid'}</div><div class="snapshot-sub">${cp.last?`<span class="chip chip-${cp.settled?'ok':'due'}">${cp.settled?'Settled':'Due'}</span> last paid ${esc(fmtDate(cp.last.settlementDate))} · ${fmtUsd(cp.paid)} paid`:'no remittance on record'}</div></div>
     </div>`;
 
-  // 2 — Execution rate per contract (sorted worst → best)
-  const execRows=data.map(r=>({
-    id:g(r,hi,'contract').trim(),
-    rate:num(g(r,hi,'contracted mt'))>0?num(g(r,hi,'shipped mt'))/num(g(r,hi,'contracted mt'))*100:0,
-    cmt:num(g(r,hi,'contracted mt'))
-  })).filter(r=>r.cmt>0).sort((a,b)=>a.rate-b.rate);
+  // 2 — Execution rate per contract (execRows derived above, already sorted worst → best)
   const execHtml=`<table class="mini-table"><thead><tr><th>Contract</th><th></th><th>Rate</th></tr></thead><tbody>`
     +execRows.map(r=>{
       const pct=Math.round(r.rate), col=bandColor(pct), cls=bandClass(pct);
