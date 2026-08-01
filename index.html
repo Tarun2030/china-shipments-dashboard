@@ -15,185 +15,236 @@
     /* Ground is warm paper, not white. Neutrals are tinted toward the paper hue so nothing reads as
        cold grey sitting on a warm sheet. */
     --paper:oklch(97.6% 0.009 78); --paper-2:oklch(95.2% 0.012 76); --paper-3:oklch(92.6% 0.015 74);
-    --ink:oklch(26% 0.017 70); --ink-2:oklch(47% 0.014 70); --ink-3:oklch(64% 0.012 74);
+    --ink:oklch(26% 0.017 70); --ink-2:oklch(47% 0.014 70); --ink-3:oklch(53% 0.012 74);
     --rule:oklch(89% 0.012 74); --rule-strong:oklch(76% 0.014 72);
     /* Accent is RARE: the one lead figure per view, and selection. Never decoration. */
     --accent:oklch(53% 0.15 38); --accent-soft:oklch(93% 0.032 42);
     /* Status only. */
-    --green:oklch(48% 0.11 150); --amber:oklch(56% 0.12 68); --red:oklch(50% 0.17 27); --blue:oklch(46% 0.07 250);
-    /* Aliases keep the pre-existing rules working against the new palette. */
-    --black:oklch(26% 0.017 70); --grey-1:oklch(95.2% 0.012 76); --grey-2:oklch(89% 0.012 74);
-    --grey-3:oklch(64% 0.012 74); --grey-4:oklch(47% 0.014 70);
+    --green:oklch(48% 0.11 150); --amber:oklch(53.5% 0.12 68); --red:oklch(50% 0.17 27); --blue:oklch(46% 0.07 250);
+    /* Aliases keep the pre-existing rules working against the new palette. They must TRACK their
+       ink/paper counterparts exactly — a stale alias silently reintroduces a contrast failure on
+       every rule still written against it (--grey-3 alone dresses 18 text colours). */
+    --black:var(--ink); --grey-1:var(--paper-2); --grey-2:var(--rule);
+    --grey-3:var(--ink-3); --grey-4:var(--ink-2);
+    /* Type ramp — 7 tokens replace 22 ad-hoc sizes. Nothing below 10px, ever. */
+    /* Ramp bottom mirrors Apple's Caption2/Caption1/Footnote (11/12/13): the three steps are close in
+       size on purpose and are separated by case, tracking and family instead — micro is uppercase
+       tracked mono, sm and body are sans. 11px is a hard legibility floor, not a style choice. */
+    --t-micro:11px;    /* uppercase tracked labels — ABSOLUTE FLOOR */
+    --t-sm:12px;       /* secondary text, sub-labels, table cells */
+    --t-body:13px;     /* body / UI default */
+    --t-lg:17px;       /* detail values, list IDs */
+    --t-xl:24px;       /* KPI values */
+    --t-2xl:34px;      /* panel lead figures */
+    --t-display:52px;  /* the ONE hero figure per view */
     --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
     --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
   }
-  body { font-family:var(--font-ui); background:var(--paper); color:var(--ink); font-size:13px; line-height:1.5;
+  body { font-family:var(--font-ui); background:var(--paper); color:var(--ink); font-size:var(--t-body); line-height:1.5;
     -webkit-font-smoothing:antialiased; }
+  /* Visually hidden but still reachable by assistive tech — clip-based, not display:none (which is
+     removed from the accessibility tree and never announced). Used for the aria-live refresh status. */
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   /* Every figure on the page shares one rhythm: mono, tabular, so columns of numbers line up. */
-  .num, .kpi-v, .lst-pct, .lst-id, .metric-value, .comm-stat-v, .analytics-kpi, .dtl-v, .dtl-id, .m-stat-v {
+  .num, .kpi-v, .lst-pct, .lst-id, .metric-value, .comm-stat-v, .dtl-v, .dtl-id, .m-stat-v, .fcl-stage-v {
     font-family:var(--font-num); font-variant-numeric:tabular-nums; letter-spacing:-.015em; }
+  /* Inline jargon definitions (FCL, MT, variance…) for outside readers — a dotted hairline rather than
+     a glossary panel or a colour change; hover/focus/long-press surfaces the full term via the native
+     title tooltip, and it's exposed to assistive tech for free because <abbr> carries it in the
+     accessibility tree without any extra markup. */
+  abbr[title] { text-decoration:underline dotted; text-decoration-color:var(--ink-3); text-underline-offset:2px; cursor:help; }
 
   /* KPI — one lead figure carries the accent, the rest are ink. Grouped by whitespace, not boxes. */
   .kpi { padding:0 var(--s5) 0 0; }
-  .kpi-l { font-family:var(--font-num); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:var(--s2); white-space:nowrap; }
-  .kpi-v { font-size:21px; font-weight:500; line-height:1.05; color:var(--ink); }
-  .kpi-s { font-size:11px; color:var(--ink-2); margin-top:5px; line-height:1.45; }
+  .kpi-l { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:var(--s2); white-space:nowrap; }
+  .kpi-v { font-size:var(--t-xl); font-weight:500; line-height:1.05; color:var(--ink); }
+  .kpi-s { font-size:var(--t-sm); color:var(--ink-2); margin-top:5px; line-height:1.45; }
   .kpi-lead { padding-right:var(--s6); }
-  .kpi-lead .kpi-v { font-family:var(--font-display); font-size:52px; font-weight:600; color:var(--accent);
+  .kpi-lead .kpi-v { font-family:var(--font-display); font-size:var(--t-display); font-weight:600; color:var(--accent);
     letter-spacing:-.02em; line-height:.95; font-variant-numeric:tabular-nums lining-nums; }
   .kpi-lead .kpi-l { color:var(--ink-2); }
 
+  /* FCL pipeline — shipped → invoiced → paid → pending are stages of ONE funnel, not four peer KPIs,
+     so they render as a connected sequence rather than a row of cards: hairline arrows carry the
+     flow, and ink steps down a shade per stage (full ink → ink-2 → ink-2 → ink-3) so the eye reads
+     "receding into not-yet-done" left to right, without spending colour on it. Subordinate in size to
+     both the hero % and the ordinary kpi figures around it (--t-lg, not --t-xl/--t-display). */
+  .fcl-pipe { flex-basis:100%; }
+  .fcl-seq { display:flex; align-items:center; flex-wrap:wrap; gap:var(--s2) 0; margin-top:var(--s2); }
+  .fcl-stage { display:flex; flex-direction:column; }
+  .fcl-stage-v { font-size:var(--t-lg); font-weight:500; color:var(--ink); line-height:1.1; }
+  .fcl-stage-2 .fcl-stage-v, .fcl-stage-3 .fcl-stage-v { color:var(--ink-2); }
+  .fcl-stage-4 .fcl-stage-v { color:var(--ink-3); }
+  .fcl-stage-l { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); margin-top:3px; }
+  .fcl-stage-s { font-family:var(--font-num); font-size:var(--t-micro); color:var(--ink-3); margin-top:1px; white-space:nowrap; }
+  .fcl-gap { display:flex; flex-direction:column; align-items:center; padding:0 var(--s3); color:var(--ink-3); align-self:flex-start; margin-top:1px; }
+  .fcl-arrow { font-size:var(--t-body); line-height:1.1; }
+  .fcl-gap-v { font-family:var(--font-num); font-size:var(--t-micro); color:var(--ink-3); white-space:nowrap; margin-top:2px; }
+
   /* Status chip — the only other place colour is allowed. */
-  .chip { display:inline-block; font-family:var(--font-num); font-size:9px; letter-spacing:.09em; text-transform:uppercase;
+  .chip { display:inline-block; font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.09em; text-transform:uppercase;
     padding:2px 6px; border:1px solid currentColor; margin-right:6px; vertical-align:1px; }
   .chip-ok { color:var(--green); } .chip-due { color:var(--amber); } .chip-alert { color:var(--red); }
 
-  .header { padding:18px 32px; border-bottom:1px solid var(--rule-strong); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--paper); z-index:100; }
-  .header-left .title { font-family:var(--font-display); font-size:19px; font-weight:600; text-transform:none; letter-spacing:-.01em; }
-  .header-left .subtitle { font-family:var(--font-num); font-size:10px; color:var(--grey-4); margin-top:3px; }
+  .header { padding:18px var(--s6); border-bottom:1px solid var(--rule-strong); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--paper); z-index:100; }
+  .header-left .title { font-family:var(--font-display); font-size:var(--t-xl); font-weight:600; text-transform:none; letter-spacing:-.01em; }
+  .header-left .subtitle { font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-4); margin-top:3px; }
   .header-right { display:flex; align-items:center; gap:14px; }
-  .last-updated { font-family:var(--font-num); font-size:10.5px; color:var(--grey-4); text-align:right; }
-  .refresh-btn { font-family:var(--font-num); font-size:10px; background:var(--black); color:var(--paper); border:none; padding:6px 14px; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; transition:opacity .15s, transform .1s var(--ease-out-quart); }
+  .last-updated { font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-4); text-align:right; }
+  .refresh-btn { font-family:var(--font-num); font-size:var(--t-micro); background:var(--black); color:var(--paper); border:none; padding:6px 14px; cursor:pointer; letter-spacing:.05em; text-transform:uppercase; transition:opacity .15s, transform .1s var(--ease-out-quart); }
   .refresh-btn:hover { opacity:.75; } .refresh-btn:active { transform:scale(.96); } .refresh-btn:disabled { opacity:.4; cursor:not-allowed; }
 
   .tabs { display:flex; border-bottom:1px solid var(--black); background:var(--paper); }
-  .tab-btn { font-family:var(--font-num); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+  .tab-btn { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase;
     color:var(--grey-4); background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-1px;
-    padding:12px 20px; cursor:pointer; transition:color .15s, border-color .15s; }
+    padding:var(--s3) 20px; cursor:pointer; transition:color .15s, border-color .15s; }
   .tab-btn:hover { color:var(--black); }
   .tab-btn.active { color:var(--black); border-bottom-color:var(--black); font-weight:500; }
+  .tab-btn:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
   .tab-panel { display:none; }
   .tab-panel.active { display:block; }
 
   .metrics, .comm-stats { display:flex; align-items:flex-start; gap:var(--s5); flex-wrap:wrap; margin:0; padding:0; border:none; }
-  .metric-value { font-size:24px; font-weight:600; line-height:1.1; letter-spacing:-.01em; }
-  .metric-label { font-family:var(--font-num); font-size:9.5px; color:var(--grey-3); text-transform:uppercase; letter-spacing:.1em; margin-top:5px; }
-  .metric-sub { font-size:11px; color:var(--grey-4); margin-top:2px; font-family:var(--font-num); }
-  @keyframes value-flash { 0%{background:#eaf1fb;} 100%{background:transparent;} }
+  .metric-value { font-size:var(--t-xl); font-weight:600; line-height:1.1; letter-spacing:-.01em; }
+  .metric-label { font-family:var(--font-num); font-size:var(--t-micro); color:var(--grey-3); text-transform:uppercase; letter-spacing:.1em; margin-top:5px; }
+  .metric-sub { font-size:var(--t-sm); color:var(--grey-4); margin-top:2px; font-family:var(--font-num); }
+  @keyframes value-flash { 0%{background:var(--accent-soft);} 100%{background:transparent;} }
   .kpi.flash, .comm-stats > div.flash, .payments-made.flash { animation:value-flash 1.2s var(--ease-out-quart); }
 
-  .section { padding:20px 32px 40px; }
-  .section-title { font-family:var(--font-num); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--grey-3); border-bottom:1px solid var(--grey-2); padding-bottom:7px; margin-bottom:14px; }
+  .section { padding:20px var(--s6) 40px; }
+  .section-title { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.14em; text-transform:uppercase; color:var(--grey-3); border-bottom:1px solid var(--grey-2); padding-bottom:7px; margin-bottom:14px; }
 
-  .contract-table { width:100%; border-collapse:collapse; font-size:12.5px; }
-  .commission-table { margin-top:24px; }
-  .contract-table thead th { font-family:var(--font-num); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding:8px 10px; text-align:left; border-bottom:1px solid var(--black); white-space:nowrap; }
+  .contract-table { width:100%; border-collapse:collapse; font-size:var(--t-body); }
+  .commission-table { margin-top:var(--s5); }
+  .contract-table thead th { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding:var(--s2) 10px; text-align:left; border-bottom:1px solid var(--black); white-space:nowrap; }
   .contract-table tbody tr.data-row { border-bottom:1px solid var(--grey-2); cursor:pointer; transition:background .1s; }
   .contract-table tbody tr.data-row:hover, .contract-table tbody tr.data-row.open { background:var(--grey-1); }
   .contract-table td { padding:11px 10px; vertical-align:middle; }
 
-  .contract-id { font-family:var(--font-num); font-weight:500; font-size:12px; color:var(--black); white-space:nowrap; }
-  .buyer-cell { font-size:11.5px; color:var(--grey-4); max-width:130px; }
-  .route-cell { font-size:11.5px; color:var(--black); max-width:150px; line-height:1.4; }
-  .mt-val { font-weight:500; } .mt-sub { font-family:var(--font-num); font-size:10px; color:var(--grey-4); }
+  .contract-id { font-family:var(--font-num); font-weight:500; font-size:var(--t-body); color:var(--black); white-space:nowrap; }
+  .buyer-cell { font-size:var(--t-sm); color:var(--grey-4); max-width:130px; }
+  .route-cell { font-size:var(--t-sm); color:var(--black); max-width:150px; line-height:1.4; }
+  .mt-val { font-weight:500; } .mt-sub { font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-4); }
 
   .progress-wrap { background:var(--grey-2); height:5px; width:100%; min-width:70px; }
   .progress-fill { background:var(--black); height:5px; transition:width .5s var(--ease-out-quart); }
-  .progress-pct { font-family:var(--font-num); font-size:10px; color:var(--grey-4); margin-top:4px; }
+  .progress-pct { font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-4); margin-top:var(--s1); }
 
-  .fcl-row { display:flex; gap:4px; flex-wrap:wrap; }
-  .fcl-pill { font-family:var(--font-num); font-size:9.5px; padding:2px 5px; background:var(--grey-1); border:1px solid var(--grey-2); white-space:nowrap; }
-  .fcl-pill.paid { background:#e8f4e8; border-color:#b8d8b8; color:var(--green); }
-  .fcl-pill.pending-pay { background:#fdf0e8; border-color:#f0cca8; color:var(--amber); }
+  .fcl-row { display:flex; gap:var(--s1); flex-wrap:wrap; }
+  .fcl-pill { font-family:var(--font-num); font-size:var(--t-micro); padding:2px 5px; background:var(--grey-1); border:1px solid var(--grey-2); white-space:nowrap; }
+  .fcl-pill.paid { background:color-mix(in oklab, var(--green) 12%, var(--paper)); border-color:color-mix(in oklab, var(--green) 35%, var(--paper)); color:var(--green); }
+  .fcl-pill.pending-pay { background:color-mix(in oklab, var(--amber) 12%, var(--paper)); border-color:color-mix(in oklab, var(--amber) 35%, var(--paper)); color:var(--amber); }
 
-  .signal { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:500; white-space:nowrap; }
-  .signal-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .signal { display:inline-flex; align-items:center; gap:5px; font-size:var(--t-sm); font-weight:500; white-space:nowrap; }
+  /* Status is never colour-alone: each state also gets a distinct silhouette (Apple's "Differentiate
+     Without Color"), so the four/five states read apart in greyscale or to anyone colour-blind.
+     Colour itself flows in through --dot-c, a custom property, never a literal set via `background`
+     directly — that indirection is what lets .lst-row.sel repaint every dot/fill to --paper below
+     using ordinary cascade, with no fight against an inline style. */
+  .signal-dot { width:8px; height:8px; flex-shrink:0; box-sizing:border-box; background:var(--dot-c); border-radius:50%; }
+  .signal-dot.st-none { background:transparent; border:1.5px solid var(--dot-c); } /* hollow ring — Not Started */
+  .signal-dot.st-progress { border-radius:2px; transform:rotate(45deg); } /* diamond — In Progress */
+  .signal-dot.st-partial { border-radius:0; clip-path:polygon(50% 0%, 0% 100%, 100% 100%); } /* triangle — Partial Payment */
+  .signal-dot.st-wait { border-radius:1px; } /* square — Awaiting Payment */
+  .signal-dot.st-done { border-radius:50%; } /* filled circle — Complete / Paid */
 
-  .chevron { font-size:10px; color:var(--grey-3); transition:transform .2s var(--ease-out-quart); display:inline-block; }
+  .chevron { font-size:var(--t-sm); color:var(--grey-3); transition:transform .2s var(--ease-out-quart); display:inline-block; }
   .open .chevron { transform:rotate(90deg); }
 
   tr.expand-row { display:none; } tr.expand-row.show { display:table-row; }
   @keyframes expand-fade { from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
   tr.expand-row.show .expand-cell { animation:expand-fade .32s var(--ease-out-quart) both; }
   .expand-cell { padding:14px 14px 18px 36px; background:var(--grey-1); border-bottom:1px solid var(--grey-2); }
-  .expand-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
-  .expand-section-label { font-family:var(--font-num); font-size:9px; text-transform:uppercase; letter-spacing:.12em; color:var(--grey-3); margin-bottom:6px; }
-  .expand-text { font-size:12px; line-height:1.7; color:#333; white-space:pre-wrap; }
+  .expand-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--s5); }
+  .expand-section-label { font-family:var(--font-num); font-size:var(--t-micro); text-transform:uppercase; letter-spacing:.12em; color:var(--grey-3); margin-bottom:6px; }
+  .expand-text { font-size:var(--t-body); line-height:1.7; color:var(--ink); white-space:pre-wrap; }
 
-  .ctl-bar { display:flex; flex-wrap:wrap; gap:16px; margin-bottom:14px; }
+  .ctl-bar { display:flex; flex-wrap:wrap; gap:var(--s4); margin-bottom:14px; }
   .ctl-group { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .ctl-btn { font-family:var(--font-num); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:5px 10px; cursor:pointer; transition:background .1s, color .1s, border-color .1s; }
+  .ctl-btn { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:5px 10px; cursor:pointer; transition:background .1s, color .1s, border-color .1s; }
   .ctl-btn:hover { color:var(--black); border-color:var(--grey-3); }
   .ctl-btn.active { color:var(--paper); background:var(--black); border-color:var(--black); }
   .ctl-btn:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
   .data-row:focus-visible, .m-card-hd:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
-  .copy-btn { font-family:var(--font-num); font-size:9px; letter-spacing:.05em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:3px 7px; cursor:pointer; white-space:nowrap; }
+  .copy-btn { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.05em; text-transform:uppercase; color:var(--grey-4); background:none; border:1px solid var(--grey-2); padding:3px 7px; cursor:pointer; white-space:nowrap; }
   .copy-btn:hover { color:var(--black); border-color:var(--grey-3); }
   .copy-btn:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
-  .copy-fb { font-family:var(--font-num); font-size:9px; color:var(--green); margin-left:5px; }
+  .copy-fb { font-family:var(--font-num); font-size:var(--t-micro); color:var(--green); margin-left:5px; }
   .empty-state { padding:26px 10px; text-align:center; }
   .empty-state a { color:var(--black); }
 
-  #loading { padding:80px 32px; text-align:center; font-family:var(--font-num); font-size:12px; color:var(--grey-3); letter-spacing:.05em; }
+  #loading { padding:80px var(--s6); text-align:center; font-family:var(--font-num); font-size:var(--t-body); color:var(--grey-3); letter-spacing:.05em; }
   .loading-dots::after { content:''; animation:dots 1.2s steps(4,end) infinite; }
   @keyframes dots { 0%,20%{content:'';} 40%{content:'.';} 60%{content:'..';} 80%,100%{content:'...';} }
-  #error-msg { display:none; padding:40px 32px; font-family:var(--font-num); font-size:12px; color:var(--red); text-align:center; }
-  #error-msg.inline { align-items:center; justify-content:space-between; gap:14px; padding:10px 32px; text-align:left; border-bottom:1px solid var(--red); }
+  #error-msg { display:none; padding:40px var(--s6); font-family:var(--font-num); font-size:var(--t-body); color:var(--red); text-align:center; }
+  #error-msg.inline { align-items:center; justify-content:space-between; gap:14px; padding:10px var(--s6); text-align:left; border-bottom:1px solid var(--red); }
   #error-msg .err-text { flex:1; }
   #dashboard { display:none; }
 
-  .footer { padding:14px 32px; border-top:1px solid var(--grey-2); font-family:var(--font-num); font-size:10px; color:var(--grey-3); display:flex; justify-content:space-between; }
+  .footer { padding:14px var(--s6); border-top:1px solid var(--grey-2); font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-3); display:flex; justify-content:space-between; }
   .countdown { color:var(--grey-4); }
 
   .analytics { display:grid; grid-template-columns:1fr 1fr 1fr; border-bottom:1px solid var(--grey-2); }
   .analytics-panel { padding:var(--s5) 0; }
   .analytics-panel:last-child { border-right:none; }
-  .analytics-title { font-family:var(--font-num); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3); padding-bottom:0; margin-bottom:0; }
-  .analytics-kpi { font-family:var(--font-display); font-size:40px; font-weight:600; letter-spacing:-.02em;
-    line-height:1; color:var(--accent); font-variant-numeric:tabular-nums lining-nums; }
-  .analytics-kpi-sub { font-family:var(--font-num); font-size:10px; color:var(--grey-4); margin:3px 0 12px; }
-  .mini-table { width:100%; border-collapse:collapse; font-size:11.5px; margin-top:2px; }
-  .mini-table th { font-family:var(--font-num); font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:4px 6px; text-align:left; border-bottom:1px solid var(--grey-2); white-space:nowrap; }
+  .analytics-title { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.16em; text-transform:uppercase; color:var(--ink-3); padding-bottom:0; margin-bottom:0; }
+  .mini-table { width:100%; border-collapse:collapse; font-size:var(--t-sm); margin-top:2px; }
+  .mini-table th { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:var(--s1) 6px; text-align:left; border-bottom:1px solid var(--grey-2); white-space:nowrap; }
   .mini-table td { padding:5px 6px; border-bottom:1px solid var(--grey-1); vertical-align:middle; }
   .exec-bar-wrap { background:var(--grey-2); height:4px; width:56px; display:inline-block; vertical-align:middle; }
   .exec-bar-fill { height:4px; transition:width .5s var(--ease-out-quart); }
-  .flag-red { color:var(--red); font-weight:600; font-family:var(--font-num); font-size:10.5px; }
-  .flag-amber { color:var(--amber); font-weight:600; font-family:var(--font-num); font-size:10.5px; }
-  .flag-green { color:var(--green); font-weight:600; font-family:var(--font-num); font-size:10.5px; }
-  .snapshot-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 16px; margin-top:14px; }
-  .snapshot-col-label { font-family:var(--font-num); font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding-bottom:4px; border-bottom:1px solid var(--grey-2); margin-bottom:6px; }
-  .snapshot-v { font-size:13px; font-weight:500; }
-  .snapshot-sub { font-family:var(--font-num); font-size:9.5px; color:var(--grey-4); margin:2px 0 10px; line-height:1.4; }
+  .flag-red { color:var(--red); font-weight:600; font-family:var(--font-num); font-size:var(--t-sm); }
+  .flag-amber { color:var(--amber); font-weight:600; font-family:var(--font-num); font-size:var(--t-sm); }
+  .flag-green { color:var(--green); font-weight:600; font-family:var(--font-num); font-size:var(--t-sm); }
+  .snapshot-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--s1) var(--s4); margin-top:14px; }
+  .snapshot-col-label { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.1em; text-transform:uppercase; color:var(--grey-3); padding-bottom:var(--s1); border-bottom:1px solid var(--grey-2); margin-bottom:6px; }
+  .snapshot-v { font-size:var(--t-body); font-weight:500; }
+  .snapshot-sub { font-family:var(--font-num); font-size:var(--t-micro); color:var(--grey-4); margin:2px 0 10px; line-height:1.4; }
 
-  .comm-stats { display:flex; gap:36px; flex-wrap:wrap; margin-bottom:16px; }
-  .comm-stat-v { font-size:20px; font-weight:600; letter-spacing:-.01em; }
-  .comm-notes { font-size:11.5px; color:var(--grey-4); font-style:italic; }
+  .comm-stats { display:flex; gap:36px; flex-wrap:wrap; margin-bottom:var(--s4); }
+  .comm-stat-v { font-size:var(--t-xl); font-weight:600; letter-spacing:-.01em; }
+  .comm-notes { font-size:var(--t-sm); color:var(--grey-4); font-style:italic; }
 
-  /* Payments Made — WS-7 immutable payment ledger. Sits inside .section-commission but OUTSIDE the
-     .brief wrapper on purpose: this is an audit record, not the warm digest zone, so it stays
-     brutalist per .impeccable.md — near-black on white, sharp corners, color only as status signal. */
-  .pmt-panel { border:1px solid var(--black); margin-top:24px; padding:20px 22px 22px; }
-  .pmt-hd { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; border-bottom:1px solid var(--grey-2); padding-bottom:14px; margin-bottom:16px; }
-  .pmt-hd-label { font-family:var(--font-num); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); }
-  .pmt-hd-amt { font-size:26px; font-weight:600; letter-spacing:-.01em; margin-top:4px; }
-  .pmt-warn { background:#fceaea; border:1px solid var(--red); color:var(--red); font-family:var(--font-num); font-size:11.5px; font-weight:600; padding:10px 14px; margin-bottom:16px; }
+  /* Payments Made — WS-7 immutable bank remittance record. This used to sit in a full border because
+     it was "outside the warm digest zone" — but that zone dissolved (the whole page is warm paper
+     now), so the box no longer marked a real boundary; it had quietly become the only boxed section
+     on an otherwise hairline-and-whitespace page. It still deserves to read as apart: everything
+     around it is a live figure re-derived from the sheet on every refresh, this is a transcribed bank
+     document that never changes. A single heavy top rule — the same device the page already uses for
+     hard boundaries (.tabs, table headers) — says that without drawing a card. */
+  .pmt-panel { border-top:2px solid var(--ink); margin-top:var(--s6); padding-top:var(--s5); }
+  .pmt-hd { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; border-bottom:1px solid var(--grey-2); padding-bottom:14px; margin-bottom:var(--s4); }
+  .pmt-hd-label { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); }
+  .pmt-hd-amt { font-size:var(--t-xl); font-weight:600; letter-spacing:-.01em; margin-top:var(--s1); }
+  .pmt-warn { background:color-mix(in oklab, var(--red) 12%, var(--paper)); border:1px solid var(--red); color:var(--red); font-family:var(--font-num); font-size:var(--t-sm); font-weight:600; padding:10px 14px; margin-bottom:var(--s4); }
   .pmt-basis { margin-bottom:22px; }
-  .pmt-basis-table { width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
-  .pmt-basis-table th { font-family:var(--font-num); font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:6px 8px; text-align:left; border-bottom:1px solid var(--black); }
-  .pmt-basis-table td { padding:7px 8px; border-bottom:1px solid var(--grey-2); }
+  .pmt-basis-table { width:100%; border-collapse:collapse; font-size:var(--t-body); margin-top:var(--s2); }
+  .pmt-basis-table th { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase; color:var(--grey-3); padding:6px var(--s2); text-align:left; border-bottom:1px solid var(--black); }
+  .pmt-basis-table td { padding:7px var(--s2); border-bottom:1px solid var(--grey-2); }
   .pmt-basis-table tfoot td { border-bottom:none; border-top:1px solid var(--black); padding-top:9px; }
-  .pmt-note-tag { font-family:var(--font-num); font-size:9px; color:var(--grey-4); }
-  .pmt-basis-cards { display:none; margin-top:8px; }
-  .pmt-line-card { border:1px solid var(--grey-2); padding:9px 11px; margin-bottom:6px; font-size:11.5px; }
-  .pmt-line-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
-  .pmt-recon-row { border:1px solid var(--grey-2); padding:10px 12px; margin-bottom:8px; }
+  .pmt-note-tag { font-family:var(--font-num); font-size:var(--t-micro); color:var(--grey-4); }
+  .pmt-basis-cards { display:none; margin-top:var(--s2); }
+  .pmt-line-card { border:1px solid var(--grey-2); padding:9px 11px; margin-bottom:6px; font-size:var(--t-sm); }
+  .pmt-line-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--s1); }
+  .pmt-recon-row { border:1px solid var(--grey-2); padding:10px var(--s3); margin-bottom:var(--s2); }
   .pmt-recon-top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
-  .pmt-recon-status { font-family:var(--font-num); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
+  .pmt-recon-status { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
   .pmt-status-match .pmt-recon-status { color:var(--green); }
   .pmt-status-diverge { border-color:var(--red); }
   .pmt-status-diverge .pmt-recon-status { color:var(--red); }
   .pmt-status-no-match { border-color:var(--amber); }
   .pmt-status-no-match .pmt-recon-status { color:var(--amber); }
   .pmt-status-pending .pmt-recon-status { color:var(--grey-4); }
-  .pmt-recon-figs { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:6px 16px; }
-  .pmt-fig-l { font-family:var(--font-num); font-size:8.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--grey-3); }
-  .pmt-fig-v { font-size:11.5px; margin-top:1px; }
-  .pmt-recon-note { font-size:10.5px; color:var(--grey-4); font-style:italic; margin-top:6px; }
-  .pmt-audit { margin-top:18px; border-top:1px solid var(--grey-2); padding-top:12px; }
-  .pmt-audit summary { font-family:var(--font-num); font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); cursor:pointer; }
+  .pmt-recon-figs { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:6px var(--s4); }
+  .pmt-fig-l { font-family:var(--font-num); font-size:var(--t-micro); text-transform:uppercase; letter-spacing:.08em; color:var(--grey-3); }
+  .pmt-fig-v { font-size:var(--t-sm); margin-top:1px; }
+  .pmt-recon-note { font-size:var(--t-sm); color:var(--grey-4); font-style:italic; margin-top:6px; }
+  .pmt-audit { margin-top:18px; border-top:1px solid var(--grey-2); padding-top:var(--s3); }
+  .pmt-audit summary { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.06em; text-transform:uppercase; color:var(--grey-4); cursor:pointer; }
   .pmt-audit summary:hover { color:var(--black); }
-  .pmt-audit-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:12px 20px; margin-top:12px; }
-  .paid-badge { font-family:var(--font-num); font-size:8.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--green); background:none; border:1px solid var(--green); padding:1px 5px; margin-left:6px; cursor:pointer; white-space:nowrap; vertical-align:middle; }
+  .pmt-audit-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:var(--s3) 20px; margin-top:var(--s3); }
+  .paid-badge { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.04em; text-transform:uppercase; color:var(--green); background:none; border:1px solid var(--green); padding:1px 5px; margin-left:6px; cursor:pointer; white-space:nowrap; vertical-align:middle; }
   .paid-badge:hover { background:var(--green); color:var(--paper); }
   .paid-badge:focus-visible { outline:2px solid var(--green); outline-offset:-2px; }
 
@@ -228,39 +279,58 @@
 
   /* Master list — one compact two-line row per record */
   .lst-hd { position:sticky; top:0; background:var(--paper); z-index:5; border-bottom:1px solid var(--black); padding:10px 14px 9px; }
-  .lst-count { font-family:var(--font-num); font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); margin-bottom:7px; }
+  .lst-count { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.12em; text-transform:uppercase; color:var(--grey-3); margin-bottom:7px; }
+  /* Reading affordance for the master/detail pattern — lives at the top of the list it belongs to,
+     rather than trailing below the detail pane's analytics as a stray footer (its old position). */
+  .lst-hint { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.04em; color:var(--ink-3); margin-top:7px; }
   .lst-row { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--grey-2); cursor:pointer; transition:background .1s; }
   .lst-row:hover { background:var(--grey-1); }
   .lst-row.sel { background:var(--ink); color:var(--paper); }
   .lst-row.sel .lst-sub, .lst-row.sel .lst-pct { color:var(--grey-2); }
   .lst-row.sel .lst-mini { background:var(--grey-4); }
+  /* Status colour must still read on the near-black selected row (--ink): green/red/amber/blue all
+     drop under 3.3:1 against it. Every status carrier — dot, its shape border, the status label, and
+     the mini progress FILL — repaints to --paper on selection. None of them set the colour property
+     directly inline (only the --dot-c/--fill-c custom property is inline), so these plain class rules
+     win the cascade on their own; no !important tug-of-war needed. Shape + text keep carrying the
+     meaning even once colour is neutralised. */
+  .lst-row.sel .lst-top .signal-dot { border-color:var(--paper); }
+  .lst-row.sel .lst-top .signal-dot:not(.st-none) { background:var(--paper); }
+  .lst-row.sel .lst-status { color:var(--paper); }
+  .lst-row.sel .lst-right .lst-mini-fill { background:var(--paper); }
   .lst-row:focus-visible { outline:2px solid var(--black); outline-offset:-2px; }
   .lst-main { flex:1; min-width:0; }
   .lst-top { display:flex; align-items:center; gap:7px; }
-  .lst-id { font-family:var(--font-num); font-size:11.5px; font-weight:500; white-space:nowrap; }
-  .lst-sub { font-size:10.5px; color:var(--grey-4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
-  .lst-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+  .lst-id { font-family:var(--font-num); font-size:var(--t-sm); font-weight:500; white-space:nowrap; }
+  .lst-sub-row { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-top:2px; }
+  .lst-sub { flex:1; min-width:0; font-size:var(--t-sm); color:var(--grey-4); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  /* Status label — the text pairing the dot needs so state is never colour-alone. --t-micro is the
+     token this size is for: an uppercase tracked label. Fixed-vocabulary contract statuses (NEW /
+     ACTIVE / PARTIAL / DUE / DONE / PAID) always fit; commission statuses come straight off the sheet
+     and can run long, so .trunc caps + ellipsizes them while the full text stays on title/aria-label. */
+  .lst-status { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.06em; text-transform:uppercase; color:var(--dot-c); flex-shrink:0; white-space:nowrap; }
+  .lst-status.trunc { max-width:78px; overflow:hidden; text-overflow:ellipsis; }
+  .lst-right { display:flex; align-items:center; gap:var(--s2); flex-shrink:0; }
   .lst-mini { width:44px; height:4px; background:var(--grey-2); }
-  .lst-mini-fill { height:4px; transition:width .5s var(--ease-out-quart); }
-  .lst-pct { font-family:var(--font-num); font-size:10px; color:var(--grey-4); min-width:32px; text-align:right; }
+  .lst-mini-fill { height:4px; background:var(--fill-c); transition:width .5s var(--ease-out-quart); }
+  .lst-pct { font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-4); min-width:32px; text-align:right; }
 
   /* Detail surface — analytics by default, one record once something is selected */
-  .dtl { padding:18px 24px 30px; }
+  .dtl { padding:18px var(--s5) 30px; }
   .dtl-hd { border-bottom:1px solid var(--black); padding-bottom:11px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:flex-start; gap:14px; }
-  .dtl-id { font-family:var(--font-num); font-size:17px; font-weight:500; letter-spacing:-.01em; }
-  .dtl-buyer { font-size:12px; color:var(--grey-4); margin-top:4px; line-height:1.5; }
+  .dtl-id { font-family:var(--font-num); font-size:var(--t-lg); font-weight:500; letter-spacing:-.01em; }
+  .dtl-buyer { font-size:var(--t-body); color:var(--grey-4); margin-top:var(--s1); line-height:1.5; }
   .dtl-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:13px 20px; margin-bottom:18px; }
-  .dtl-l { font-family:var(--font-num); font-size:8.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:3px; }
-  .dtl-v { font-size:14px; font-weight:500; }
-  .dtl-hint { padding:22px 24px; font-family:var(--font-num); font-size:10.5px; color:var(--grey-3); letter-spacing:.04em; border-top:1px solid var(--grey-2); }
+  .dtl-l { font-family:var(--font-num); font-size:var(--t-micro); text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:3px; }
+  .dtl-v { font-size:var(--t-lg); font-weight:500; }
 
   /* Folds — native <details> so keyboard + a11y come free. Forced open on desktop by syncFolds(). */
   .fold { border-bottom:1px solid var(--grey-2); }
   .fold:last-child { border-bottom:none; }
   .fold > summary { list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:10px; }
   .fold > summary::-webkit-details-marker { display:none; }
-  .fold-sum { font-family:var(--font-num); font-size:10px; color:var(--grey-4); font-weight:400; letter-spacing:0; text-transform:none; white-space:nowrap; }
-  .fold-body { padding-top:12px; }
+  .fold-sum { font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-4); font-weight:400; letter-spacing:0; text-transform:none; white-space:nowrap; }
+  .fold-body { padding-top:var(--s3); }
   /* A fold's title reuses .analytics-title for the terracotta marker, but must not carry its own
      rule/spacing inside a flex <summary>. */
   .fold > summary .analytics-title { border-bottom:none; padding-bottom:0; margin-bottom:0; }
@@ -273,24 +343,24 @@
   .brief-rail .kpi-lead { padding-right:var(--s6); margin-right:var(--s2); border-right:1px solid var(--rule); align-self:stretch; }
 
   /* ── Mobile card components (hidden on desktop) ── */
-  .contract-cards { display:none; padding:0 16px 32px; }
-  .commission-cards { display:none; padding:0 16px 32px; }
+  .contract-cards { display:none; padding:0 var(--s4) var(--s6); }
+  .commission-cards { display:none; padding:0 var(--s4) var(--s6); }
   .m-card { border:1px solid var(--grey-2); margin-bottom:10px; overflow:hidden; }
   .m-card-hd { padding:13px 14px 10px; cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none; transition:background .1s; }
   .m-card-hd:active { background:var(--grey-1); }
   .m-card-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
-  .m-card-buyer { font-size:11.5px; color:var(--grey-4); margin-bottom:9px; line-height:1.4; }
-  .m-card-fcl { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .m-card-buyer { font-size:var(--t-sm); color:var(--grey-4); margin-bottom:9px; line-height:1.4; }
+  .m-card-fcl { display:flex; flex-wrap:wrap; gap:var(--s1); margin-top:var(--s2); }
   .m-card-dtl { display:grid; grid-template-rows:0fr; overflow:hidden; transition:grid-template-rows .32s var(--ease-out-quart); }
   .m-card-dtl.open { grid-template-rows:1fr; }
-  .m-card-dtl-inner { overflow:hidden; background:var(--grey-1); border-top:1px solid var(--grey-2); padding:14px 14px 16px; }
+  .m-card-dtl-inner { overflow:hidden; background:var(--grey-1); border-top:1px solid var(--grey-2); padding:14px 14px var(--s4); }
   .m-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px 14px; margin-top:14px; }
-  .m-stat-l { font-family:var(--font-num); font-size:8.5px; text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:2px; }
-  .m-stat-v { font-size:12px; font-weight:500; }
+  .m-stat-l { font-family:var(--font-num); font-size:var(--t-micro); text-transform:uppercase; letter-spacing:.1em; color:var(--grey-3); margin-bottom:2px; }
+  .m-stat-v { font-size:var(--t-body); font-weight:500; }
 
   /* ── Mobile layout overrides ── */
   @media(max-width:680px){
-    body { font-size:12px; }
+    body { font-size:var(--t-body); }
 
     /* Unwind the cockpit: a phone gets normal page scroll, numbers first, everything else folded.
        The detail pane is ordered above the list so the reading order matches desktop; on a phone
@@ -303,60 +373,95 @@
     .pane { overflow:visible; }
     .pane-detail { order:1; }
     .pane-list { order:2; border-right:none; }
-    .lst, .lst-hd, .dtl-hint { display:none; }
+    /* Only the desktop row list (.lst) and the reading hint drop out on a phone. .lst-hd stays: it
+       carries the buyer filter + sort controls (#contract-controls) AND .lst-count, which doubles as
+       the on-mobile "filter is active" indicator ("12 contracts · Hunan Jinjian"). Hiding the whole
+       header — the earlier bug — silently stranded filtering/sorting and left goToBuyer()'s filter
+       with no visible state and no way to clear it. position:sticky is deliberately dropped here: on
+       desktop .lst-hd pins to the top of its own independently-scrolling pane, but on a phone the
+       whole page scrolls and .pane-list sits BELOW .pane-detail in DOM order, so a sticky header would
+       pin to the viewport top while its list is still below the fold — decidedly wrong. Static it is. */
+    .lst-hd { position:static; background:none; padding:var(--s3) var(--s4); }
+    .lst, .lst-hint { display:none; }
     .dtl { padding:0; }
-    .fold > summary { padding:13px 16px; }
+    .fold > summary { padding:13px var(--s4); }
     .fold-body { padding-top:0; }
     .brief-rail { padding:var(--s4) var(--s4) var(--s3); }
     .brief-rail .metrics, .brief-rail .comm-stats { display:grid; grid-template-columns:1fr 1fr; gap:var(--s4) var(--s3); }
     .kpi { padding-right:0; }
     .kpi-lead { grid-column:1/-1; padding-right:0; }
-    .kpi-lead .kpi-v { font-size:32px; }
-    .kpi-v { font-size:17px; }
-    .kpi-l { font-size:8.5px; }
-
-    /* Brief (warm zone) */
-    .brief .analytics-kpi { font-size:26px; }
+    .kpi-lead .kpi-v { font-size:var(--t-2xl); }
+    .kpi-v { font-size:var(--t-lg); }
+    .kpi-l { font-size:var(--t-micro); }
+    /* FCL pipeline — the rail becomes a 2-column grid on a phone; the sequence needs the full row to
+       stay legible, same treatment as the hero. */
+    .fcl-pipe { grid-column:1/-1; }
+    .fcl-seq { gap:var(--s3) 0; }
+    .fcl-gap { padding:0 var(--s2); }
 
     /* Header */
-    .header { padding:11px 16px; }
-    .header-left .title { font-size:12px; }
-    .header-left .subtitle { font-size:8.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
+    .header { padding:11px var(--s4); }
+    .header-left .title { font-size:var(--t-body); }
+    .header-left .subtitle { font-size:var(--t-micro); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
     .last-updated { display:none; }
-    .refresh-btn { padding:5px 11px; font-size:9px; touch-action:manipulation; }
-    .tab-btn { padding:9px 14px; font-size:9.5px; }
+    .refresh-btn { padding:5px 11px; font-size:var(--t-micro); touch-action:manipulation; }
+    .tab-btn { padding:9px 14px; font-size:var(--t-micro); }
 
     /* Metrics: 2-column grid (mirrors desktop 4x2) */
 
-    .metric-value { font-size:18px; }
-    .metric-label { font-size:8px; }
-    .metric-sub { font-size:10px; }
+    .metric-value { font-size:var(--t-xl); }
+    .metric-label { font-size:var(--t-micro); }
+    .metric-sub { font-size:var(--t-sm); }
 
     /* Analytics: stack full-width */
     .analytics { grid-template-columns:1fr; }
-    .analytics-panel { border-right:none; border-bottom:1px solid var(--grey-2); padding:14px 16px; }
+    .analytics-panel { border-right:none; border-bottom:1px solid var(--grey-2); padding:14px var(--s4); }
     .analytics-panel:last-child { border-bottom:none; }
-    .analytics-kpi { font-size:19px; }
-    .mini-table th { font-size:8px; padding:4px 4px; }
-    .mini-table td { font-size:11px; padding:5px 4px; }
+    .mini-table th { font-size:var(--t-micro); padding:var(--s1) var(--s1); }
+    .mini-table td { font-size:var(--t-sm); padding:5px var(--s1); }
 
     /* Contract section */
-    .section { padding:12px 0 0; }
-    .section-title { padding:0 16px 8px; margin-bottom:8px; }
+    .section { padding:var(--s3) 0 0; }
+    .section-title { padding:0 var(--s4) var(--s2); margin-bottom:var(--s2); }
     .contract-table { display:none; }
     .contract-cards { display:block !important; }
-    .ctl-bar { padding:0 16px; margin-bottom:10px; gap:10px; }
-    .ctl-btn { padding:4px 8px; font-size:8.5px; }
-    .copy-btn { padding:3px 6px; font-size:8px; }
+    /* .ctl-bar now renders inside .lst-hd (restored above), which already carries the section's
+       horizontal inset — so the bar itself takes none, or the buyer/sort row would be indented twice. */
+    .ctl-bar { padding:0; margin-bottom:0; gap:10px; }
+    .ctl-btn { padding:var(--s1) var(--s2); font-size:var(--t-micro); }
+    .copy-btn { padding:3px 6px; font-size:var(--t-micro); }
+    /* Touch targets: measured, .copy-btn/.ctl-btn/.paid-badge are ~30x16 / ~28x18 / smaller — well
+       under the 44px minimum. These are deliberately small chip/pill controls on desktop where pointer
+       precision is fine, so we don't inflate the visible box on a phone either; instead an invisible
+       ::after grows the HIT area to at least 44x44, centred on the control. Generated content isn't a
+       separate DOM node, so it doesn't intercept the element's own click/keydown handlers. */
+    /* Touch targets. The filter/sort chips are the primary mobile control and wrap into a cloud, so
+       they become REAL 44px targets rather than small chips wearing an oversized phantom hit area —
+       a phantom taller than the row pitch makes neighbouring chips overlap and steal each other's
+       taps, which is worse than a small target. Real height + a gap that exceeds nothing means the
+       hit area can never collide. */
+    .ctl-group { gap:var(--s2); }
+    .ctl-btn { min-height:44px; display:inline-flex; align-items:center; padding:0 var(--s3); }
+    /* .copy-btn and .paid-badge sit inline inside text flow (card headers, list rows), where a 44px
+       box would break the line box. They get a bounded expansion instead: full 44px across, and as
+       much height as their container's own spacing allows without overlapping the element below. */
+    .copy-btn, .paid-badge { position:relative; }
+    .copy-btn::after, .paid-badge::after {
+      content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      width:max(100%,44px); height:max(100%,30px);
+    }
+    .m-card-top { gap:var(--s3); }
 
     /* Commission section */
-    .comm-stats { padding:0 16px; gap:20px; }
+    .comm-stats { padding:0 var(--s4); gap:20px; }
     .commission-table { display:none; }
-    .commission-cards { display:block !important; margin-top:8px; }
+    .commission-cards { display:block !important; margin-top:var(--s2); }
 
-    /* Payments Made panel */
-    .pmt-panel { padding:14px 14px 16px; margin-top:16px; }
-    .pmt-hd-amt { font-size:21px; }
+    /* Payments Made panel — desktop keeps zero horizontal inset to match its flush-left sibling folds
+       (Business Snapshot, Commission payable by invoice); on a phone there's no fold-body padding to
+       borrow from, so it takes the same var(--s4) inset every other mobile fold header already uses. */
+    .pmt-panel { padding:var(--s4); margin-top:var(--s4); }
+    .pmt-hd-amt { font-size:var(--t-xl); }
     .pmt-basis-table { display:none; }
     .pmt-basis-cards { display:block; }
     .pmt-recon-figs { grid-template-columns:1fr; }
@@ -366,8 +471,8 @@
     .expand-grid { grid-template-columns:1fr; }
 
     /* Footer */
-    .footer { padding:10px 16px; flex-direction:column; gap:3px; font-size:9px; }
-    #error-msg.inline { padding:9px 16px; gap:10px; font-size:11px; }
+    .footer { padding:10px var(--s4); flex-direction:column; gap:3px; font-size:var(--t-micro); }
+    #error-msg.inline { padding:9px var(--s4); gap:10px; font-size:var(--t-sm); }
   }
 
   /* ── First-load reveal (plays once, not on auto-refresh) ── */
@@ -391,6 +496,7 @@
 </head>
 <body>
 
+<div id="live-status" class="sr-only" role="status" aria-live="polite"></div>
 <div id="loading"><div class="loading-dots">Loading live data</div></div>
 <div id="error-msg"></div>
 
@@ -398,7 +504,7 @@
   <div class="header">
     <div class="header-left">
       <div class="title">China Shipments — Live Dashboard</div>
-      <div class="subtitle">Tarun's Brief &nbsp;|&nbsp; Source: Email Threads (Yan / Sujit) + Contract & Payment Sheet</div>
+      <div class="subtitle">Tarun's Brief</div>
     </div>
     <div class="header-right">
       <div class="last-updated" id="last-updated">—</div>
@@ -406,12 +512,12 @@
     </div>
   </div>
 
-  <nav class="tabs">
-    <button class="tab-btn active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
-    <button class="tab-btn" data-tab="commission" onclick="switchTab('commission')">Commission</button>
+  <nav class="tabs" role="tablist" aria-label="Dashboard sections">
+    <button class="tab-btn active" id="tab-btn-overview" role="tab" aria-selected="true" aria-controls="tab-overview" tabindex="0" data-tab="overview" onclick="switchTab('overview')" onkeydown="onTabKeydown(event)">Overview</button>
+    <button class="tab-btn" id="tab-btn-commission" role="tab" aria-selected="false" aria-controls="tab-commission" tabindex="-1" data-tab="commission" onclick="switchTab('commission')" onkeydown="onTabKeydown(event)">Commission</button>
   </nav>
 
-  <div class="tab-panel active" id="tab-overview">
+  <div class="tab-panel active" id="tab-overview" role="tabpanel" aria-labelledby="tab-btn-overview">
     <div class="brief brief-rail"><div class="metrics" id="metrics-strip"></div></div>
     <div class="split">
       <div class="pane pane-list">
@@ -420,11 +526,12 @@
           <div class="ctl-bar" id="contract-controls">
             <div class="ctl-group" id="buyer-filter-group" role="group" aria-label="Filter by buyer"></div>
             <div class="ctl-group" id="sort-group" role="group" aria-label="Sort contracts">
-              <button class="ctl-btn active" data-sort="natural" onclick="setSort('natural')">Sheet Order</button>
+              <button class="ctl-btn active" data-sort="natural" onclick="setSort('natural')">Default Order</button>
               <button class="ctl-btn" data-sort="exec-asc" onclick="setSort('exec-asc')">Exec % ↑</button>
-              <button class="ctl-btn" data-sort="pending-desc" onclick="setSort('pending-desc')">Pending MT ↓</button>
+              <button class="ctl-btn" data-sort="pending-desc" onclick="setSort('pending-desc')">Pending <abbr title="Metric Tonnes">MT</abbr> ↓</button>
             </div>
           </div>
+          <div class="lst-hint">Select a contract below for its full operational and financial detail.</div>
         </div>
         <div class="lst" id="contract-list" role="listbox" aria-label="Contracts"></div>
         <div class="contract-cards" id="contract-cards"></div>
@@ -435,19 +542,21 @@
           <div class="brief">
             <details class="fold" open><summary><span class="analytics-title">Business Snapshot</span><span class="fold-sum" id="fs-snapshot"></span></summary><div class="fold-body" id="analytics-snapshot"></div></details>
             <details class="fold" open><summary><span class="analytics-title">Execution Rate by Contract</span><span class="fold-sum" id="fs-exec"></span></summary><div class="fold-body" id="analytics-exec"></div></details>
-            <details class="fold" open><summary><span class="analytics-title">Buyer MT Concentration</span><span class="fold-sum" id="fs-buyer"></span></summary><div class="fold-body" id="analytics-buyer"></div></details>
+            <details class="fold" open><summary><span class="analytics-title">Buyer <abbr title="Metric Tonnes">MT</abbr> Concentration</span><span class="fold-sum" id="fs-buyer"></span></summary><div class="fold-body" id="analytics-buyer"></div></details>
           </div>
-          <div class="dtl-hint">Select a contract to see its full operational and financial detail here.</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="tab-panel" id="tab-commission">
+  <div class="tab-panel" id="tab-commission" role="tabpanel" aria-labelledby="tab-btn-commission">
     <div class="brief brief-rail"><div class="comm-stats" id="comm-stats"></div></div>
     <div class="split">
       <div class="pane pane-list">
-        <div class="lst-hd"><div class="lst-count" id="comm-count">Commission — Schepens statement</div></div>
+        <div class="lst-hd">
+          <div class="lst-count" id="comm-count">Commission — <abbr title="Schepens &amp; Co, the Hong Kong freight/customs broker handling these shipments">Schepens</abbr> statement</div>
+          <div class="lst-hint">Select a record below for its notes and figures.</div>
+        </div>
         <div class="lst" id="commission-list" role="listbox" aria-label="Commission records"></div>
         <div class="commission-cards" id="commission-cards"></div>
       </div>
@@ -458,24 +567,23 @@
             <details class="fold" open><summary><span class="analytics-title">Commission payable by invoice</span><span class="fold-sum" id="fs-proc"></span></summary>
               <div class="fold-body">
                 <table class="mini-table" id="comm-processing-table">
-                  <thead><tr><th>Contract</th><th>Buyer</th><th>Qty Paid (MT)</th><th>Amount</th></tr></thead>
+                  <thead><tr><th>Contract</th><th>Buyer</th><th>Qty Paid (<abbr title="Metric Tonnes">MT</abbr>)</th><th>Amount</th></tr></thead>
                   <tbody id="comm-processing-tbody"></tbody>
                   <tfoot><tr id="comm-processing-total"></tr></tfoot>
                 </table>
               </div>
             </details>
           </div>
-          <details class="fold" open><summary style="padding:14px 24px 10px"><span class="section-title" style="border:none;padding:0;margin:0">Payments Made</span><span class="fold-sum" id="fs-pmt"></span></summary>
+          <details class="fold" open><summary style="padding:14px 0 10px"><span class="section-title" style="border:none;padding:0;margin:0">Payments Made</span><span class="fold-sum" id="fs-pmt"></span></summary>
             <div class="fold-body" style="padding-top:0"><div class="payments-made" id="payments-made"></div></div>
           </details>
-          <div class="dtl-hint">Select a commission record to see its notes and figures here.</div>
         </div>
       </div>
     </div>
   </div>
 
   <div class="footer">
-    <span>Data read live from your Google Sheet &nbsp;|&nbsp; Auto-refreshes every 5 minutes</span>
+    <span>Live from the Contract &amp; Payment Google Sheet, with operational updates transcribed from email threads (Yan / Sujit) &nbsp;|&nbsp; Auto-refreshes every 5 minutes</span>
     <span class="countdown" id="countdown">Next refresh in 5:00</span>
   </div>
 </div>
@@ -547,7 +655,14 @@ const PAYMENTS_MADE = Object.freeze([
 const PAID_CONTRACT_NUMS = new Set(PAYMENTS_MADE.flatMap(p=>p.lines.map(l=>l.contract)));
 
 let countdownInterval=null, secs=REFRESH_SECS, countdownLabel='Next refresh in ';
-let hasLoadedOnce=false, lastSuccessAt=null;
+let hasLoadedOnce=false, lastSuccessAt=null, errorAnnounced=false;
+// The one assistive-tech equivalent of flashChanged()'s visual pulse: a terse, infrequent polite
+// announcement — one per successful refresh, and (via errorAnnounced) only once per failure streak
+// rather than on every 30s retry — so a screen-reader user learns the data changed, or is stale,
+// without the auto-refresh becoming chatty.
+function announce(msg){
+  const el=document.getElementById('live-status'); if(el) el.textContent=msg;
+}
 const VALID_TABS=['overview','commission'];
 
 function parseCSV(text){
@@ -574,13 +689,16 @@ function bandClass(p){ return p<20?'flag-red':p<50?'flag-amber':'flag-green'; }
 // for more than is payable) — flagged amber, never green (no gap is normal, not an achievement)
 // and never red (a dispute, not a realised loss).
 function varFlag(v){ return v&&v!=='-'&&num(v)>0?' flag-amber':''; }
+// `cls` is a shape token (see .signal-dot.st-* in <style>) so status is never colour-alone: every
+// state also has a distinct silhouette. `abbr` is the short form used only in the dense master-list
+// row — the full `label` always remains available via aria-label/title for assistive tech.
 function getSignal(c,s,p,pd){
-  if(s===0) return{label:'Not Started',color:'#999'};
-  if(p>=c&&c>0) return{label:'Complete',color:'#1e6e2e'};
-  if(p>0&&pd>0) return{label:'Partial Payment',color:'#8a5c00'};
-  if(s>0&&p===0&&pd>0) return{label:'Awaiting Payment',color:'#b52a2a'};
-  if(s>0&&p>0) return{label:'Paid',color:'#1e6e2e'};
-  return{label:'In Progress',color:'#1a4a8a'};
+  if(s===0) return{label:'Not Started',abbr:'NEW',color:'var(--ink-3)',cls:'st-none'};
+  if(p>=c&&c>0) return{label:'Complete',abbr:'DONE',color:'var(--green)',cls:'st-done'};
+  if(p>0&&pd>0) return{label:'Partial Payment',abbr:'PARTIAL',color:'var(--amber)',cls:'st-partial'};
+  if(s>0&&p===0&&pd>0) return{label:'Awaiting Payment',abbr:'DUE',color:'var(--red)',cls:'st-wait'};
+  if(s>0&&p>0) return{label:'Paid',abbr:'PAID',color:'var(--green)',cls:'st-done'};
+  return{label:'In Progress',abbr:'ACTIVE',color:'var(--blue)',cls:'st-progress'};
 }
 function parseSummary(rows){ const m={}; let t=false;
   rows.forEach(r=>{ const k=(r[0]||'').toLowerCase().trim();
@@ -603,23 +721,43 @@ function mt(m,k){ const v=m[k]?.val; return v?fmt(num(v))+' MT':'—'; }
 function renderMetrics(m, uninvoicedMT){
   const contracted=mv(m,'total contracted (operational)'), shipped=mv(m,'shipped so far');
   const shipPct=pct(shipped,contracted);
+  // The sheet-sourced contract value string flows straight into markup below, so it's escaped right
+  // at the point of interpolation — the rest of heroSub is either app-authored markup or a number.
+  const contractedVal=esc(m['total contracted value']?.val||'—');
+  const heroSub=fmt(shipped)+' of '+fmt(contracted)+' <abbr title="Metric Tonnes">MT</abbr> · $'+contractedVal+'m contracted';
   const cards=[
     // Lead — the question this tab exists to answer: has what we sold actually moved?
-    {lead:true, label:'Shipped of contracted', val:shipPct+'%',
-     sub:fmt(shipped)+' of '+fmt(contracted)+' MT · $'+(m['total contracted value']?.val||'—')+'m contracted'},
-    {label:'Pending shipment',      val:mt(m,'pending shipment'), sub:'still to move'},
-    {label:'Shipped, not invoiced', val:fmt(uninvoicedMT)+' MT',  sub:'(FCL shipped − invoiced) × '+MT_PER_FCL},
-    {label:'FCL shipped',           val:fmt(mv(m,'fcl shipped')),  sub:'containers'},
-    {label:'FCL invoiced',          val:fmt(mv(m,'fcl invoiced')), sub:'of '+fmt(mv(m,'fcl shipped'))+' shipped'},
-    {label:'FCL paid',              val:fmt(mv(m,'fcl paid')),     sub:m['fcl paid']?.extra||''},
-    {label:'Payment pending',       val:fmt(mv(m,'fcl payment pending')), sub:'FCL awaiting collection'},
+    {lead:true, label:'Shipped of contracted', val:shipPct+'%', sub:heroSub, rawSub:true},
+    {label:'Pending shipment', val:mt(m,'pending shipment'), sub:'still to move'},
   ];
+  const fclShipped=mv(m,'fcl shipped'), fclInvoiced=mv(m,'fcl invoiced'), fclPaid=mv(m,'fcl paid'), fclPending=mv(m,'fcl payment pending');
+  // FCL pipeline — shipped, invoiced, paid and payment-pending are four stages of ONE funnel
+  // (contracted → shipped → invoiced → paid), not four peer metrics competing for equal billing. A
+  // flat row of cards destroyed that sequence, and "FCL invoiced — of N shipped" duplicated the
+  // number the "FCL shipped" card already showed. Rendered as a single connected sequence instead:
+  // hairline arrows carry the flow, ink recedes a shade per stage, and the "Shipped, not invoiced" MT
+  // figure — which is really just the gap between the first two stages — now annotates that join
+  // instead of standing alone as a seventh peer card.
+  const pipeHtml=`
+    <div class="kpi-l"><abbr title="Full Container Load">FCL</abbr> pipeline &nbsp;·&nbsp; shipped &rarr; invoiced &rarr; paid</div>
+    <div class="fcl-seq">
+      <div class="fcl-stage"><div class="fcl-stage-v num">${fmt(fclShipped)}</div><div class="fcl-stage-l">Shipped</div></div>
+      <div class="fcl-gap" aria-hidden="true"><span class="fcl-arrow">&rarr;</span>${uninvoicedMT>0?`<span class="fcl-gap-v">${fmt(uninvoicedMT)} MT uninvoiced</span>`:''}</div>
+      <div class="fcl-stage fcl-stage-2"><div class="fcl-stage-v num">${fmt(fclInvoiced)}</div><div class="fcl-stage-l">Invoiced</div></div>
+      <div class="fcl-gap" aria-hidden="true"><span class="fcl-arrow">&rarr;</span></div>
+      <div class="fcl-stage fcl-stage-3"><div class="fcl-stage-v num">${fmt(fclPaid)}</div><div class="fcl-stage-l">Paid</div>${m['fcl paid']?.extra?`<div class="fcl-stage-s">${esc(m['fcl paid'].extra)}</div>`:''}</div>
+      <div class="fcl-gap" aria-hidden="true"><span class="fcl-arrow">&rarr;</span></div>
+      <div class="fcl-stage fcl-stage-4"><div class="fcl-stage-v num">${fmt(fclPending)}</div><div class="fcl-stage-l">Pending</div><div class="fcl-stage-s">awaiting collection</div></div>
+    </div>`;
+  const pipeVal=[fclShipped,fclInvoiced,fclPaid,fclPending,uninvoicedMT].join('|');
   const strip=document.getElementById('metrics-strip');
   strip.innerHTML=cards.map(c=>`
     <div class="kpi${c.lead?' kpi-lead':''}"><div class="kpi-l">${esc(c.label)}</div>
-    <div class="kpi-v num">${esc(c.val)}</div>${c.sub?`<div class="kpi-s">${esc(c.sub)}</div>`:''}</div>`).join('');
-  flashChanged(strip.children, cards.map(c=>c.val), prevMetricVals);
-  prevMetricVals=cards.map(c=>c.val);
+    <div class="kpi-v num">${esc(c.val)}</div>${c.sub?`<div class="kpi-s">${c.rawSub?c.sub:esc(c.sub)}</div>`:''}</div>`).join('')
+    +`<div class="kpi fcl-pipe" role="group" aria-label="FCL container pipeline: ${fmt(fclShipped)} shipped, ${fmt(fclInvoiced)} invoiced, ${fmt(fclPaid)} paid, ${fmt(fclPending)} payment pending">${pipeHtml}</div>`;
+  const allVals=cards.map(c=>c.val).concat([pipeVal]);
+  flashChanged(strip.children, allVals, prevMetricVals);
+  prevMetricVals=allVals;
 }
 // Derives the trailing unit text from a rendered value string (e.g. "134,560 MT" -> "MT",
 // "$3.56m" -> "m", "42%" -> "%") so a delta can be expressed in the same units.
@@ -705,6 +843,42 @@ function onExpandKey(e,fn){
   if(e.target.closest('.copy-btn,.paid-badge')) return;
   if(e.key==='Enter'||e.key===' '){ e.preventDefault(); fn(); }
 }
+// Shared roving-tabindex keyboard contract for #contract-list and #commission-list (both role="option"
+// listboxes). Up/Down move focus one row; Home/End jump to the ends; Enter/Space activates the
+// focused row exactly like a click. Selection follows focus on arrow movement (the standard listbox
+// pattern) so the detail pane tracks the keyboard — deliberately NOT aria-activedescendant, which is
+// the alternative pattern and would be wrong to mix in here.
+function onListKeydown(e,kind,idx){
+  if(e.target.closest('.copy-btn,.paid-badge')) return;
+  const total=kind==='contract'?contractRenderedRows.length:commRenderedRows.length;
+  if(!total) return;
+  switch(e.key){
+    case 'ArrowDown': e.preventDefault(); moveListSelection(kind,Math.min(idx+1,total-1)); return;
+    case 'ArrowUp':   e.preventDefault(); moveListSelection(kind,Math.max(idx-1,0)); return;
+    case 'Home':      e.preventDefault(); moveListSelection(kind,0); return;
+    case 'End':       e.preventDefault(); moveListSelection(kind,total-1); return;
+    case 'Enter':
+    case ' ':         e.preventDefault(); activateListRow(kind,idx); return;
+  }
+}
+function moveListSelection(kind,idx){
+  if(kind==='contract') selectContract(idx,{focus:true});
+  else selectComm(idx,{focus:true});
+}
+// Click and Enter/Space share this: activating the row that is ALREADY selected toggles selection
+// off (closes the detail, restores the default panel) instead of just reselecting it — clicking an
+// open record used to be a dead end.
+function activateListRow(kind,idx){
+  if(kind==='contract'){
+    const r=contractRenderedRows[idx]; if(!r) return;
+    const id=g(r,contractHi,'contract').trim();
+    if(selContractId===id) clearContractSelection(true); else selectContract(idx,{focus:true});
+  }else{
+    const r=commRenderedRows[idx]; if(!r) return;
+    const key=g(r,commHi,'schepens no.').trim()+'|'+idx;
+    if(selCommKey===key) clearCommSelection(true); else selectComm(idx,{focus:true});
+  }
+}
 // Master list — one compact row per contract. Selection is keyed on the contract ID rather than
 // the row index so it survives filtering, sorting and the 5-minute auto-refresh reordering the list.
 function renderContractList(hi,data){
@@ -716,38 +890,77 @@ function renderContractList(hi,data){
     lst.innerHTML=`<div class="mt-sub empty-state">No contracts match this filter. <a href="#" onclick="resetContractFilters();return false;">Clear filter</a></div>`;
     clearContractDetail(); return;
   }
+  // Roving tabindex: exactly one row is a tab stop — the selected row, or the first row when
+  // nothing is selected. Every other row is tabindex="-1" so Tab moves past the whole list in one
+  // hop; Up/Down/Home/End (see onListKeydown) move focus AND selection within the list itself.
   const selIdx=selContractId?data.findIndex(r=>g(r,hi,'contract').trim()===selContractId):-1;
+  const activeIdx=selIdx>=0?selIdx:0;
+  const hadFocus=lst.contains(document.activeElement);
   lst.innerHTML=data.map((r,idx)=>{
     const id=g(r,hi,'contract').trim(), buyer=g(r,hi,'buyer').trim();
     const cmt=num(g(r,hi,'contracted mt')), smt=num(g(r,hi,'shipped mt'));
     const fclC=num(g(r,hi,'fcl contracted')), fclS=num(g(r,hi,'fcl shipped'));
     const fclP=num(g(r,hi,'fcl paid')), fclPd=num(g(r,hi,'fcl pending'));
     const sp=pct(smt,cmt), sig=getSignal(fclC,fclS,fclP,fclPd);
-    return `<div class="lst-row${idx===selIdx?' sel':''}" role="option" aria-selected="${idx===selIdx}" tabindex="0" onclick="selectContract(${idx})" onkeydown="onExpandKey(event,()=>selectContract(${idx}))">
+    return `<div class="lst-row${idx===selIdx?' sel':''}" role="option" aria-selected="${idx===selIdx}" tabindex="${idx===activeIdx?'0':'-1'}" onclick="activateListRow('contract',${idx})" onkeydown="onListKeydown(event,'contract',${idx})">
       <div class="lst-main">
-        <div class="lst-top"><span class="lst-id">${esc(id)}</span><span class="signal-dot" style="background:${sig.color}" title="${esc(sig.label)}"></span></div>
-        <div class="lst-sub">${esc(buyer)}</div>
+        <div class="lst-top"><span class="lst-id">${esc(id)}</span><span class="signal-dot ${sig.cls}" style="--dot-c:${sig.color}" aria-hidden="true"></span></div>
+        <div class="lst-sub-row">
+          <span class="lst-sub">${esc(buyer)}</span>
+          <span class="lst-status" style="--dot-c:${sig.color}" title="${esc(sig.label)}" aria-label="${esc(sig.label)}">${esc(sig.abbr)}</span>
+        </div>
       </div>
       <div class="lst-right">
-        <div class="lst-mini"><div class="lst-mini-fill" style="width:0;background:${bandColor(sp)}" data-grow="${Math.min(sp,100)}%"></div></div>
+        <div class="lst-mini"><div class="lst-mini-fill" style="width:0;--fill-c:${bandColor(sp)}" data-grow="${Math.min(sp,100)}%"></div></div>
         <span class="lst-pct">${sp}%</span>
       </div>
     </div>`;
   }).join('');
   growBars(lst);
+  // A re-render (filter/sort/auto-refresh) replaces every row node, which would otherwise drop
+  // keyboard focus back to the document. If focus was inside this list, put it back on the row that
+  // is now the tab stop (the selected row, or the first row) instead of losing it.
+  if(hadFocus){ const rows=lst.querySelectorAll('.lst-row'); if(rows[activeIdx]) rows[activeIdx].focus(); }
   if(selIdx>=0) renderContractDetail(selIdx); else clearContractDetail();
 }
-function selectContract(idx){
+// Applies selection + roving-tabindex state to the live row nodes without a full re-render (keeps
+// scroll position and avoids rebuilding rows on every arrow-key press).
+function applyContractRowStates(activeIdx){
+  document.querySelectorAll('#contract-list .lst-row').forEach((el,i)=>{
+    const sel=i===activeIdx;
+    el.classList.toggle('sel',sel);
+    el.setAttribute('aria-selected',String(sel));
+    el.setAttribute('tabindex', sel?'0':'-1');
+  });
+}
+function focusContractRow(idx){
+  const rows=document.querySelectorAll('#contract-list .lst-row');
+  if(rows[idx]) rows[idx].focus();
+}
+function selectContract(idx,opts){
   const r=contractRenderedRows[idx]; if(!r) return;
   selContractId=g(r,contractHi,'contract').trim();
-  document.querySelectorAll('#contract-list .lst-row').forEach((el,i)=>{
-    el.classList.toggle('sel',i===idx); el.setAttribute('aria-selected',String(i===idx));
-  });
+  applyContractRowStates(idx);
   renderContractDetail(idx);
+  if(opts&&opts.focus) focusContractRow(idx);
 }
 function clearContractDetail(){
   const d=document.getElementById('contract-detail'); if(d) d.innerHTML='';
   const o=document.getElementById('overview-default'); if(o) o.style.display='';
+}
+// Selection is no longer a one-way door: Escape, or activating the already-selected row, comes back
+// here. Restores the default Business Snapshot / Execution Rate / Buyer Concentration panels and, on
+// request, moves focus to the list's new tab stop rather than dropping it to <body>.
+function clearContractSelection(moveFocus){
+  selContractId=null;
+  clearContractDetail();
+  const rows=document.querySelectorAll('#contract-list .lst-row');
+  rows.forEach((el,i)=>{
+    el.classList.remove('sel');
+    el.setAttribute('aria-selected','false');
+    el.setAttribute('tabindex', i===0?'0':'-1');
+  });
+  if(moveFocus && rows[0]) rows[0].focus();
 }
 function renderContractDetail(idx){
   const hi=contractHi, r=contractRenderedRows[idx];
@@ -768,7 +981,8 @@ function renderContractDetail(idx){
     <div class="dtl-hd">
       <div><div class="dtl-id">${esc(id)}</div><div class="dtl-buyer">${esc(buyer)}${route?' &nbsp;·&nbsp; '+esc(route):''}</div></div>
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-        <span class="signal" style="color:${sig.color}"><span class="signal-dot" style="background:${sig.color}"></span>${sig.label}</span>
+        <span class="signal" style="color:${sig.color}"><span class="signal-dot ${sig.cls}" style="--dot-c:${sig.color}"></span>${sig.label}</span>
+        <button class="copy-btn" onclick="clearContractSelection(true)" title="Back to Business Snapshot / Execution Rate / Buyer Concentration">&larr; Overview</button>
         <button class="copy-btn" onclick="copyContractRow(${idx},'d')" title="Copy status summary">Copy</button>
         <span class="copy-fb" id="copy-fb-${idx}"></span>
       </div>
@@ -818,11 +1032,11 @@ function renderContractsMobile(hi,data){
           <span class="contract-id">${esc(id)}</span>
           <div style="display:flex;align-items:center;gap:9px">
             <button class="copy-btn" onclick="event.stopPropagation();copyContractRow(${idx},'m')" onkeydown="event.stopPropagation()" title="Copy status summary">Copy</button>
-            <span class="signal" style="color:${sig.color}"><span class="signal-dot" style="background:${sig.color}"></span>${sig.label}</span>
+            <span class="signal" style="color:${sig.color}"><span class="signal-dot ${sig.cls}" style="--dot-c:${sig.color}"></span>${sig.label}</span>
             <span class="chevron" id="mchev-${idx}" style="transition:transform .2s">▶</span>
           </div>
         </div>
-        <div class="m-card-buyer">${esc(buyer)}${route?` &nbsp;·&nbsp; <span style="font-size:10.5px">${esc(route)}</span>`:''}</div>
+        <div class="m-card-buyer">${esc(buyer)}${route?` &nbsp;·&nbsp; <span style="font-size:var(--t-sm)">${esc(route)}</span>`:''}</div>
         <div class="progress-wrap"><div class="progress-fill" style="width:0" data-grow="${sp}%"></div></div>
         <div class="progress-pct" style="margin-top:4px">${fmt(smt)} / ${fmt(cmt)} MT &nbsp;(${sp}%)</div>
         <div class="m-card-fcl">
@@ -836,9 +1050,9 @@ function renderContractsMobile(hi,data){
         ${fin?`<div class="expand-section-label">Financial — Sheet</div><div class="expand-text">${esc(fin)}${terms?'\n\nTerms: '+esc(terms):''}</div>`:''}
         <div class="m-stats">
           ${val?`<div><div class="m-stat-l">Contract Value</div><div class="m-stat-v">$${val.replace(/[^0-9.]/g,'')}m</div></div>`:''}
-          <div><div class="m-stat-l">Contracted MT</div><div class="m-stat-v">${fmt(cmt)}</div></div>
-          <div><div class="m-stat-l">FCL Invoiced</div><div class="m-stat-v">${fclI}</div></div>
-          <div><div class="m-stat-l">FCL Pend. Pay</div><div class="m-stat-v">${fclPd>0?fclPd+' FCL':'—'}</div></div>
+          <div><div class="m-stat-l">Contracted <abbr title="Metric Tonnes">MT</abbr></div><div class="m-stat-v">${fmt(cmt)}</div></div>
+          <div><div class="m-stat-l"><abbr title="Full Container Load">FCL</abbr> Invoiced</div><div class="m-stat-v">${fclI}</div></div>
+          <div><div class="m-stat-l"><abbr title="Full Container Load">FCL</abbr> Pend. Pay</div><div class="m-stat-v">${fclPd>0?fclPd+' FCL':'—'}</div></div>
         </div>
       </div></div>
     </div>`;
@@ -908,9 +1122,9 @@ function parseCommission(rows){ if(rows.length<2)return{hi:{},data:[]};
 }
 function getCommSignal(status){
   const s=(status||'').toLowerCase();
-  if(s.includes('paid')) return{label:status||'—',color:'#1e6e2e'};
-  if(s.includes('partial')) return{label:status||'—',color:'#8a5c00'};
-  return{label:status||'—',color:'#666'};
+  if(s.includes('paid')) return{label:status||'—',color:'var(--green)',cls:'st-done'};
+  if(s.includes('partial')) return{label:status||'—',color:'var(--amber)',cls:'st-partial'};
+  return{label:status||'—',color:'var(--ink-2)',cls:'st-none'};
 }
 let prevCommStatVals=null;
 // The broker position. Payable is live from the sheet; paid is the frozen remittance record. The
@@ -960,8 +1174,8 @@ function renderCommProcessing(hi,data){
   const body=rows.map(r=>{
     const id=g(r,hi,'schepens no.').trim(), buyer=g(r,hi,'buyer').trim();
     const pqty=num(g(r,hi,'qty paid (mt)')), amt=num(g(r,hi,'final payable ($)'));
-    return `<tr><td class="contract-id" style="font-size:11px">${esc(id)}</td>
-      <td style="font-size:11.5px">${esc(buyer)}</td>
+    return `<tr><td class="contract-id" style="font-size:var(--t-sm)">${esc(id)}</td>
+      <td style="font-size:var(--t-sm)">${esc(buyer)}</td>
       <td class="mt-sub">${fmt(pqty)}</td>
       <td class="mt-sub">${fmtUsd(amt)}</td></tr>`;
   }).join('');
@@ -969,7 +1183,7 @@ function renderCommProcessing(hi,data){
   const covered=PAYMENTS_MADE.reduce((s,p)=>s+p.settlementAmountUsd,0)>=totalAmt-1;
   setFold('fs-proc', rows.length+' invoices · '+fmtUsd(totalAmt)+(covered?' · settled':' · unsettled'));
   document.getElementById('comm-processing-total').innerHTML=
-    `<td colspan="2" style="font-weight:600;font-size:11px">Total</td>
+    `<td colspan="2" style="font-weight:600;font-size:var(--t-sm)">Total</td>
      <td class="mt-sub" style="font-weight:600">${fmt(totalQty)}</td>
      <td class="mt-sub" style="font-weight:600">${fmtUsd(totalAmt)}</td>`;
 }
@@ -1052,7 +1266,7 @@ function paidBadge(schepensNo){
 }
 function goToPaymentsMade(){
   const sec=document.getElementById('payments-made'); if(!sec) return;
-  clearCommDetail();                                    // the panel lives on the default surface
+  clearCommSelection(false);                            // the panel lives on the default surface
   const fold=sec.closest('details.fold'); if(fold) fold.open=true;
   sec.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
   sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash');
@@ -1116,31 +1330,59 @@ function renderCommissionList(hi,data){
     clearCommDetail(); return;
   }
   const selIdx=selCommKey?data.findIndex((r,i)=>g(r,hi,'schepens no.').trim()+'|'+i===selCommKey):-1;
+  const activeIdx=selIdx>=0?selIdx:0;
+  const hadFocus=lst.contains(document.activeElement);
   lst.innerHTML=data.map((r,idx)=>{
     const id=g(r,hi,'schepens no.').trim(), buyer=g(r,hi,'buyer').trim();
     const variance=g(r,hi,'variance ($)').trim(), status=g(r,hi,'status').trim();
     const csig=getCommSignal(status);
-    return `<div class="lst-row${idx===selIdx?' sel':''}" role="option" aria-selected="${idx===selIdx}" tabindex="0" onclick="selectComm(${idx})" onkeydown="onExpandKey(event,()=>selectComm(${idx}))">
+    return `<div class="lst-row${idx===selIdx?' sel':''}" role="option" aria-selected="${idx===selIdx}" tabindex="${idx===activeIdx?'0':'-1'}" onclick="activateListRow('commission',${idx})" onkeydown="onListKeydown(event,'commission',${idx})">
       <div class="lst-main">
-        <div class="lst-top"><span class="lst-id">${esc(id)}</span><span class="signal-dot" style="background:${csig.color}" title="${esc(csig.label)}"></span>${paidBadge(id)}</div>
-        <div class="lst-sub">${esc(buyer)}</div>
+        <div class="lst-top"><span class="lst-id">${esc(id)}</span><span class="signal-dot ${csig.cls}" style="--dot-c:${csig.color}" aria-hidden="true"></span>${paidBadge(id)}</div>
+        <div class="lst-sub-row">
+          <span class="lst-sub">${esc(buyer)}</span>
+          <span class="lst-status trunc" style="--dot-c:${csig.color}" title="${esc(csig.label)}" aria-label="${esc(csig.label)}">${esc(csig.label)}</span>
+        </div>
       </div>
       <div class="lst-right"><span class="lst-pct${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</span></div>
     </div>`;
   }).join('');
+  if(hadFocus){ const rows=lst.querySelectorAll('.lst-row'); if(rows[activeIdx]) rows[activeIdx].focus(); }
   if(selIdx>=0) renderCommissionDetail(selIdx); else clearCommDetail();
 }
-function selectComm(idx){
+function applyCommRowStates(activeIdx){
+  document.querySelectorAll('#commission-list .lst-row').forEach((el,i)=>{
+    const sel=i===activeIdx;
+    el.classList.toggle('sel',sel);
+    el.setAttribute('aria-selected',String(sel));
+    el.setAttribute('tabindex', sel?'0':'-1');
+  });
+}
+function focusCommRow(idx){
+  const rows=document.querySelectorAll('#commission-list .lst-row');
+  if(rows[idx]) rows[idx].focus();
+}
+function selectComm(idx,opts){
   const r=commRenderedRows[idx]; if(!r) return;
   selCommKey=g(r,commHi,'schepens no.').trim()+'|'+idx;
-  document.querySelectorAll('#commission-list .lst-row').forEach((el,i)=>{
-    el.classList.toggle('sel',i===idx); el.setAttribute('aria-selected',String(i===idx));
-  });
+  applyCommRowStates(idx);
   renderCommissionDetail(idx);
+  if(opts&&opts.focus) focusCommRow(idx);
 }
 function clearCommDetail(){
   const d=document.getElementById('commission-detail'); if(d) d.innerHTML='';
   const o=document.getElementById('commission-default'); if(o) o.style.display='';
+}
+function clearCommSelection(moveFocus){
+  selCommKey=null;
+  clearCommDetail();
+  const rows=document.querySelectorAll('#commission-list .lst-row');
+  rows.forEach((el,i)=>{
+    el.classList.remove('sel');
+    el.setAttribute('aria-selected','false');
+    el.setAttribute('tabindex', i===0?'0':'-1');
+  });
+  if(moveFocus && rows[0]) rows[0].focus();
 }
 function renderCommissionDetail(idx){
   const hi=commHi, r=commRenderedRows[idx];
@@ -1159,7 +1401,8 @@ function renderCommissionDetail(idx){
     <div class="dtl-hd">
       <div><div class="dtl-id">${esc(id)}</div><div class="dtl-buyer">${esc(buyer)}${contractNo?'<br>China Contract No.: '+esc(contractNo):''}</div></div>
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-        <span class="signal" style="color:${csig.color}"><span class="signal-dot" style="background:${csig.color}"></span>${esc(csig.label)}</span>${paidBadge(id)}
+        <button class="copy-btn" onclick="clearCommSelection(true)" title="Back to Commission payable by invoice">&larr; Overview</button>
+        <span class="signal" style="color:${csig.color}"><span class="signal-dot ${csig.cls}" style="--dot-c:${csig.color}"></span>${esc(csig.label)}</span>${paidBadge(id)}
       </div>
     </div>
     <div class="dtl-grid">
@@ -1171,7 +1414,7 @@ function renderCommissionDetail(idx){
     <div class="dtl-grid">
       <div><div class="dtl-l">Demanded</div><div class="dtl-v">${esc(demanded)||'—'}</div></div>
       <div><div class="dtl-l">Earned / payable</div><div class="dtl-v">${esc(earned)||'—'}</div></div>
-      <div><div class="dtl-l">Variance</div><div class="dtl-v${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</div></div>
+      <div><div class="dtl-l"><abbr title="Demanded minus earned — a gap between what the broker asked for and what's currently payable">Variance</abbr></div><div class="dtl-v${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</div></div>
     </div>
     <div class="expand-section-label">Notes</div>
     <div class="expand-text comm-notes">${esc(notes)||'—'}</div>
@@ -1199,7 +1442,7 @@ function renderCommissionMobile(hi,data){
         <div class="m-card-top">
           <span class="contract-id">${esc(id)}${paidBadge(id)}</span>
           <div style="display:flex;align-items:center;gap:9px">
-            <span class="signal" style="color:${csig.color}"><span class="signal-dot" style="background:${csig.color}"></span>${esc(csig.label)}</span>
+            <span class="signal" style="color:${csig.color}"><span class="signal-dot ${csig.cls}" style="--dot-c:${csig.color}"></span>${esc(csig.label)}</span>
             <span class="chevron" id="mcommchev-${idx}" style="transition:transform .2s">▶</span>
           </div>
         </div>
@@ -1208,7 +1451,7 @@ function renderCommissionMobile(hi,data){
           <div><div class="m-stat-l">Qty (C/S/P)</div><div class="m-stat-v" title="Contracted / Shipped / Paid">${fmt(cqty)} / ${fmt(sqty)} / ${fmt(pqty)}</div></div>
           <div><div class="m-stat-l">Demanded</div><div class="m-stat-v">${esc(demanded)||'—'}</div></div>
           <div><div class="m-stat-l">Earned</div><div class="m-stat-v">${esc(earned)||'—'}</div></div>
-          <div><div class="m-stat-l">Variance</div><div class="m-stat-v${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</div></div>
+          <div><div class="m-stat-l"><abbr title="Demanded minus earned — a gap between what the broker asked for and what's currently payable">Variance</abbr></div><div class="m-stat-v${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</div></div>
         </div>
       </div>
       <div class="m-card-dtl" id="mcomm-${idx}"><div class="m-card-dtl-inner">
@@ -1228,7 +1471,12 @@ function toggleCommCard(idx){
 }
 
 function switchTab(name, skipHash){
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===name));
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    const active=b.dataset.tab===name;
+    b.classList.toggle('active', active);
+    b.setAttribute('aria-selected', String(active));
+    b.setAttribute('tabindex', active?'0':'-1');
+  });
   document.getElementById('tab-overview').classList.toggle('active', name==='overview');
   document.getElementById('tab-commission').classList.toggle('active', name==='commission');
   if(!skipHash) location.hash=name;
@@ -1238,6 +1486,22 @@ function switchTab(name, skipHash){
 function tabFromHash(){
   const h=(location.hash||'').replace('#','');
   return VALID_TABS.includes(h)?h:'overview';
+}
+// APG tabs pattern: Left/Right (and Home/End) move focus AND activate — switchTab already owns the
+// URL-hash logic above, this only drives which tab is focused/active.
+function onTabKeydown(e){
+  const tabs=[...document.querySelectorAll('.tab-btn')];
+  const idx=tabs.indexOf(e.target);
+  if(idx===-1) return;
+  let next;
+  if(e.key==='ArrowRight') next=(idx+1)%tabs.length;
+  else if(e.key==='ArrowLeft') next=(idx-1+tabs.length)%tabs.length;
+  else if(e.key==='Home') next=0;
+  else if(e.key==='End') next=tabs.length-1;
+  else return;
+  e.preventDefault();
+  switchTab(tabs[next].dataset.tab);
+  tabs[next].focus();
 }
 
 function renderAnalytics(hi,data,chi,cdata){
@@ -1254,15 +1518,21 @@ function renderAnalytics(hi,data,chi,cdata){
   const demanded=cp.demanded, earned=cp.earned;
   const payableRate=pct(earned,demanded);
 
+  // The outstanding-to-broker figure used to repeat here at display size — the same number as the
+  // fold digest three lines up (fs-snapshot, below) and, on the Commission tab, the actual hero KPI
+  // in renderCommStats. Two accent display figures on one screen is a failed view (spec principle 3);
+  // the fold digest already carries the headline, so this grid carries only the supporting detail, at
+  // the same ordinary body weight as every other cell in it — no accent colour, no display type.
   document.getElementById('analytics-snapshot').innerHTML=`
-    <div class="analytics-kpi num">${fmtUsd(Math.max(cp.outstanding,0))}</div>
-    <div class="analytics-kpi-sub">Still owed to the broker — commission earned less what has already been remitted${cp.last?`. <span class="chip chip-${cp.settled?'ok':'due'}">${cp.settled?'Settled':'Due'}</span> last paid <span class="num">${esc(fmtDate(cp.last.settlementDate))}</span> · <span class="num">${fmtUsd(cp.paid)}</span>`:''}</div>
     <div class="snapshot-grid">
       <div class="snapshot-col-label">Contracts</div>
       <div class="snapshot-col-label">Commission</div>
 
       <div><div class="snapshot-v">${shipPct}% shipped</div><div class="snapshot-sub">${fmt(shippedMT)} of ${fmt(contractedMT)} MT</div></div>
       <div><div class="snapshot-v">${payableRate}% of demand payable</div><div class="snapshot-sub">${fmtUsd(earned)} of ${fmtUsd(demanded)} demanded</div></div>
+
+      <div></div>
+      <div><div class="snapshot-v">${fmtUsd(Math.max(cp.outstanding,0))} ${cp.settled?'settled':'still owed'}</div><div class="snapshot-sub">${cp.last?`<span class="chip chip-${cp.settled?'ok':'due'}">${cp.settled?'Settled':'Due'}</span> last paid ${esc(fmtDate(cp.last.settlementDate))} · ${fmtUsd(cp.paid)} paid`:'no remittance on record'}</div></div>
     </div>`;
 
   // 2 — Execution rate per contract (sorted worst → best)
@@ -1274,7 +1544,7 @@ function renderAnalytics(hi,data,chi,cdata){
   const execHtml=`<table class="mini-table"><thead><tr><th>Contract</th><th></th><th>Rate</th></tr></thead><tbody>`
     +execRows.map(r=>{
       const pct=Math.round(r.rate), col=bandColor(pct), cls=bandClass(pct);
-      return `<tr><td class="contract-id" style="font-size:11px">${esc(r.id)}</td>
+      return `<tr><td class="contract-id" style="font-size:var(--t-sm)">${esc(r.id)}</td>
         <td><div class="exec-bar-wrap"><div class="exec-bar-fill" style="width:0;background:${col}" data-grow="${Math.min(pct,100)}%"></div></div></td>
         <td class="${cls}">${pct}%</td></tr>`;
     }).join('')+'</tbody></table>';
@@ -1293,12 +1563,12 @@ function renderAnalytics(hi,data,chi,cdata){
   const buyerRows=Object.entries(buyerMap)
     .map(([b,d])=>({b,contracted:d.c,pending:d.c-d.s,pct:d.c>0?Math.round((d.c-d.s)/d.c*100):0}))
     .sort((a,z)=>z.pending-a.pending);
-  const buyerHtml=`<table class="mini-table"><thead><tr><th>Buyer</th><th>Contracted</th><th>Pending MT</th><th>% Remaining</th></tr></thead><tbody>`
+  const buyerHtml=`<table class="mini-table"><thead><tr><th>Buyer</th><th>Contracted</th><th>Pending <abbr title="Metric Tonnes">MT</abbr></th><th>% Remaining</th></tr></thead><tbody>`
     +buyerRows.map(r=>`<tr tabindex="0" role="button" data-buyer="${esc(r.b)}" aria-label="Filter contracts by ${esc(r.b)}">
-      <td style="font-size:11.5px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.b)}</td>
-      <td style="font-family:var(--font-num);font-size:10px">${fmt(Math.round(r.contracted))}</td>
-      <td style="font-family:var(--font-num);font-size:10px">${fmt(Math.round(r.pending))}</td>
-      <td style="font-family:var(--font-num);font-size:10px;color:var(--grey-4)">${r.pct}%</td>
+      <td style="font-size:var(--t-sm);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r.b)}</td>
+      <td style="font-family:var(--font-num);font-size:var(--t-sm)">${fmt(Math.round(r.contracted))}</td>
+      <td style="font-family:var(--font-num);font-size:var(--t-sm)">${fmt(Math.round(r.pending))}</td>
+      <td style="font-family:var(--font-num);font-size:var(--t-sm);color:var(--grey-4)">${r.pct}%</td>
     </tr>`).join('')+'</tbody></table>';
   document.getElementById('analytics-buyer').innerHTML=buyerHtml;
 
@@ -1336,9 +1606,13 @@ async function loadData(){
     dash.style.display='flex'; dash.classList.add('ready');
     if(firstLoad){ dash.classList.add('show'); syncFolds(); }
     const now=new Date();
+    const nowStamp=now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
     document.getElementById('last-updated').innerHTML='Last updated<br>'+
-      now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' &nbsp;'+
-      now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      now.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' &nbsp;'+nowStamp;
+    // Only announce actual refreshes, not the very first load (the whole page just appeared — nothing
+    // for a screen reader to diff against yet).
+    if(hasLoadedOnce) announce('Data updated '+nowStamp);
+    errorAnnounced=false;
     hasLoadedOnce=true; lastSuccessAt=now;
     secs=REFRESH_SECS; countdownLabel='Next refresh in '; clearInterval(countdownInterval); startCountdown();
   }catch(e){
@@ -1351,11 +1625,15 @@ async function loadData(){
       em.innerHTML=`<span class="err-text">Refresh failed (${esc(e.message)}) — showing data from ${stamp}</span>`+
         `<button class="refresh-btn" onclick="loadData()">↻ Retry</button>`;
       em.style.display='flex';
+      // Retries every 30s while offline would otherwise repeat this announcement forever — say it once
+      // per failure streak, not once per retry, and reset the flag the moment a refresh next succeeds.
+      if(!errorAnnounced){ announce('Refresh failed — showing data from '+stamp+'.'); errorAnnounced=true; }
     }else{
       em.classList.remove('inline');
       em.innerHTML=`<div>Could not load data: ${esc(e.message)}</div>`+
         `<button class="refresh-btn" style="margin-top:14px" onclick="loadData()">↻ Retry</button>`;
       em.style.display='block';
+      if(!errorAnnounced){ announce('Could not load data: '+e.message); errorAnnounced=true; }
     }
     secs=RETRY_SECS; countdownLabel='Retrying in '; clearInterval(countdownInterval); startCountdown();
   }
@@ -1383,6 +1661,16 @@ document.getElementById('analytics-buyer').addEventListener('keydown',e=>{
   e.preventDefault(); goToBuyer(row.dataset.buyer);
 });
 window.addEventListener('hashchange',()=>switchTab(tabFromHash(),true));
+// Escape is the other way selection un-does itself (besides toggling the selected row): wherever
+// focus is within the active tab — a list row, the detail pane's Copy/Back buttons, a fold — Escape
+// clears whatever is selected on that tab and returns focus to the list's tab stop.
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape') return;
+  const activeTab=document.querySelector('.tab-panel.active');
+  if(!activeTab) return;
+  if(activeTab.id==='tab-overview'&&selContractId!==null){ e.preventDefault(); clearContractSelection(true); }
+  else if(activeTab.id==='tab-commission'&&selCommKey!==null){ e.preventDefault(); clearCommSelection(true); }
+});
 // Remember folds the user opened/closed by hand so a resize doesn't undo their choice.
 document.querySelectorAll('details.fold').forEach(d=>d.addEventListener('toggle',()=>{ if(isNarrow()) d.dataset.userSet='1'; }));
 let _rzTimer=null;
@@ -1391,7 +1679,7 @@ window.addEventListener('resize',()=>{
   _rzTimer=setTimeout(()=>{
     // Crossing into phone width drops any master/detail selection — on a phone, record detail comes
     // from the expanding cards, not the detail pane, so a stale selection would hide the defaults.
-    if(isNarrow()){ selContractId=null; selCommKey=null; clearContractDetail(); clearCommDetail(); }
+    if(isNarrow()){ clearContractSelection(false); clearCommSelection(false); }
     syncFolds();
   },150);
 });
