@@ -188,6 +188,14 @@
   #error-msg .err-text { flex:1; }
   #dashboard { display:none; }
 
+  /* Update bar — a tab left open runs the code it booted with forever (see api/data.js). When the
+     serving deployment changes underneath it, say so rather than letting stale UI look like a bug. */
+  .update-bar { display:none; align-items:center; justify-content:space-between; gap:14px;
+    padding:9px var(--s6); background:var(--accent-soft); border-bottom:1px solid var(--accent);
+    font-family:var(--font-num); font-size:var(--t-sm); color:var(--ink); }
+  .update-bar.show { display:flex; }
+  .update-bar .refresh-btn { background:var(--accent); }
+
   .footer { padding:14px var(--s6); border-top:1px solid var(--grey-2); font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-3); display:flex; justify-content:space-between; }
   .countdown { color:var(--grey-4); }
 
@@ -484,6 +492,7 @@
     /* Footer */
     .footer { padding:10px var(--s4); flex-direction:column; gap:3px; font-size:var(--t-micro); }
     #error-msg.inline { padding:9px var(--s4); gap:10px; font-size:var(--t-sm); }
+    .update-bar { padding:9px var(--s4); gap:10px; }
   }
 
   /* ── First-load reveal (plays once, not on auto-refresh) ── */
@@ -521,6 +530,11 @@
       <div class="last-updated" id="last-updated">—</div>
       <button class="refresh-btn" id="refresh-btn" onclick="loadData()">↻ Refresh</button>
     </div>
+  </div>
+
+  <div class="update-bar" id="update-bar" role="status">
+    <span>A newer version of this dashboard is available.</span>
+    <button class="refresh-btn" onclick="location.reload()">&#8635; Reload</button>
   </div>
 
   <nav class="tabs" role="tablist" aria-label="Dashboard sections">
@@ -667,6 +681,18 @@ const PAID_CONTRACT_NUMS = new Set(PAYMENTS_MADE.flatMap(p=>p.lines.map(l=>l.con
 
 let countdownInterval=null, secs=REFRESH_SECS, countdownLabel='Next refresh in ';
 let hasLoadedOnce=false, lastSuccessAt=null, errorAnnounced=false;
+// Build identity this tab booted with. Set from the first successful fetch; every later fetch
+// compares against it, so a deploy that lands while the tab is open surfaces instead of silently
+// leaving old markup on screen with fresh numbers rendered into it.
+let bootBuild=null, updateOffered=false;
+function checkBuild(build){
+  if(!build) return;
+  if(bootBuild===null){ bootBuild=build; return; }
+  if(build===bootBuild||updateOffered) return;
+  updateOffered=true;
+  const bar=document.getElementById('update-bar'); if(bar) bar.classList.add('show');
+  announce('A newer version of this dashboard is available. Reload to get it.');
+}
 // The one assistive-tech equivalent of flashChanged()'s visual pulse: a terse, infrequent polite
 // announcement — one per successful refresh, and (via errorAnnounced) only once per failure streak
 // rather than on every 30s retry — so a screen-reader user learns the data changed, or is stale,
@@ -1623,7 +1649,7 @@ async function loadData(){
   try{
     const res=await fetch('/api/data?t='+Date.now());
     if(!res.ok) throw new Error('Server returned '+res.status);
-    const {summary,contract,commission}=await res.json();
+    const {summary,contract,commission,build}=await res.json();
     const {hi,data}=parseContracts(parseCSV(contract));
     let uninvoicedMT=0;
     data.forEach(r=>{ uninvoicedMT+=(num(g(r,hi,'fcl shipped'))-num(g(r,hi,'fcl invoiced')))*MT_PER_FCL; });
@@ -1651,6 +1677,7 @@ async function loadData(){
     // for a screen reader to diff against yet).
     if(hasLoadedOnce) announce('Data updated '+nowStamp);
     errorAnnounced=false;
+    checkBuild(build);
     hasLoadedOnce=true; lastSuccessAt=now;
     secs=REFRESH_SECS; countdownLabel='Next refresh in '; clearInterval(countdownInterval); startCountdown();
   }catch(e){
