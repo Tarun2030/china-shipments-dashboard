@@ -309,7 +309,7 @@
      ACTIVE / PARTIAL / DUE / DONE / PAID) always fit; commission statuses come straight off the sheet
      and can run long, so .trunc caps + ellipsizes them while the full text stays on title/aria-label. */
   .lst-status { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.06em; text-transform:uppercase; color:var(--dot-c); flex-shrink:0; white-space:nowrap; }
-  .lst-status.trunc { max-width:78px; overflow:hidden; text-overflow:ellipsis; }
+  .lst-status.trunc { max-width:104px; overflow:hidden; text-overflow:ellipsis; }
   .lst-right { display:flex; align-items:center; gap:var(--s2); flex-shrink:0; }
   .lst-mini { width:44px; height:4px; background:var(--grey-2); }
   .lst-mini-fill { height:4px; background:var(--fill-c); transition:width .5s var(--ease-out-quart); }
@@ -982,7 +982,7 @@ function renderContractDetail(idx){
       <div><div class="dtl-id">${esc(id)}</div><div class="dtl-buyer">${esc(buyer)}${route?' &nbsp;·&nbsp; '+esc(route):''}</div></div>
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
         <span class="signal" style="color:${sig.color}"><span class="signal-dot ${sig.cls}" style="--dot-c:${sig.color}"></span>${sig.label}</span>
-        <button class="copy-btn" onclick="clearContractSelection(true)" title="Back to Business Snapshot / Execution Rate / Buyer Concentration">&larr; Overview</button>
+        <button class="copy-btn" onclick="clearContractSelection(true)" title="Back to Business Snapshot / Execution Rate / Buyer Concentration">&larr; Summary</button>
         <button class="copy-btn" onclick="copyContractRow(${idx},'d')" title="Copy status summary">Copy</button>
         <span class="copy-fb" id="copy-fb-${idx}"></span>
       </div>
@@ -1120,11 +1120,21 @@ function parseCommission(rows){ if(rows.length<2)return{hi:{},data:[]};
   data.sort((a,b)=>num(g(b,hi,'variance ($)'))-num(g(a,hi,'variance ($)'))); // biggest problem first
   return{hi,data};
 }
+// Sheet status strings run long ("Shipped & Paid" is 14 chars) and the master-list column is narrow,
+// so clipping them mid-string hid the one word that mattered — "SHIPPED &…" told you nothing. These
+// short forms keep the meaning in the visible text; anything unrecognised falls through to the full
+// label and is ellipsized as a safety net, with the untruncated string always on title/aria-label.
+const COMM_ABBR={'shipped & paid':'PAID','no commission':'NO COMM','not shipped':'UNSHIPPED'};
+function commAbbr(status){
+  const s=(status||'').toLowerCase().trim();
+  return COMM_ABBR[s]||status||'—';
+}
 function getCommSignal(status){
   const s=(status||'').toLowerCase();
-  if(s.includes('paid')) return{label:status||'—',color:'var(--green)',cls:'st-done'};
-  if(s.includes('partial')) return{label:status||'—',color:'var(--amber)',cls:'st-partial'};
-  return{label:status||'—',color:'var(--ink-2)',cls:'st-none'};
+  const base={label:status||'—',abbr:commAbbr(status)};
+  if(s.includes('paid')) return{...base,color:'var(--green)',cls:'st-done'};
+  if(s.includes('partial')) return{...base,color:'var(--amber)',cls:'st-partial'};
+  return{...base,color:'var(--ink-2)',cls:'st-none'};
 }
 let prevCommStatVals=null;
 // The broker position. Payable is live from the sheet; paid is the frozen remittance record. The
@@ -1262,7 +1272,7 @@ function copyPaymentBasis(idx){
 // Payments Made panel rather than duplicating its detail inline.
 function paidBadge(schepensNo){
   return PAID_CONTRACT_NUMS.has(baseContractNum(schepensNo))?
-    `<button class="paid-badge" onclick="event.stopPropagation();goToPaymentsMade()" onkeydown="event.stopPropagation()" title="Payment recorded — view in Payments Made">Paid</button>`:'';
+    `<button class="paid-badge" onclick="event.stopPropagation();goToPaymentsMade()" onkeydown="event.stopPropagation()" title="Covered by the recorded bank remittance — view in Payments Made">Remitted</button>`:'';
 }
 function goToPaymentsMade(){
   const sec=document.getElementById('payments-made'); if(!sec) return;
@@ -1341,7 +1351,7 @@ function renderCommissionList(hi,data){
         <div class="lst-top"><span class="lst-id">${esc(id)}</span><span class="signal-dot ${csig.cls}" style="--dot-c:${csig.color}" aria-hidden="true"></span>${paidBadge(id)}</div>
         <div class="lst-sub-row">
           <span class="lst-sub">${esc(buyer)}</span>
-          <span class="lst-status trunc" style="--dot-c:${csig.color}" title="${esc(csig.label)}" aria-label="${esc(csig.label)}">${esc(csig.label)}</span>
+          <span class="lst-status trunc" style="--dot-c:${csig.color}" title="${esc(csig.label)}" aria-label="${esc(csig.label)}">${esc(csig.abbr)}</span>
         </div>
       </div>
       <div class="lst-right"><span class="lst-pct${varFlag(variance)}">${variance&&variance!=='-'?esc(variance):'—'}</span></div>
@@ -1401,7 +1411,7 @@ function renderCommissionDetail(idx){
     <div class="dtl-hd">
       <div><div class="dtl-id">${esc(id)}</div><div class="dtl-buyer">${esc(buyer)}${contractNo?'<br>China Contract No.: '+esc(contractNo):''}</div></div>
       <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-        <button class="copy-btn" onclick="clearCommSelection(true)" title="Back to Commission payable by invoice">&larr; Overview</button>
+        <button class="copy-btn" onclick="clearCommSelection(true)" title="Back to Commission payable by invoice">&larr; Summary</button>
         <span class="signal" style="color:${csig.color}"><span class="signal-dot ${csig.cls}" style="--dot-c:${csig.color}"></span>${esc(csig.label)}</span>${paidBadge(id)}
       </div>
     </div>
@@ -1532,7 +1542,7 @@ function renderAnalytics(hi,data,chi,cdata){
       <div><div class="snapshot-v">${payableRate}% of demand payable</div><div class="snapshot-sub">${fmtUsd(earned)} of ${fmtUsd(demanded)} demanded</div></div>
 
       <div></div>
-      <div><div class="snapshot-v">${fmtUsd(Math.max(cp.outstanding,0))} ${cp.settled?'settled':'still owed'}</div><div class="snapshot-sub">${cp.last?`<span class="chip chip-${cp.settled?'ok':'due'}">${cp.settled?'Settled':'Due'}</span> last paid ${esc(fmtDate(cp.last.settlementDate))} · ${fmtUsd(cp.paid)} paid`:'no remittance on record'}</div></div>
+      <div><div class="snapshot-v">${cp.settled?'Nothing outstanding':cp.outstanding>0?fmtUsd(cp.outstanding)+' still owed':fmtUsd(-cp.outstanding)+' overpaid'}</div><div class="snapshot-sub">${cp.last?`<span class="chip chip-${cp.settled?'ok':'due'}">${cp.settled?'Settled':'Due'}</span> last paid ${esc(fmtDate(cp.last.settlementDate))} · ${fmtUsd(cp.paid)} paid`:'no remittance on record'}</div></div>
     </div>`;
 
   // 2 — Execution rate per contract (sorted worst → best)
