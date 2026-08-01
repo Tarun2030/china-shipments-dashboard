@@ -47,7 +47,7 @@
   .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
     clip:rect(0,0,0,0); white-space:nowrap; border:0; }
   /* Every figure on the page shares one rhythm: mono, tabular, so columns of numbers line up. */
-  .num, .kpi-v, .lst-pct, .lst-id, .metric-value, .comm-stat-v, .dtl-v, .dtl-id, .m-stat-v, .fcl-stage-v {
+  .num, .kpi-v, .lst-pct, .lst-id, .metric-value, .comm-stat-v, .dtl-v, .dtl-id, .m-stat-v, .fcl-step-v {
     font-family:var(--font-num); font-variant-numeric:tabular-nums; letter-spacing:-.015em; }
   /* Inline jargon definitions (FCL, MT, variance…) for outside readers — a dotted hairline rather than
      a glossary panel or a colour change; hover/focus/long-press surfaces the full term via the native
@@ -69,24 +69,30 @@
   .kpi-lead.is-settled .kpi-v { color:var(--ink); }
 
   /* FCL pipeline — shipped → invoiced → paid → pending are stages of ONE funnel, not four peer KPIs,
-     so they render as a connected sequence rather than a row of cards: hairline arrows carry the
-     flow, and ink steps down a shade per stage (full ink → ink-2 → ink-2 → ink-3) so the eye reads
-     "receding into not-yet-done" left to right, without spending colour on it. Subordinate in size to
-     both the hero % and the ordinary kpi figures around it (--t-lg, not --t-xl/--t-display). */
-  /* The pipeline used to be forced onto its own row (flex-basis:100%), which left the rail's top band
-     55% empty and pushed the contract list below the fold. It sits inline instead, filling the space
-     the hero and pending figure were leaving behind, separated by the same hairline the hero uses. */
+     so they render as a connected sequence rather than a row of cards, with ink stepping down a shade
+     per stage (full ink → ink-2 → ink-2 → ink-3) so the eye reads "receding into not-yet-done" without
+     spending colour on it. Subordinate in size to both the hero % and the ordinary kpi figures around
+     it (--t-lg, not --t-xl/--t-display).
+     The sequence used to run left-to-right with hairline arrows between the stages. It read badly at
+     the width the rail actually hands this block (~390px next to the hero and the pending figure, less
+     on a phone): seven columns of content needed ~520px, so the funnel wrapped mid-flow, and the
+     footnotes under "paid" and "pending" stretched their own columns until the arrows no longer sat
+     between the two numbers each one connects. The funnel descends instead — one row per stage, labels
+     left, figures right on a shared tabular column — which costs about 200px of width rather than 520,
+     lines every figure up on one edge so the drop from stage to stage is legible in the digits
+     themselves, and needs no second layout on a phone. */
   .fcl-pipe { flex:1 1 auto; min-width:0; padding-left:var(--s5); border-left:1px solid var(--rule); align-self:stretch; }
-  .fcl-seq { display:flex; align-items:center; flex-wrap:wrap; gap:var(--s2) 0; margin-top:var(--s2); }
-  .fcl-stage { display:flex; flex-direction:column; }
-  .fcl-stage-v { font-size:var(--t-lg); font-weight:500; color:var(--ink); line-height:1.1; }
-  .fcl-stage-2 .fcl-stage-v, .fcl-stage-3 .fcl-stage-v { color:var(--ink-2); }
-  .fcl-stage-4 .fcl-stage-v { color:var(--ink-3); }
-  .fcl-stage-l { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); margin-top:3px; }
-  .fcl-stage-s { font-family:var(--font-num); font-size:var(--t-micro); color:var(--ink-3); margin-top:1px; white-space:nowrap; }
-  .fcl-gap { display:flex; flex-direction:column; align-items:center; padding:0 var(--s3); color:var(--ink-3); align-self:flex-start; margin-top:1px; }
-  .fcl-arrow { font-size:var(--t-body); line-height:1.1; }
-  .fcl-gap-v { font-family:var(--font-num); font-size:var(--t-micro); color:var(--ink-3); white-space:nowrap; margin-top:2px; }
+  /* Three columns: stage name, footnote, figure. The middle column absorbs the slack as the rail grows,
+     keeping each footnote tucked against the figure it qualifies rather than stranded beside its label.
+     Baseline alignment (not centre) puts the 11px label, the 11px footnote and the 17px figure on one
+     line — that shared baseline per row is what the horizontal version could never hold. */
+  .fcl-seq { display:grid; grid-template-columns:max-content minmax(0,1fr) max-content; align-items:baseline;
+    column-gap:var(--s4); row-gap:6px; margin-top:var(--s3); max-width:440px; }
+  .fcl-step-l { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.08em; text-transform:uppercase; color:var(--ink-3); }
+  .fcl-step-s { font-family:var(--font-num); font-size:var(--t-micro); color:var(--ink-3); text-align:right; }
+  .fcl-step-v { font-size:var(--t-lg); font-weight:500; color:var(--ink); line-height:1.15; text-align:right; }
+  .fcl-t2, .fcl-t3 { color:var(--ink-2); }
+  .fcl-t4 { color:var(--ink-3); }
 
   /* Status chip — the only other place colour is allowed. */
   .chip { display:inline-block; font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.09em; text-transform:uppercase;
@@ -412,11 +418,11 @@
     .kpi-lead .kpi-v { font-size:var(--t-2xl); }
     .kpi-v { font-size:var(--t-lg); }
     .kpi-l { font-size:var(--t-micro); }
-    /* FCL pipeline — the rail becomes a 2-column grid on a phone; the sequence needs the full row to
-       stay legible, same treatment as the hero. */
+    /* FCL pipeline — the rail becomes a 2-column grid on a phone; the funnel takes the full row, same
+       treatment as the hero, and its own three columns then fit without wrapping. The footnote column
+       may wrap on a narrow phone, so it is right-aligned to stay tucked against its figure. */
     .fcl-pipe { grid-column:1/-1; }
-    .fcl-seq { gap:var(--s3) 0; }
-    .fcl-gap { padding:0 var(--s2); }
+    .fcl-seq { column-gap:var(--s3); max-width:none; }
 
     /* Header */
     .header { padding:11px var(--s4); }
@@ -774,20 +780,21 @@ function renderMetrics(m, uninvoicedMT){
   // FCL pipeline — shipped, invoiced, paid and payment-pending are four stages of ONE funnel
   // (contracted → shipped → invoiced → paid), not four peer metrics competing for equal billing. A
   // flat row of cards destroyed that sequence, and "FCL invoiced — of N shipped" duplicated the
-  // number the "FCL shipped" card already showed. Rendered as a single connected sequence instead:
-  // hairline arrows carry the flow, ink recedes a shade per stage, and the "Shipped, not invoiced" MT
-  // figure — which is really just the gap between the first two stages — now annotates that join
-  // instead of standing alone as a seventh peer card.
+  // number the "FCL shipped" card already showed. Rendered as one descending sequence instead: ink
+  // recedes a shade per stage, and the "Shipped, not invoiced" MT figure — which is really just the gap
+  // between the first two stages — annotates the invoiced row rather than standing alone as a seventh
+  // peer card. Each stage is three flat grid cells — name, footnote, figure — rather than a wrapper per
+  // stage, so every cell participates in the shared grid and each row holds one baseline.
+  const step=(label,val,sub,tone)=>`<div class="fcl-step-l">${label}</div>`
+    +`<div class="fcl-step-s">${sub||''}</div>`
+    +`<div class="fcl-step-v num${tone}">${fmt(val)}</div>`;
   const pipeHtml=`
-    <div class="kpi-l"><abbr title="Full Container Load">FCL</abbr> pipeline &nbsp;·&nbsp; shipped &rarr; invoiced &rarr; paid</div>
+    <div class="kpi-l"><abbr title="Full Container Load">FCL</abbr> pipeline &nbsp;·&nbsp; containers</div>
     <div class="fcl-seq">
-      <div class="fcl-stage"><div class="fcl-stage-v num">${fmt(fclShipped)}</div><div class="fcl-stage-l">Shipped</div></div>
-      <div class="fcl-gap" aria-hidden="true"><span class="fcl-arrow">&rarr;</span>${uninvoicedMT>0?`<span class="fcl-gap-v">${fmt(uninvoicedMT)} MT uninvoiced</span>`:''}</div>
-      <div class="fcl-stage fcl-stage-2"><div class="fcl-stage-v num">${fmt(fclInvoiced)}</div><div class="fcl-stage-l">Invoiced</div></div>
-      <div class="fcl-gap" aria-hidden="true"><span class="fcl-arrow">&rarr;</span></div>
-      <div class="fcl-stage fcl-stage-3"><div class="fcl-stage-v num">${fmt(fclPaid)}</div><div class="fcl-stage-l">Paid</div>${m['fcl paid']?.extra?`<div class="fcl-stage-s">${esc(m['fcl paid'].extra)}</div>`:''}</div>
-      <div class="fcl-gap" aria-hidden="true"><span class="fcl-arrow">&rarr;</span></div>
-      <div class="fcl-stage fcl-stage-4"><div class="fcl-stage-v num">${fmt(fclPending)}</div><div class="fcl-stage-l">Pending</div><div class="fcl-stage-s">awaiting collection</div></div>
+      ${step('Shipped',fclShipped,'','')}
+      ${step('Invoiced',fclInvoiced,uninvoicedMT>0?fmt(uninvoicedMT)+' MT still uninvoiced':'',' fcl-t2')}
+      ${step('Paid',fclPaid,m['fcl paid']?.extra?esc(m['fcl paid'].extra):'',' fcl-t3')}
+      ${step('Pending',fclPending,'awaiting collection',' fcl-t4')}
     </div>`;
   const pipeVal=[fclShipped,fclInvoiced,fclPaid,fclPending,uninvoicedMT].join('|');
   const strip=document.getElementById('metrics-strip');
