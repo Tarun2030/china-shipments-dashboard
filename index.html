@@ -764,7 +764,37 @@ let prevMetricVals=null;
 // rail is grouped the same way. mv() returns a number, mt() a formatted "134,560 MT".
 function mv(m,k){ return num(m[k]?.val||''); }
 function mt(m,k){ const v=m[k]?.val; return v?fmt(num(v))+' MT':'—'; }
-function renderMetrics(m, uninvoicedMT){
+// The buyer-side gap. Tonnage is real sheet data: the commission statement carries qty shipped and
+// qty paid per record, so the MT figure is a subtraction, not an estimate. The dollar figure is NOT
+// — no sheet here holds an amount-received-from-buyer column, so it is derived: unpaid tonnage
+// priced at each contract's own $/MT (contract value ÷ contracted MT), joined on the base contract
+// number, falling back to the blended book rate for rows the join misses. That is why the card
+// carries a permanent "derived at contract rate" note; the day the sheet gains a real received
+// column, delete the derivation and subtract instead of pricing.
+function buyerPosition(chi,cdata,hi,data){
+  const rate={}; let bookUsd=0, bookMt=0;
+  (data||[]).forEach(r=>{
+    const cmt=num(g(r,hi,'contracted mt'));
+    // 'value m ($)' is denominated in millions — the only place on the page that needs it as an
+    // absolute dollar figure rather than an "m" display string, hence the lone ×1e6 here.
+    const usd=num(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value'))*1e6;
+    bookUsd+=usd; bookMt+=cmt;
+    if(cmt>0&&usd>0) rate[baseContractNum(g(r,hi,'contract'))]=usd/cmt;
+  });
+  const blended=bookMt>0?bookUsd/bookMt:0;
+  let shippedMt=0, paidMt=0, unpaidMt=0, unpaidUsd=0;
+  (cdata||[]).forEach(r=>{
+    const s=num(g(r,chi,'qty shipped (mt)')), p=num(g(r,chi,'qty paid (mt)'));
+    shippedMt+=s; paidMt+=p;
+    // A record paid ahead of shipment is not credit against another contract's arrears — only
+    // positive gaps accumulate, so one over-payment can never mask tonnage owed elsewhere.
+    const gap=s-p; if(gap<=0) return;
+    unpaidMt+=gap;
+    unpaidUsd+=gap*(rate[baseContractNum(g(r,chi,'schepens no.'))]||blended);
+  });
+  return {shippedMt,paidMt,unpaidMt,unpaidUsd};
+}
+function renderMetrics(m, uninvoicedMT, bp){
   const contracted=mv(m,'total contracted (operational)'), shipped=mv(m,'shipped so far');
   const shipPct=pct(shipped,contracted);
   // The sheet-sourced contract value string flows straight into markup below, so it's escaped right
@@ -774,6 +804,13 @@ function renderMetrics(m, uninvoicedMT){
   const cards=[
     // Lead — the question this tab exists to answer: has what we sold actually moved?
     {lead:true, label:'Shipped of contracted', val:shipPct+'%', sub:heroSub, rawSub:true},
+    // The two the director asked for, placed directly after the lead: he picked the gap measures
+    // over both the cumulative total and the transaction ledger, so the rail answers "what is still
+    // open" before it answers "what has moved".
+    {label:'Shipped, not paid for', val:fmt(Math.round(bp.unpaidMt))+' MT',
+     sub:'buyer has paid for '+fmt(Math.round(bp.paidMt))+' of '+fmt(Math.round(bp.shippedMt))+' <abbr title="Metric Tonnes">MT</abbr> shipped', rawSub:true},
+    {label:'Still to come from buyer', val:fmtUsd(bp.unpaidUsd),
+     sub:'<abbr title="No amount-received column exists in the sheet — this prices the unpaid tonnage at each contract\'s own $/MT">derived at contract rate</abbr>', rawSub:true},
     {label:'Pending shipment', val:mt(m,'pending shipment'), sub:'still to move'},
   ];
   const fclShipped=mv(m,'fcl shipped'), fclInvoiced=mv(m,'fcl invoiced'), fclPaid=mv(m,'fcl paid'), fclPending=mv(m,'fcl payment pending');
@@ -1660,10 +1697,12 @@ async function loadData(){
     const {hi,data}=parseContracts(parseCSV(contract));
     let uninvoicedMT=0;
     data.forEach(r=>{ uninvoicedMT+=(num(g(r,hi,'fcl shipped'))-num(g(r,hi,'fcl invoiced')))*MT_PER_FCL; });
-    renderMetrics(parseSummary(parseCSV(summary)), uninvoicedMT);
+    // Commission is parsed before the rail renders, not after: the rail's buyer-gap cards are built
+    // from commission rows priced against contract rows, so both sheets must be in hand first.
+    const {hi:chi,data:cdata}=parseCommission(parseCSV(commission));
+    renderMetrics(parseSummary(parseCSV(summary)), uninvoicedMT, buyerPosition(chi,cdata,hi,data));
     contractHi=hi; contractData=data;
     applyContractFilterSort(); // re-applies any filter/sort already set — a refresh must not reset it
-    const {hi:chi,data:cdata}=parseCommission(parseCSV(commission));
     renderAnalytics(hi,data,chi,cdata);
     renderCommStats(chi,cdata);
     renderCommProcessing(chi,cdata);
