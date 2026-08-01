@@ -139,6 +139,53 @@
   .route-cell { font-size:var(--t-sm); color:var(--black); max-width:150px; line-height:1.4; }
   .mt-val { font-weight:500; } .mt-sub { font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-4); }
 
+  /* ── Working panel: the derivation behind the two buyer-gap cards ──
+     These two are the only figures on the rail whose method isn't self-evident from the sheet — one
+     is a subtraction across two tabs, the other is priced tonnage — so they alone are openable. The
+     panel is shared, not one per card, because the dollar figure IS the tonnage figure multiplied by
+     a rate; two panels would print the same table twice. Chrome stays minimal: a caret in the label
+     and a hairline that darkens when open. The rail must not become a row of boxes just because two
+     of its cards happen to be buttons. */
+  button.kpi { font:inherit; color:inherit; background:none; border:none; text-align:left; cursor:pointer;
+    border-bottom:1px solid transparent; padding-bottom:var(--s1); }
+  button.kpi .kpi-l, button.kpi .kpi-v, button.kpi .kpi-s { display:block; }
+  button.kpi:hover { border-bottom-color:var(--rule-strong); }
+  button.kpi:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+  button.kpi .kpi-l::after { content:'\203A'; margin-left:6px; display:inline-block; transition:transform .2s var(--ease-out-quart); }
+  button.kpi[aria-expanded="true"] { border-bottom-color:var(--ink); }
+  button.kpi[aria-expanded="true"] .kpi-l::after { transform:rotate(90deg); }
+
+  .working { margin-top:var(--s5); padding-top:var(--s4); border-top:1px solid var(--rule);
+    animation:fade-up .3s var(--ease-out-quart) both; }
+  .working[hidden] { display:none; }
+  .working-hd { display:flex; justify-content:space-between; align-items:baseline; gap:var(--s4); margin-bottom:var(--s4); }
+  .working-t { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); }
+  .working-x { font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-3); background:none; border:none; cursor:pointer; padding:2px 4px; }
+  .working-x:hover { color:var(--ink); }
+  .working-x:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  /* The chain states the arithmetic before any table, so the figure is explained even to someone who
+     never reads a row of it: shipped − paid = unpaid, priced at rate, equals the dollar card. */
+  .chain { display:flex; align-items:flex-end; gap:var(--s3); flex-wrap:wrap; margin-bottom:var(--s5); }
+  .chain-step .chain-v { font-family:var(--font-num); font-variant-numeric:tabular-nums; font-size:var(--t-lg); line-height:1.1; }
+  .chain-step .chain-l { display:block; font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.08em;
+    text-transform:uppercase; color:var(--ink-3); margin-top:var(--s1); }
+  .chain-op { font-family:var(--font-num); font-size:var(--t-lg); color:var(--ink-3); padding-bottom:18px; }
+  .chain-step.is-result .chain-v { color:var(--accent); }
+  /* Paid/unpaid as one bar per contract: green is settled tonnage, the remainder carries that row's
+     own status colour, so the table reads as a column of proportions before any number is parsed.
+     Colour never rides alone — the same status also has a shape in the signal dot beside the id. */
+  .split-bar { display:flex; height:5px; width:100%; min-width:60px; background:var(--rule); }
+  .split-paid { background:var(--green); height:100%; }
+  .split-gap { background:var(--dot-c); height:100%; }
+  .legend { display:flex; gap:var(--s4); flex-wrap:wrap; align-items:center; margin-top:var(--s4);
+    font-size:var(--t-sm); color:var(--ink-2); }
+  .legend-i { display:flex; align-items:center; gap:6px; }
+  .legend-sw { width:12px; height:5px; flex-shrink:0; }
+  .working-note { font-size:var(--t-sm); color:var(--ink-2); margin-top:var(--s3); line-height:1.5; max-width:62ch; }
+  .wk-table td.wk-bar { width:80px; }
+  .wk-table tfoot td { border-top:1px solid var(--rule-strong); border-bottom:none; font-weight:600; padding-top:var(--s2); }
+
   .progress-wrap { background:var(--grey-2); height:5px; width:100%; min-width:70px; }
   .progress-fill { background:var(--black); height:5px; transition:width .5s var(--ease-out-quart); }
   .progress-pct { font-family:var(--font-num); font-size:var(--t-sm); color:var(--grey-4); margin-top:var(--s1); }
@@ -444,6 +491,12 @@
     .analytics-panel:last-child { border-bottom:none; }
     .mini-table th { font-size:var(--t-micro); padding:var(--s1) var(--s1); }
     .mini-table td { font-size:var(--t-sm); padding:5px var(--s1); }
+    /* Working table on a phone: buyer, rate and the proportion bar are the three columns a reader
+       can reconstruct from the rest, so they drop first and the arithmetic columns survive intact. */
+    .wk-table .wk-buyer, .wk-table .wk-rate, .wk-table .wk-bar { display:none; }
+    .chain { gap:var(--s2) var(--s3); }
+    .chain-step .chain-v { font-size:var(--t-body); }
+    .chain-op { font-size:var(--t-body); padding-bottom:16px; }
 
     /* Contract section */
     .section { padding:var(--s3) 0 0; }
@@ -549,7 +602,8 @@
   </nav>
 
   <div class="tab-panel active" id="tab-overview" role="tabpanel" aria-labelledby="tab-btn-overview">
-    <div class="brief brief-rail"><div class="metrics" id="metrics-strip"></div></div>
+    <div class="brief brief-rail"><div class="metrics" id="metrics-strip"></div>
+      <div class="working" id="working-panel" role="region" aria-label="How the buyer-payment figures are worked out" hidden></div></div>
     <div class="split">
       <div class="pane pane-list">
         <div class="lst-hd">
@@ -772,27 +826,126 @@ function mt(m,k){ const v=m[k]?.val; return v?fmt(num(v))+' MT':'—'; }
 // carries a permanent "derived at contract rate" note; the day the sheet gains a real received
 // column, delete the derivation and subtract instead of pricing.
 function buyerPosition(chi,cdata,hi,data){
-  const rate={}; let bookUsd=0, bookMt=0;
+  const rate={}, label={}; let bookUsd=0, bookMt=0;
   (data||[]).forEach(r=>{
     const cmt=num(g(r,hi,'contracted mt'));
     // 'value m ($)' is denominated in millions — the only place on the page that needs it as an
     // absolute dollar figure rather than an "m" display string, hence the lone ×1e6 here.
     const usd=num(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value'))*1e6;
     bookUsd+=usd; bookMt+=cmt;
-    if(cmt>0&&usd>0) rate[baseContractNum(g(r,hi,'contract'))]=usd/cmt;
+    const key=baseContractNum(g(r,hi,'contract'));
+    label[key]={id:g(r,hi,'contract').trim(), buyer:g(r,hi,'buyer').trim()};
+    if(cmt>0&&usd>0) rate[key]=usd/cmt;
   });
   const blended=bookMt>0?bookUsd/bookMt:0;
-  let shippedMt=0, paidMt=0, unpaidMt=0, unpaidUsd=0;
+  // Commission rows are folded to one row per contract before the gap is taken. A contract split
+  // across statement lines (HK2899-1, HK2899-2) is one commercial position, so an over-payment on
+  // one of its lines nets against the other — but never against a different contract, which is why
+  // the positive-gap guard sits after the fold, not inside it.
+  const byContract={};
   (cdata||[]).forEach(r=>{
-    const s=num(g(r,chi,'qty shipped (mt)')), p=num(g(r,chi,'qty paid (mt)'));
-    shippedMt+=s; paidMt+=p;
-    // A record paid ahead of shipment is not credit against another contract's arrears — only
-    // positive gaps accumulate, so one over-payment can never mask tonnage owed elsewhere.
-    const gap=s-p; if(gap<=0) return;
-    unpaidMt+=gap;
-    unpaidUsd+=gap*(rate[baseContractNum(g(r,chi,'schepens no.'))]||blended);
+    const key=baseContractNum(g(r,chi,'schepens no.')); if(!key) return;
+    if(!byContract[key]) byContract[key]={key, shipped:0, paid:0, buyer:'', lines:0};
+    const c=byContract[key];
+    c.shipped+=num(g(r,chi,'qty shipped (mt)'));
+    c.paid+=num(g(r,chi,'qty paid (mt)'));
+    c.lines++;
+    const b=g(r,chi,'buyer').trim(); if(b&&!c.buyer) c.buyer=b;
   });
-  return {shippedMt,paidMt,unpaidMt,unpaidUsd};
+  let shippedMt=0, paidMt=0, unpaidMt=0, unpaidUsd=0;
+  const rows=Object.values(byContract).map(c=>{
+    shippedMt+=c.shipped; paidMt+=c.paid;
+    const gap=Math.max(c.shipped-c.paid,0);
+    const rt=rate[c.key]||blended, amount=gap*rt;
+    unpaidMt+=gap; unpaidUsd+=amount;
+    return {
+      id:label[c.key]?.id||('HK'+c.key), buyer:c.buyer||label[c.key]?.buyer||'—',
+      shipped:c.shipped, paid:c.paid, gap, rate:rt, amount,
+      ownRate:!!rate[c.key],
+      // Reuses the master list's own status vocabulary rather than inventing a second one for this
+      // panel: same words, same colours, same dot shapes as every other row on the page.
+      sig:getSignal(c.shipped,c.shipped,c.paid,gap),
+    };
+  }).filter(r=>r.shipped>0).sort((a,b)=>b.gap-a.gap||b.shipped-a.shipped);
+  return {shippedMt,paidMt,unpaidMt,unpaidUsd,rows,blended,anyFallback:rows.some(r=>r.gap>0&&!r.ownRate)};
+}
+// The panel is rebuilt on every poll but its open/closed state is not — a refresh must never close
+// something Tarun is reading, so the flag lives outside the render.
+let workingOpen=false, lastBp=null;
+function toggleWorking(force){
+  workingOpen = force==null ? !workingOpen : !!force;
+  const panel=document.getElementById('working-panel');
+  panel.hidden=!workingOpen;
+  document.querySelectorAll('#metrics-strip button.kpi').forEach(b=>b.setAttribute('aria-expanded',workingOpen?'true':'false'));
+  if(workingOpen){ announce('Working shown: how the buyer-payment figures are calculated.'); }
+}
+function renderWorking(bp){
+  const panel=document.getElementById('working-panel'); if(!panel) return;
+  const effRate=bp.unpaidMt>0?bp.unpaidUsd/bp.unpaidMt:0;
+  const step=(v,l,cls)=>`<div class="chain-step${cls||''}"><div class="chain-v">${v}</div><div class="chain-l">${l}</div></div>`;
+  const op=s=>`<div class="chain-op" aria-hidden="true">${s}</div>`;
+  const chain=`<div class="chain">
+    ${step(fmt(Math.round(bp.shippedMt))+' MT','shipped')}
+    ${op('&minus;')}
+    ${step(fmt(Math.round(bp.paidMt))+' MT','paid for by buyer')}
+    ${op('=')}
+    ${step(fmt(Math.round(bp.unpaidMt))+' MT','not paid for')}
+    ${op('&times;')}
+    ${step('$'+effRate.toFixed(2),'per MT, contract rate')}
+    ${op('=')}
+    ${step(fmtUsd(bp.unpaidUsd),'still to come',' is-result')}
+  </div>`;
+  const body=bp.rows.map(r=>{
+    const paidPct=r.shipped>0?r.paid/r.shipped*100:0;
+    return `<tr>
+      <td class="contract-id" style="font-size:var(--t-sm);white-space:nowrap">
+        <span class="signal-dot ${r.sig.cls}" style="--dot-c:${r.sig.color};display:inline-block;margin-right:6px" aria-hidden="true"></span>${esc(r.id)}</td>
+      <td class="wk-buyer" style="font-size:var(--t-sm)">${esc(r.buyer)}</td>
+      <td class="mt-sub">${fmt(Math.round(r.shipped))}</td>
+      <td class="mt-sub" style="color:var(--green)">${fmt(Math.round(r.paid))}</td>
+      <td class="mt-sub"${r.gap>0?` style="color:${r.sig.color}"`:''}>${r.gap>0?fmt(Math.round(r.gap)):'—'}</td>
+      <td class="mt-sub wk-rate">$${r.rate.toFixed(2)}${r.ownRate?'':'<abbr title="This contract has no value on the contract sheet, so the blended book rate is used">*</abbr>'}</td>
+      <td class="mt-sub"${r.gap>0?` style="color:${r.sig.color}"`:''}>${r.gap>0?fmtUsd(r.amount):'—'}</td>
+      <td class="wk-bar">
+        <div class="split-bar" role="img" aria-label="${esc(r.sig.label)}: ${Math.round(paidPct)}% of shipped tonnage paid for">
+          <div class="split-paid" style="width:${paidPct}%"></div>
+          <div class="split-gap" style="width:${100-paidPct}%;--dot-c:${r.sig.color}"></div>
+        </div></td>
+    </tr>`;
+  }).join('');
+  panel.innerHTML=`
+    <div class="working-hd">
+      <span class="working-t">How this is worked out</span>
+      <button type="button" class="working-x" onclick="toggleWorking(false)">Close &times;</button>
+    </div>
+    ${chain}
+    <table class="mini-table wk-table">
+      <thead><tr>
+        <th>Contract</th><th class="wk-buyer">Buyer</th><th>Shipped</th><th>Paid for</th>
+        <th>Not paid</th><th class="wk-rate">$/<abbr title="Metric Tonnes">MT</abbr></th><th>Still to come</th><th class="wk-bar">Paid share</th>
+      </tr></thead>
+      <tbody>${body||'<tr><td colspan="8" class="mt-sub">No shipped tonnage on record</td></tr>'}</tbody>
+      <tfoot><tr>
+        <td colspan="2">Total</td>
+        <td class="mt-sub">${fmt(Math.round(bp.shippedMt))}</td>
+        <td class="mt-sub" style="color:var(--green)">${fmt(Math.round(bp.paidMt))}</td>
+        <td class="mt-sub">${fmt(Math.round(bp.unpaidMt))}</td>
+        <td class="wk-rate"></td>
+        <td class="mt-sub">${fmtUsd(bp.unpaidUsd)}</td>
+        <td class="wk-bar"></td>
+      </tr></tfoot>
+    </table>
+    <div class="legend">
+      <span class="legend-i"><span class="legend-sw" style="background:var(--green)"></span>Paid for by buyer</span>
+      <span class="legend-i"><span class="legend-sw" style="background:var(--amber)"></span>Part paid</span>
+      <span class="legend-i"><span class="legend-sw" style="background:var(--red)"></span>Awaiting payment</span>
+    </div>
+    <p class="working-note"><strong>Tonnage is measured, money is derived.</strong> Shipped and paid-for tonnes come
+      straight from the commission statement. No sheet records the amount actually received from a buyer, so the
+      "still to come" column prices each contract's unpaid tonnes at that contract's own rate — its contract value
+      divided by its contracted tonnes${bp.anyFallback?', except where marked * (blended book rate of $'+bp.blended.toFixed(2)+'/MT)':''}.
+      It is an estimate of exposure, not an invoice.</p>`;
+  panel.hidden=!workingOpen;
 }
 function renderMetrics(m, uninvoicedMT, bp){
   const contracted=mv(m,'total contracted (operational)'), shipped=mv(m,'shipped so far');
@@ -807,10 +960,11 @@ function renderMetrics(m, uninvoicedMT, bp){
     // The two the director asked for, placed directly after the lead: he picked the gap measures
     // over both the cumulative total and the transaction ledger, so the rail answers "what is still
     // open" before it answers "what has moved".
-    {label:'Shipped, not paid for', val:fmt(Math.round(bp.unpaidMt))+' MT',
+    // Both open the same working panel — neither figure can be explained without the other.
+    {btn:true, label:'Shipped, not paid for', val:fmt(Math.round(bp.unpaidMt))+' MT',
      sub:'buyer has paid for '+fmt(Math.round(bp.paidMt))+' of '+fmt(Math.round(bp.shippedMt))+' <abbr title="Metric Tonnes">MT</abbr> shipped', rawSub:true},
-    {label:'Still to come from buyer', val:fmtUsd(bp.unpaidUsd),
-     sub:'<abbr title="No amount-received column exists in the sheet — this prices the unpaid tonnage at each contract\'s own $/MT">derived at contract rate</abbr>', rawSub:true},
+    {btn:true, label:'Still to come from buyer', val:fmtUsd(bp.unpaidUsd),
+     sub:'derived at contract rate', rawSub:true},
     {label:'Pending shipment', val:mt(m,'pending shipment'), sub:'still to move'},
   ];
   const fclShipped=mv(m,'fcl shipped'), fclInvoiced=mv(m,'fcl invoiced'), fclPaid=mv(m,'fcl paid'), fclPending=mv(m,'fcl payment pending');
@@ -835,13 +989,23 @@ function renderMetrics(m, uninvoicedMT, bp){
     </div>`;
   const pipeVal=[fclShipped,fclInvoiced,fclPaid,fclPending,uninvoicedMT].join('|');
   const strip=document.getElementById('metrics-strip');
-  strip.innerHTML=cards.map(c=>`
-    <div class="kpi${c.lead?' kpi-lead':''}"><div class="kpi-l">${esc(c.label)}</div>
-    <div class="kpi-v num">${esc(c.val)}</div>${c.sub?`<div class="kpi-s">${c.rawSub?c.sub:esc(c.sub)}</div>`:''}</div>`).join('')
+  // Openable cards render as real <button>s — not divs wearing a click handler — so they are
+  // focusable, Enter/Space-activated and announced as expandable without a line of extra script.
+  // Their children are spans, because a <button> may only contain phrasing content.
+  strip.innerHTML=cards.map(c=>{
+    const t=c.btn?'span':'div';
+    const open=c.btn?` type="button" class="kpi" aria-expanded="${workingOpen?'true':'false'}" aria-controls="working-panel" onclick="toggleWorking()"`:'';
+    const inner=`<${t} class="kpi-l">${esc(c.label)}</${t}>`
+      +`<${t} class="kpi-v num">${esc(c.val)}</${t}>`
+      +(c.sub?`<${t} class="kpi-s">${c.rawSub?c.sub:esc(c.sub)}</${t}>`:'');
+    return c.btn?`<button${open}>${inner}</button>`
+      :`<div class="kpi${c.lead?' kpi-lead':''}">${inner}</div>`;
+  }).join('')
     +`<div class="kpi fcl-pipe" role="group" aria-label="FCL container pipeline: ${fmt(fclShipped)} shipped, ${fmt(fclInvoiced)} invoiced, ${fmt(fclPaid)} paid, ${fmt(fclPending)} payment pending">${pipeHtml}</div>`;
   const allVals=cards.map(c=>c.val).concat([pipeVal]);
   flashChanged(strip.children, allVals, prevMetricVals);
   prevMetricVals=allVals;
+  lastBp=bp; renderWorking(bp);
 }
 // Derives the trailing unit text from a rendered value string (e.g. "134,560 MT" -> "MT",
 // "$3.56m" -> "m", "42%" -> "%") so a delta can be expressed in the same units.
@@ -1779,7 +1943,13 @@ document.addEventListener('keydown',e=>{
   if(e.key!=='Escape') return;
   const activeTab=document.querySelector('.tab-panel.active');
   if(!activeTab) return;
-  if(activeTab.id==='tab-overview'&&selContractId!==null){ e.preventDefault(); clearContractSelection(true); }
+  // The working panel is the innermost thing Escape can close on Overview, so it unwinds first —
+  // one Escape closes the working, a second clears the contract selection behind it.
+  if(activeTab.id==='tab-overview'&&workingOpen){
+    e.preventDefault(); toggleWorking(false);
+    const b=document.querySelector('#metrics-strip button.kpi'); if(b) b.focus();
+  }
+  else if(activeTab.id==='tab-overview'&&selContractId!==null){ e.preventDefault(); clearContractSelection(true); }
   else if(activeTab.id==='tab-commission'&&selCommKey!==null){ e.preventDefault(); clearCommSelection(true); }
 });
 // Remember folds the user opened/closed by hand so a resize doesn't undo their choice.
