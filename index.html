@@ -106,9 +106,18 @@
   .chip-s { font-size:var(--t-micro); color:var(--ink-3); margin-top:4px; line-height:1.4; }
   /* The funnel keeps its direction of travel inside one chip. The arrows are ink-3 so the eye reads
      three numbers with connectors, not five glyphs of equal weight. */
-  .chip-pipe .chip-v { display:inline-flex; align-items:baseline; gap:7px; }
-  .pipe-a { color:var(--ink-3); font-size:var(--t-sm); }
-  .pipe-n { font-variant-numeric:tabular-nums; }
+  /* Two explicit rows: figures on the first, their stage names directly beneath on the second, in
+     five columns (figure, arrow, figure, arrow, figure). Every child declares its own grid-column, so
+     the pairing is positional and cannot drift if a value's width changes. justify-items:center keeps
+     each name optically under its figure whether it is 510 or 2,935. */
+  .chip-pipe .chip-v { display:inline-grid; grid-template-columns:repeat(5,auto);
+    column-gap:9px; row-gap:3px; justify-items:center; align-items:baseline; }
+  .pipe-n { grid-row:1; font-variant-numeric:tabular-nums; }
+  .pipe-l { grid-row:2; font-family:var(--font-num); font-size:var(--t-micro); font-weight:400;
+    letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); }
+  .pipe-a { grid-row:1; color:var(--ink-3); font-size:var(--t-sm); font-weight:400; }
+  /* The qualifiers line up with the other chips' sub-lines rather than hanging off the taller grid. */
+  .chip-pipe .chip-s { margin-top:7px; }
   /* The Commission tab's own lead figure. It ranks above its three siblings but deliberately BELOW
      the locked hero band standing above it — one step up in size, still ink, no display serif. The
      tab's subject may lead its own rail; it may not outrank the page's two locked metrics. */
@@ -1044,16 +1053,28 @@ function renderMetrics(m, uninvoicedMT, bp){
     {label:'Pending shipment', val:mt(m,'pending shipment'), sub:'still to move'},
   ];
   // The funnel keeps its stage order inside one chip rather than expanding into four. Its detail
-  // (uninvoiced MT, in-progress containers) moves to the title attribute: it is reference-grade, and
-  // spending four rows of the rail on it is what made the hierarchy flat in the first place.
+  // (pending, in-progress, uninvoiced) sits on its own line beneath, because it qualifies the funnel
+  // rather than continuing it.
   const pipeDetail=[
+    fclPending>0?fmt(fclPending)+' pending':'',
     fclProgress>0?fmt(fclProgress)+' in progress':'',
     uninvoicedMT>0?fmt(uninvoicedMT)+' MT uninvoiced':'',
   ].filter(Boolean).join(' · ');
-  const pipeChip=`<div class="chip-stat chip-pipe" title="Shipped ${fmt(fclShipped)} → invoiced ${fmt(fclInvoiced)} → paid ${fmt(fclPaid)}; ${fmt(fclPending)} awaiting collection">
+  // Each stage label sits directly beneath its own figure. Previously the three labels ran as a list
+  // ("shipped · invoiced · paid") on a line that also carried three unrelated footnotes separated by
+  // pipes — so the reader had to count positions to learn which number was which, and four facts at
+  // two different levels shared one run-on line. A stage is a figure AND its name, so they are one
+  // grid cell apart, not one sentence apart.
+  const stage=(v,l,col)=>`<span class="pipe-n" style="grid-column:${col}">${fmt(v)}</span>`
+    +`<span class="pipe-l" style="grid-column:${col}">${l}</span>`;
+  const pipeChip=`<div class="chip-stat chip-pipe" title="Shipped ${fmt(fclShipped)} → invoiced ${fmt(fclInvoiced)} → paid ${fmt(fclPaid)}${fclPending>0?'; '+fmt(fclPending)+' awaiting collection':''}">
       <span class="chip-l"><abbr title="Full Container Load">FCL</abbr> pipeline</span>
-      <span class="chip-v num"><span class="pipe-n">${fmt(fclShipped)}</span><span class="pipe-a">→</span><span class="pipe-n">${fmt(fclInvoiced)}</span><span class="pipe-a">→</span><span class="pipe-n">${fmt(fclPaid)}</span></span>
-      <span class="chip-s">shipped · invoiced · paid${fclPending>0?' &nbsp;|&nbsp; '+fmt(fclPending)+' pending':''}${pipeDetail?' &nbsp;|&nbsp; '+pipeDetail:''}</span>
+      <span class="chip-v num pipe-grid">
+        ${stage(fclShipped,'shipped',1)}<span class="pipe-a" style="grid-column:2">&rarr;</span>
+        ${stage(fclInvoiced,'invoiced',3)}<span class="pipe-a" style="grid-column:4">&rarr;</span>
+        ${stage(fclPaid,'paid',5)}
+      </span>
+      ${pipeDetail?`<span class="chip-s">${pipeDetail}</span>`:''}
     </div>`;
   const chipHtml=`<div class="chip-row">`+chips.map(c=>
     `<div class="chip-stat"><span class="chip-l">${esc(c.label)}</span><span class="chip-v num">${esc(c.val)}</span><span class="chip-s">${c.sub}</span></div>`
