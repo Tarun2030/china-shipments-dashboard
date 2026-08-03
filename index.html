@@ -882,53 +882,49 @@ let prevMetricVals=null;
 // rail is grouped the same way. mv() returns a number, mt() a formatted "134,560 MT".
 function mv(m,k){ return num(m[k]?.val||''); }
 function mt(m,k){ const v=m[k]?.val; return v?fmt(num(v))+' MT':'—'; }
-// The buyer-side gap. Tonnage is real sheet data: the commission statement carries qty shipped and
-// qty paid per record, so the MT figure is a subtraction, not an estimate. The dollar figure is NOT
-// — no sheet here holds an amount-received-from-buyer column, so it is derived: unpaid tonnage
-// priced at each contract's own $/MT (contract value ÷ contracted MT), joined on the base contract
-// number, falling back to the blended book rate for rows the join misses. That is why the card
-// carries a permanent "derived at contract rate" note; the day the sheet gains a real received
-// column, delete the derivation and subtract instead of pricing.
-function buyerPosition(chi,cdata,hi,data){
-  const rate={}, label={}; let bookUsd=0, bookMt=0;
+// The buyer-side gap — computed ENTIRELY from the execution tracker.
+//
+// This used to read shipped and paid tonnage off the Schepens commission statement, which put two
+// different "shipped" figures on one screen: the rail said 76,710 (tracker) while the hero said
+// 70,080 (statement). The statement also trails the tracker on payments received — 42,780 MT against
+// 59,160 — so the gap came out 9,750 MT too wide and the headline overstated what the buyer owed by
+// about $2.9m. The commission statement answers commission questions and nothing else; shipment and
+// buyer-payment questions are the tracker's, which carries 'shipped mt' and 'qty paid mt' per row.
+//
+// Tonnage is measured, money is derived. The MT figure is a subtraction of two real columns. The
+// dollar figure is not: no sheet records the amount actually received from a buyer, so unpaid tonnage
+// is priced at each contract's own $/MT (its value divided by its contracted tonnes), falling back to
+// the blended book rate where a row carries no value of its own. That is what the permanent "derived
+// at contract rate" note is for; the day a received-amount column exists, subtract instead of price.
+function buyerPosition(hi,data){
+  let bookUsd=0, bookMt=0;
   (data||[]).forEach(r=>{
-    const cmt=num(g(r,hi,'contracted mt'));
+    bookMt+=num(g(r,hi,'contracted mt'));
     // 'value m ($)' is denominated in millions — the only place on the page that needs it as an
     // absolute dollar figure rather than an "m" display string, hence the lone ×1e6 here.
-    const usd=num(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value'))*1e6;
-    bookUsd+=usd; bookMt+=cmt;
-    const key=baseContractNum(g(r,hi,'contract'));
-    label[key]={id:g(r,hi,'contract').trim(), buyer:g(r,hi,'buyer').trim()};
-    if(cmt>0&&usd>0) rate[key]=usd/cmt;
+    bookUsd+=num(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value'))*1e6;
   });
   const blended=bookMt>0?bookUsd/bookMt:0;
-  // Commission rows are folded to one row per contract before the gap is taken. A contract split
-  // across statement lines (HK2899-1, HK2899-2) is one commercial position, so an over-payment on
-  // one of its lines nets against the other — but never against a different contract, which is why
-  // the positive-gap guard sits after the fold, not inside it.
-  const byContract={};
-  (cdata||[]).forEach(r=>{
-    const key=baseContractNum(g(r,chi,'schepens no.')); if(!key) return;
-    if(!byContract[key]) byContract[key]={key, shipped:0, paid:0, buyer:'', lines:0};
-    const c=byContract[key];
-    c.shipped+=num(g(r,chi,'qty shipped (mt)'));
-    c.paid+=num(g(r,chi,'qty paid (mt)'));
-    c.lines++;
-    const b=g(r,chi,'buyer').trim(); if(b&&!c.buyer) c.buyer=b;
-  });
   let shippedMt=0, paidMt=0, unpaidMt=0, unpaidUsd=0;
-  const rows=Object.values(byContract).map(c=>{
-    shippedMt+=c.shipped; paidMt+=c.paid;
-    const gap=Math.max(c.shipped-c.paid,0);
-    const rt=rate[c.key]||blended, amount=gap*rt;
-    unpaidMt+=gap; unpaidUsd+=amount;
+  // One row per tracker row — the tranche, not the contract number. Folding on a stripped base number
+  // was merging genuinely separate contracts: HK2866-1 (SB-XMSS-20260420, Xiamen Seashine Minsheng,
+  // 6,500 MT) and HK2866-2 (SB-XMP-20260330-02, Xiamen Port Commerce, 6,760 MT) were printing as one
+  // 13,260 MT line under a single ID and buyer. The suffix marks a separate contract on HK2866, HK2899
+  // and HK2867; only HK2860's two rows are one contract, and those already share a contract number.
+  // Keeping the tracker's own granularity means this panel and the ledger show the same rows.
+  const rows=(data||[]).map(r=>{
+    const shipped=num(g(r,hi,'shipped mt')), paid=num(g(r,hi,'qty paid mt'));
+    const cmt=num(g(r,hi,'contracted mt'));
+    const usd=num(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value'))*1e6;
+    const own=cmt>0&&usd>0, rt=own?usd/cmt:blended;
+    const gap=Math.max(shipped-paid,0), amount=gap*rt;
+    shippedMt+=shipped; paidMt+=paid; unpaidMt+=gap; unpaidUsd+=amount;
+    const port=g(r,hi,'disport').trim();
     return {
-      id:label[c.key]?.id||('HK'+c.key), buyer:c.buyer||label[c.key]?.buyer||'—',
-      shipped:c.shipped, paid:c.paid, gap, rate:rt, amount,
-      ownRate:!!rate[c.key],
-      // Reuses the master list's own status vocabulary rather than inventing a second one for this
-      // panel: same words, same colours, same dot shapes as every other row on the page.
-      sig:getSignal(c.shipped,c.shipped,c.paid,gap),
+      id:g(r,hi,'contract').trim(), port, buyer:g(r,hi,'buyer').trim()||'—',
+      shipped, paid, gap, rate:rt, amount, ownRate:own,
+      // Reuses the ledger's own status vocabulary rather than inventing a second one for this panel.
+      sig:getSignal(shipped,shipped,paid,gap),
     };
   }).filter(r=>r.shipped>0).sort((a,b)=>b.gap-a.gap||b.shipped-a.shipped);
   return {shippedMt,paidMt,unpaidMt,unpaidUsd,rows,blended,anyFallback:rows.some(r=>r.gap>0&&!r.ownRate)};
@@ -945,6 +941,9 @@ function toggleWorking(force){
 }
 function renderWorking(bp){
   const panel=document.getElementById('working-panel'); if(!panel) return;
+  // Each contract is priced at its OWN rate and the results summed; this figure is that total divided
+  // back out, shown so the chain reads as arithmetic. Labelled "blended" rather than "contract rate"
+  // because no single contract carries it — the table below shows the five real rates it averages.
   const effRate=bp.unpaidMt>0?bp.unpaidUsd/bp.unpaidMt:0;
   const step=(v,l,cls)=>`<div class="chain-step${cls||''}"><div class="chain-v">${v}</div><div class="chain-l">${l}</div></div>`;
   const op=s=>`<div class="chain-op" aria-hidden="true">${s}</div>`;
@@ -955,7 +954,7 @@ function renderWorking(bp){
     ${op('=')}
     ${step(fmt(Math.round(bp.unpaidMt))+' MT','not paid for')}
     ${op('&times;')}
-    ${step('$'+effRate.toFixed(2),'per MT, contract rate')}
+    ${step('$'+effRate.toFixed(2),'per MT, blended')}
     ${op('=')}
     ${step(fmtUsd(bp.unpaidUsd),'still to come',' is-result')}
   </div>`;
@@ -963,7 +962,7 @@ function renderWorking(bp){
     const paidPct=r.shipped>0?r.paid/r.shipped*100:0;
     return `<tr>
       <td class="contract-id" style="font-size:var(--t-sm);white-space:nowrap">
-        ${esc(r.id)}</td>
+        ${esc(r.id)}${r.port?`<span class="led-sub">${esc(r.port)}</span>`:''}</td>
       <td class="wk-buyer" style="font-size:var(--t-sm)">${esc(r.buyer)}</td>
       <td class="mt-sub">${fmt(Math.round(r.shipped))}</td>
       <td class="mt-sub" style="color:var(--green)">${fmt(Math.round(r.paid))}</td>
@@ -1890,7 +1889,7 @@ async function loadData(){
     // Commission is parsed before the rail renders, not after: the rail's buyer-gap cards are built
     // from commission rows priced against contract rows, so both sheets must be in hand first.
     const {hi:chi,data:cdata}=parseCommission(parseCSV(commission));
-    renderMetrics(parseSummary(parseCSV(summary)), uninvoicedMT, buyerPosition(chi,cdata,hi,data));
+    renderMetrics(parseSummary(parseCSV(summary)), uninvoicedMT, buyerPosition(hi,data));
     contractHi=hi; contractData=data;
     applyContractFilterSort(); // re-applies any filter/sort already set — a refresh must not reset it
     renderAnalytics(hi,data,chi,cdata);
