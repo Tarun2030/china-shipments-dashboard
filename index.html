@@ -133,6 +133,9 @@
   .chip { display:inline-block; font-family:var(--font-num); font-size:var(--t-micro); letter-spacing:.09em; text-transform:uppercase;
     padding:2px 6px; border:1px solid currentColor; margin-right:6px; vertical-align:1px; }
   .chip-ok { color:var(--green); } .chip-due { color:var(--amber-ink); } .chip-alert { color:var(--red); }
+  /* Commission that has never been remitted at all — distinct from --amber "owed on something you
+     already paid for", and reusing the same blue getSignal() gives "in progress" elsewhere. */
+  .chip-new { color:var(--blue); }
 
   .header { padding:18px var(--s6); border-bottom:1px solid var(--rule-strong); display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:var(--paper); z-index:100; }
   .header-left .title { font-family:var(--font-display); font-size:var(--t-xl); font-weight:600; text-transform:none; letter-spacing:-.01em; }
@@ -240,8 +243,51 @@
   .legend-i { display:flex; align-items:center; gap:6px; }
   .legend-sw { width:12px; height:5px; flex-shrink:0; }
   .working-note { font-size:var(--t-sm); color:var(--ink-2); margin-top:var(--s3); line-height:1.5; max-width:62ch; }
+  /* The container restatement under the money chain: same structure, one step down in figure size,
+     so it reads as a footnote to the arithmetic rather than a competing headline. */
+  .chain-alt { margin-top:calc(-1 * var(--s3)); }
+  .chain-alt .chain-v { font-size:var(--t-body); }
+  .chain-alt .chain-op { font-size:var(--t-body); padding-bottom:14px; }
+  /* Matches .led-sub's geometry but holds --ink-2 (5.94:1 on --paper-2) instead of --ink-3, which
+     measures 3.26:1 and would put a new sub-AA text colour on the page's most-read panel. */
+  .wk-fcl { display:block; font-family:var(--font-num); font-size:var(--t-micro); color:var(--ink-2);
+    margin-top:2px; font-weight:400; white-space:nowrap; }
   .wk-table td.wk-bar { width:80px; }
   .wk-table tfoot td { border-top:1px solid var(--rule-strong); border-bottom:none; font-weight:600; padding-top:var(--s2); }
+
+  /* ---- Since last settlement ---- */
+  /* The position as one proportion: everything earned to date, split by what has been remitted and
+     what has not. Same 5px bar and same legend as .split-bar so it reads as the existing component
+     with a third segment, not a new chart. Taller (8px) because it stands alone at panel width
+     rather than sitting inside a table cell. Colour is redundant throughout — the legend states
+     each segment in words and dollars, and the table below repeats every row of it. */
+  .pos-bar { display:flex; height:8px; width:100%; background:var(--rule); margin-bottom:var(--s3); }
+  .pos-seg { height:100%; }
+  .pos-remitted, .legend-sw.pos-remitted { background:var(--green); }
+  .pos-topup,    .legend-sw.pos-topup    { background:var(--amber); }
+  .pos-fresh,    .legend-sw.pos-fresh    { background:var(--blue); }
+  /* Inherits --ink-2 (5.94:1 on --paper-2) rather than stepping down to --ink-3, which measures
+     3.26:1 and would fail AA at this size. The qualifier is quieter than the figure by weight and
+     order, not by dropping below the contrast floor. */
+  .pos-legend-s { font-weight:400; }
+  .since-hd { display:flex; justify-content:space-between; align-items:baseline; gap:var(--s4);
+    margin-top:var(--s5); margin-bottom:var(--s2); }
+  /* Six columns is more than a phone can hold, and this table's whole value is the row-by-row
+     correspondence — collapsing it to cards would break exactly that. It scrolls sideways in its
+     own box instead, so the page body never does. */
+  .since-scroll { overflow-x:auto; }
+  .since-table { min-width:560px; }
+  .since-table td { font-size:var(--t-sm); }
+  .since-table tfoot td { border-top:1px solid var(--rule-strong); border-bottom:none; padding-top:var(--s2); }
+  /* Reduced figures and vanished rows are integrity questions, not billable movement. A hairline
+     rule in the status colour marks them without boxing the row — the chip carries the word. */
+  .since-altered td:first-child, .since-missing td:first-child { box-shadow:inset 2px 0 0 var(--red); }
+  .since-missing td { color:var(--ink-2); }
+  .pmt-snap-note { margin-bottom:var(--s3); max-width:78ch; line-height:1.5; }
+  .pmt-snap-scroll { overflow-x:auto; }
+  /* A remitted contract that has earned more since is not simply "Remitted" — the dashed edge and
+     amber ink say the badge is qualified, and the label itself says how. */
+  .paid-badge.is-part { color:var(--amber-ink); border-style:dashed; }
 
   .progress-wrap { background:var(--grey-2); height:5px; width:100%; min-width:70px; }
   .progress-fill { background:var(--black); height:5px; transition:width .5s var(--ease-out-quart); }
@@ -375,7 +421,6 @@
   .pmt-status-diverge .pmt-recon-status { color:var(--red); }
   .pmt-status-no-match { border-color:var(--amber); }
   .pmt-status-no-match .pmt-recon-status { color:var(--amber-ink); }
-  .pmt-status-pending .pmt-recon-status { color:var(--grey-4); }
   .pmt-recon-figs { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:6px var(--s4); }
   .pmt-fig-l { font-family:var(--font-num); font-size:var(--t-micro); text-transform:uppercase; letter-spacing:.08em; color:var(--grey-3); }
   .pmt-fig-v { font-size:var(--t-sm); margin-top:1px; }
@@ -682,7 +727,10 @@
     <div class="brief brief-rail brief-sub"><div class="comm-stats" id="comm-stats"></div></div>
     <div class="ledger-scroll">
       <div class="brief breakdown">
-        <details class="fold"><summary><span class="analytics-title" id="panel-proc"><span class="panel-n">05</span>Commission payable by invoice</span><span class="fold-sum" id="fs-proc"></span></summary>
+        <details class="fold"><summary><span class="analytics-title" id="panel-since"><span class="panel-n">05</span>Since last settlement</span><span class="fold-sum" id="fs-since"></span></summary>
+          <div class="fold-body"><div class="comm-since" id="comm-since"></div></div>
+        </details>
+        <details class="fold"><summary><span class="analytics-title" id="panel-proc"><span class="panel-n">06</span>Commission payable by invoice</span><span class="fold-sum" id="fs-proc"></span></summary>
           <div class="fold-body">
             <table class="mini-table" id="comm-processing-table">
               <thead><tr><th>Contract</th><th>Buyer</th><th>Qty Paid (<abbr title="Metric Tonnes">MT</abbr>)</th><th>Amount</th></tr></thead>
@@ -691,11 +739,11 @@
             </table>
           </div>
         </details>
-        <details class="fold"><summary><span class="analytics-title" id="panel-pmt"><span class="panel-n">06</span>Payments Made</span><span class="fold-sum" id="fs-pmt"></span></summary>
+        <details class="fold"><summary><span class="analytics-title" id="panel-pmt"><span class="panel-n">07</span>Settlements</span><span class="fold-sum" id="fs-pmt"></span></summary>
           <div class="fold-body"><div class="payments-made" id="payments-made"></div></div>
         </details>
       </div>
-      <details class="fold fold-ledger"><summary><span class="analytics-title" id="panel-records"><span class="panel-n">07</span>Commission Records</span><span class="fold-sum" id="fs-records"></span></summary>
+      <details class="fold fold-ledger"><summary><span class="analytics-title" id="panel-records"><span class="panel-n">08</span>Commission Records</span><span class="fold-sum" id="fs-records"></span></summary>
       <div class="fold-body">
       <div class="lst-hd" id="comm-hd">
         <div class="lst-count" id="comm-count">Commission &mdash; <abbr title="Schepens &amp; Co, the Hong Kong freight/customs broker handling these shipments">Schepens</abbr> statement</div>
@@ -726,20 +774,49 @@ const REFRESH_SECS=300, RETRY_SECS=30;
 const MT_PER_FCL=26; // tonnes per FCL container — used to express uninvoiced containers as MT
 
 // ============================================================================
-// WS-7 — Immutable Payment Record. A real commission payment was remitted to the
-// broker (Schepens & Co) via HDFC Bank on 22/07/2026. This is transcribed VERBATIM
-// from the bank remittance advice and hardcoded on purpose: if the live Google
-// Sheet is later edited or corrected, the record of what was actually paid — and
-// the exact basis it was paid on — must NOT silently move with it. Never derive
-// or recompute these figures from the CSVs; only compare against them (see
-// reconcilePayment below). Bank account numbers are masked to last 4 digits only
-// — this dashboard is served on a public URL and shared with buyers.
+// WS-7 — Immutable Settlement Record. Commission to the broker (Schepens & Co) is
+// not a one-off: buyers keep paying against tonnage already shipped, so commission
+// earned rises every week and is cleared in periodic settlements. Each entry below
+// closes one such period and carries TWO frozen artefacts:
+//
+//   basis — the bank remittance advice, transcribed VERBATIM. What was actually sent.
+//   asOf  — the full commission statement as it stood when that basis was agreed.
+//           The baseline every later "what has accrued since" is measured against.
+//
+// Both are hardcoded on purpose: if the live Google Sheet is later edited or
+// corrected, the record of what was paid — and the exact state it was paid on —
+// must NOT silently move with it. Never derive or recompute these figures from the
+// CSVs; only compare against them (see reconcileSettlement and settlementLedger).
+// Bank account numbers are masked to last 4 digits only — this dashboard is served
+// on a public URL and shared with buyers.
+//
+// TO CLOSE THE NEXT SETTLEMENT: append one object here — snapshot the sheet into
+// `asOf`, transcribe the new remittance advice into `basis`, deploy. Outstanding
+// recomputes itself, the "Since last settlement" panel resets to zero and starts
+// accruing again. Nothing above is ever edited; the file only ever grows.
 // ============================================================================
 function mkPaymentLine(contract,note,buyer,qtyMt,amountUsd){
   return Object.freeze({contract,note,buyer,qtyMt,amountUsd,rateUsdPerMt:qtyMt?+(amountUsd/qtyMt).toFixed(4):0});
 }
-const PAYMENTS_MADE = Object.freeze([
+// One row of the commission statement, frozen at settlement time. Positional rather than named at
+// the call site so 18 rows stay readable as a block; the column order matches the sheet's own.
+function snapRow(schepensNo,chinaContractNo,buyer,contractQtyMt,qtyShippedMt,qtyPaidMt,rateUsdPerMt,
+                 demandedUsd,earnedUsd,finalPayableUsd,varianceUsd,status,notes){
+  return Object.freeze({schepensNo,chinaContractNo,buyer,contractQtyMt,qtyShippedMt,qtyPaidMt,
+    rateUsdPerMt,demandedUsd,earnedUsd,finalPayableUsd,varianceUsd,status,notes});
+}
+// Schepens No. is NOT unique — HK2860 and HK2899-1 each appear twice. Contract qty separates them
+// (2,800 vs 18,200; 2,600 vs 1,400), so identity is the triple. Verified unique across all 18 rows.
+// If a contract qty is ever revised the row reads as new and its twin as missing, which the ledger
+// surfaces as an integrity exception — it cannot silently double-count, because the headline figure
+// is always computed from totals, never from this key.
+function snapKey(schepensNo,chinaContractNo,contractQtyMt){
+  return [(schepensNo||'').toString().trim(),(chinaContractNo||'').toString().trim(),num(contractQtyMt)].join('|');
+}
+const SETTLEMENTS = Object.freeze([
   Object.freeze({
+    seq:1,
+    label:'Settlement 1',
     id:'PMT-2026-07-22-1',
     settlementAmountUsd:141660,
     settlementDate:'2026-07-22',
@@ -768,7 +845,7 @@ const PAYMENTS_MADE = Object.freeze([
     statedTotals: Object.freeze({qtyMt:42780, amountUsd:141660}),
     // Contract numbers here are WITHOUT the "HK" prefix, exactly as they appear in the payment
     // document. baseContractNum() strips the prefix (and any -N statement-line suffix) from live
-    // Schepens Nos. so the two can be matched — see reconcilePayment().
+    // Schepens Nos. so the two can be matched — see reconcileSettlement().
     lines: Object.freeze([
       mkPaymentLine('2854',null,'Hunan Jinjian',5200,20800),
       mkPaymentLine('2855',null,'Xiamen Youliang',6500,19500),
@@ -781,9 +858,47 @@ const PAYMENTS_MADE = Object.freeze([
       mkPaymentLine('2899','Note 2','Hunan Jinjian',1680,1680),
       mkPaymentLine('2919',null,'Hunan Jinjian',2080,4160),
     ]),
+    // The commission statement as it stood behind that payment. PROVENANCE: transcribed from the
+    // live sheet on 2026-08-03, twelve days after the remittance — not on the settlement date
+    // itself. It is used as the settlement-date baseline because on the day it was taken the sheet
+    // still totalled $141,660 earned / 42,780 MT paid, tying out to the remittance to the dollar
+    // and to the tonne, and reconciling contract-by-contract against the basis above. That equality
+    // is what licenses treating it as the as-of state; it is asserted at render time (see
+    // verifySnapshot) rather than trusted, so if it were ever wrong the panel would say so.
+    asOfCapturedAt:'2026-08-03',
+    asOfTotals: Object.freeze({qtyPaidMt:42780, earnedUsd:141660, demandedUsd:181000}),
+    asOf: Object.freeze([
+      snapRow("HK2854","BA-HNJJ-20260227","Hunan Jinjian",5200,5200,5200,4,20800,20800,20800,0,"Shipped & Paid","All shipped & paid"),
+      snapRow("HK2883","SB-HNJJ-20260302","Hunan Jinjian",5200,5200,5200,3.5,18200,18200,18200,0,"Shipped & Paid","All shipped & paid (2 statement lines @9,100)"),
+      snapRow("HK2855","SB-LF-20260302","Xiamen Youliang",12000,11700,6500,3,39000,19500,19500,19500,"Partial","Commision is changed to $3 but demanded as per $5"),
+      snapRow("HK2862","SB-HNJJ-20260309-02","Hunan Jinjian",3900,2600,2600,4,10400,10400,10400,0,"Shipped & Paid","Shipped & paid"),
+      snapRow("HK2860","SB-HNJJ-20260309-01","Hunan Jinjian",2800,2800,2800,4,11200,11200,11200,0,"Shipped & Paid","Shipped & paid"),
+      snapRow("HK2860","SB-HNJJ-20260309-01","Hunan Jinjian",18200,13000,7800,4,38560,31200,31200,7360,"Partial","13,000 MT shipped of 18,000; partial payment, balance pending"),
+      snapRow("HK2899-1","SB-HNJJ-20260318-1","Hunan Jinjian",2600,1300,1300,1,0,1300,1300,-1300,"No Commission","Yangpu discharge — brokerage = 0 per master"),
+      snapRow("HK2899-1","SB-HNJJ-20260318-1","Hunan Jinjian",1400,1400,1400,1,0,1400,1400,-1400,"No Commission","Yangpu discharge — brokerage = 0 per master"),
+      snapRow("HK2899-2","SB-HNJJ-20260318-1","Hunan Jinjian",2600,1300,1300,1,2600,1300,1300,1300,"Partial","50 FCL shipped & paid @Zhanjiang"),
+      snapRow("HK2899-2","SB-HNJJ-20260318-2","Hunan Jinjian",1400,1400,1400,1,2800,1400,1400,1400,"Shipped & Paid","50 FCL shipped & paid @Zhanjiang"),
+      snapRow("HK2866-1","SB-XMSS-20260420","Xiamen Port Commerce",6500,6500,0,4,0,0,0,0,"Shipped","Fully shipped 6,500 MT; commission pending Qty Paid confirmation"),
+      snapRow("HK2866-2","SB-XMP-20260330-01","Xiamen Port Commerce",6760,6760,5200,4,27040,20800,20800,6240,"Partial","Partial shipped, not paid"),
+      snapRow("HK2919","SB-HNJJ-20260401","Hunan Jinjian",5200,3120,2080,2,4160,4160,4160,0,"Partial","5,200 MT fully shipped; partial payment received"),
+      snapRow("HK2924","SB-HNJJ-20260403","Xiamen Port Trading",5200,5200,0,2,6240,0,0,6240,"Partial","5,200 MT fully shipped; payment pending"),
+      snapRow("HK2928","SB-HNJJ-20260427","Hunan Jinjian",10400,0,0,3,0,0,0,0,"Not Shipped","Not in Schepens statement; nothing shipped"),
+      snapRow("HK2931","SB-XMP-20260427","Xiamen Port",5200,2600,0,3,0,0,0,0,"Partial","2,600 MT shipped; awaiting Schepens commission statement"),
+      snapRow("HK2867-1","SB-HNJJ-20260310","Hunan Jinjian",20000,0,0,4,0,0,0,0,"Not Shipped","Not in Schepens statement; nothing shipped"),
+      snapRow("HK2867-2","SB-HNJJ-20260310","Hunan Jinjian",20000,0,0,4,0,0,0,0,"Not Shipped","Not in Schepens statement; nothing shipped"),
+    ]),
   }),
 ]);
-const PAID_CONTRACT_NUMS = new Set(PAYMENTS_MADE.flatMap(p=>p.lines.map(l=>l.contract)));
+// Alias retained so the settlement record can be read under either name while the two vocabularies
+// coexist: a settlement is the period, the payment is what closed it.
+const PAYMENTS_MADE = SETTLEMENTS;
+const PAID_CONTRACT_NUMS = new Set(SETTLEMENTS.flatMap(s=>s.lines.map(l=>l.contract)));
+// The newest settlement is the baseline for "since". Sorted rather than assumed last-in-array, so
+// appending out of date order cannot silently pick the wrong baseline.
+function latestSettlement(){
+  return SETTLEMENTS.slice().sort((a,b)=>a.settlementDate<b.settlementDate?1:a.settlementDate>b.settlementDate?-1:a.seq-b.seq)[0]||null;
+}
+const TOTAL_REMITTED_USD = SETTLEMENTS.reduce((s,x)=>s+x.settlementAmountUsd,0);
 
 let countdownInterval=null, secs=REFRESH_SECS, countdownLabel='Next refresh in ';
 let hasLoadedOnce=false, lastSuccessAt=null, errorAnnounced=false;
@@ -838,7 +953,13 @@ function fmtInvoiceList(s){
   return (s||'').split(/,|\s{2,}|\n/).map(p=>p.trim()).filter(Boolean).join(', ');
 }
 function pct(a,b){ return b>0?Math.round(a/b*100):0; }
-function fmtUsd(n){ return n>=1e6?'$'+(n/1e6).toFixed(2)+'m':'$'+Math.round(n).toLocaleString('en-US'); }
+function fmtUsd(n){ const a=Math.abs(n), s=n<0?'−':'';
+  return a>=1e6?s+'$'+(a/1e6).toFixed(2)+'m':s+'$'+Math.round(a).toLocaleString('en-US'); }
+// Deltas carry their direction in the glyph, not just the minus sign — a column of movements is only
+// readable if a rise and a fall are distinguishable at a glance, and "$15,600" alone says neither.
+// U+2212 MINUS, not a hyphen, so the two signs are the same width in the tabular figures.
+function fmtSignedUsd(n){ return (n>0?'+':'')+fmtUsd(n); }
+function fmtSigned(n){ const a=Math.abs(n); return (n>0?'+':n<0?'−':'')+fmt(a); }
 function esc(v){ return (v==null?'':String(v)).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 // Shared red/amber/green banding for percent rates. Returns CSS tokens rather than literals so the
 // .brief zone's local token re-definitions retint these for free.
@@ -905,6 +1026,15 @@ function mt(m,k){ const v=m[k]?.val; return v?fmt(num(v))+' MT':'—'; }
 // is priced at each contract's own $/MT (its value divided by its contracted tonnes), falling back to
 // the blended book rate where a row carries no value of its own. That is what the permanent "derived
 // at contract rate" note is for; the day a received-amount column exists, subtract instead of price.
+// Tonnage re-expressed as containers. The tracker books shipments in whole FCL and multiplies by
+// MT_PER_FCL, so a gap almost always divides exactly — but "almost always" is not a guarantee: a
+// buyer can pay for part of a container, and the tracker's own TOTAL FCL column already carries
+// five decimals. So the exact case prints a clean integer and anything else prints one decimal
+// behind a "≈", rather than silently rounding a partial container into a whole one.
+function fclFromMt(mt){
+  const n=mt/MT_PER_FCL, exact=Math.abs(n-Math.round(n))<0.005;
+  return {n,exact,text:(exact?'':'≈ ')+(exact?fmt(Math.round(n)):n.toFixed(1))+' FCL'};
+}
 function buyerPosition(hi,data){
   let bookUsd=0, bookMt=0;
   (data||[]).forEach(r=>{
@@ -967,6 +1097,18 @@ function renderWorking(bp){
     ${op('=')}
     ${step(fmtUsd(bp.unpaidUsd),'still to come',' is-result')}
   </div>`;
+  // The same unpaid tonnage in containers. A second chain rather than a longer first one: these are
+  // two different questions off one shared figure — what is it worth, and how many boxes is it —
+  // and threading them into a single line would imply dollars divide into containers, which they
+  // do not. It restates "not paid for" as its own first step so each chain reads independently.
+  const fclGap=fclFromMt(bp.unpaidMt);
+  const fclChain=`<div class="chain chain-alt">
+    ${step(fmt(Math.round(bp.unpaidMt))+' MT','not paid for')}
+    ${op('&divide;')}
+    ${step(MT_PER_FCL+' MT','per container')}
+    ${op('=')}
+    ${step(esc(fclGap.text),fclGap.exact?'still to come':'still to come, part container')}
+  </div>`;
   const body=bp.rows.map(r=>{
     const paidPct=r.shipped>0?r.paid/r.shipped*100:0;
     return `<tr>
@@ -975,7 +1117,8 @@ function renderWorking(bp){
       <td class="wk-buyer" style="font-size:var(--t-sm)">${esc(r.buyer)}</td>
       <td class="mt-sub">${fmt(Math.round(r.shipped))}</td>
       <td class="mt-sub" style="color:var(--green)">${fmt(Math.round(r.paid))}</td>
-      <td class="mt-sub"${r.gap>0?` style="color:${sigColor(r.sig)}"`:''}>${r.gap>0?fmt(Math.round(r.gap)):'—'}</td>
+      <td class="mt-sub"${r.gap>0?` style="color:${sigColor(r.sig)}"`:''}>${r.gap>0
+        ?fmt(Math.round(r.gap))+`<span class="wk-fcl">${esc(fclFromMt(r.gap).text)}</span>`:'—'}</td>
       <td class="mt-sub wk-rate">$${r.rate.toFixed(2)}${r.ownRate?'':'<abbr title="This contract has no value on the contract sheet, so the blended book rate is used">*</abbr>'}</td>
       <td class="mt-sub"${r.gap>0?` style="color:${sigColor(r.sig)}"`:''}>${r.gap>0?fmtUsd(r.amount):'—'}</td>
       <td class="wk-bar">
@@ -991,6 +1134,7 @@ function renderWorking(bp){
       <button type="button" class="working-x" onclick="toggleWorking(false)">Close &times;</button>
     </div>
     ${chain}
+    ${fclChain}
     <table class="mini-table wk-table">
       <thead><tr>
         <th>Contract</th><th class="wk-buyer">Buyer</th><th>Shipped</th><th>Paid for</th>
@@ -1001,9 +1145,9 @@ function renderWorking(bp){
         <td colspan="2">Total</td>
         <td class="mt-sub">${fmt(Math.round(bp.shippedMt))}</td>
         <td class="mt-sub" style="color:var(--green)">${fmt(Math.round(bp.paidMt))}</td>
-        <td class="mt-sub">${fmt(Math.round(bp.unpaidMt))}</td>
+        <td class="mt-sub">${fmt(Math.round(bp.unpaidMt))}<span class="wk-fcl">${esc(fclGap.text)}</span></td>
         <td class="wk-rate"></td>
-        <td class="mt-sub">${fmtUsd(bp.unpaidUsd)}</td>
+        <td class="mt-sub">${fmtUsd(bp.unpaidUsd)}<span class="wk-fcl">${esc(fmtUsd(fclGap.n>0?bp.unpaidUsd/fclGap.n:0))} per FCL</span></td>
         <td class="wk-bar"></td>
       </tr></tfoot>
     </table>
@@ -1031,8 +1175,10 @@ function renderMetrics(m, uninvoicedMT, bp){
   const heroes=[
     {label:'Shipped, not paid for', val:fmt(Math.round(bp.unpaidMt))+' MT',
      sub:'buyer has paid for '+fmt(Math.round(bp.paidMt))+' of '+fmt(Math.round(bp.shippedMt))+' <abbr title="Metric Tonnes">MT</abbr> shipped'},
+    // The container count sits on the money card because that is the card the desk reads first, and
+    // "675 containers" is the form the figure is actionable in — you chase containers, not dollars.
     {label:'Still to come from buyer', val:fmtUsd(bp.unpaidUsd),
-     sub:'derived at contract rate · <span class="hero-note">not an invoice</span>'},
+     sub:esc(fclFromMt(bp.unpaidMt).text)+' at '+MT_PER_FCL+' <abbr title="Metric Tonnes">MT</abbr> · derived at contract rate · <span class="hero-note">not an invoice</span>'},
   ];
   const heroHtml=`<div class="hero-band">`+heroes.map(h=>
     `<button type="button" class="hero-cell" aria-expanded="${workingOpen?'true':'false'}" aria-controls="working-panel" onclick="toggleWorking()">
@@ -1491,21 +1637,114 @@ function getCommSignal(status){
   return{...base,variant:'neutral'};
 }
 let prevCommStatVals=null;
+
+// ---- Settlement ledger: what has accrued since the last settlement ----
+// Re-sums a settlement's own asOf snapshot against its stated totals, and against the amount that
+// was actually remitted. The second check is the one that licenses using a snapshot captured after
+// the settlement date as the settlement-date baseline: if earned-at-capture does not equal the
+// remittance, the snapshot is not a picture of the moment the payment was agreed and must not be
+// presented as one. Checked at render time, never assumed.
+function verifySnapshot(settlement){
+  const rows=settlement.asOf||[];
+  const computed=rows.reduce((a,r)=>({
+    qtyPaidMt:a.qtyPaidMt+r.qtyPaidMt, earnedUsd:a.earnedUsd+r.earnedUsd, demandedUsd:a.demandedUsd+r.demandedUsd,
+  }),{qtyPaidMt:0,earnedUsd:0,demandedUsd:0});
+  const st=settlement.asOfTotals||{qtyPaidMt:0,earnedUsd:0,demandedUsd:0};
+  const keys=new Set(rows.map(r=>snapKey(r.schepensNo,r.chinaContractNo,r.contractQtyMt)));
+  return {
+    computed, stated:st,
+    totalsOk:Math.abs(computed.qtyPaidMt-st.qtyPaidMt)<0.5&&Math.abs(computed.earnedUsd-st.earnedUsd)<0.5
+      &&Math.abs(computed.demandedUsd-st.demandedUsd)<0.5,
+    tiesToRemittance:Math.abs(computed.earnedUsd-settlement.settlementAmountUsd)<1,
+    keysUnique:keys.size===rows.length,
+    rowCount:rows.length,
+  };
+}
+function snapshotIndex(settlement){
+  const map=new Map();
+  (settlement&&settlement.asOf||[]).forEach(r=>map.set(snapKey(r.schepensNo,r.chinaContractNo,r.contractQtyMt),r));
+  return map;
+}
+// Row-by-row diff of the live sheet against the newest frozen snapshot. Every dollar of movement is
+// bucketed, and the buckets are exhaustive by construction:
+//
+//   outstanding = topUp + fresh + reversals + priorBalance
+//
+// topUp        more owed on a contract the broker has already been paid for
+// fresh        movement on a contract never remitted, plus rows absent from the snapshot entirely
+// reversals    negative movement — a figure that went DOWN, or a snapshot row that vanished
+// priorBalance snapshot earned minus everything remitted; non-zero only if a settlement under- or
+//              over-paid its own basis, and $0 for settlement 1
+//
+// Bucketing keys on whether the contract was actually REMITTED, not on whether the row appears in
+// the snapshot: HK2924 sits in the snapshot at $0 earned and was never paid, so its first dollar is
+// new money, not a top-up on something settled.
+function settlementLedger(hi,data){
+  const baseline=latestSettlement();
+  const snap=snapshotIndex(baseline);
+  const seen=new Set();
+  const rows=(data||[]).map(r=>{
+    const schepensNo=g(r,hi,'schepens no.').trim();
+    const chinaContractNo=g(r,hi,'china contract no.').trim();
+    const contractQtyMt=num(g(r,hi,'contract qty (mt)'));
+    const key=snapKey(schepensNo,chinaContractNo,contractQtyMt);
+    const s=snap.get(key); if(s) seen.add(key);
+    const liveEarned=num(g(r,hi,'commission earned ($) as per qty paid'));
+    const liveDemanded=num(g(r,hi,'commission demanded ($) as per mail'));
+    const liveQtyPaid=num(g(r,hi,'qty paid (mt)'));
+    const snapEarned=s?s.earnedUsd:0, snapDemanded=s?s.demandedUsd:0, snapQtyPaid=s?s.qtyPaidMt:0;
+    const delta=liveEarned-snapEarned;
+    const remitted=PAID_CONTRACT_NUMS.has(baseContractNum(schepensNo));
+    let status;
+    if(!s) status='new';
+    else if(delta<-0.5||liveQtyPaid-snapQtyPaid<-0.5) status='altered';
+    else if(delta>0.5) status='accrued';
+    else status='unchanged';
+    return {key,schepensNo,chinaContractNo,buyer:g(r,hi,'buyer').trim(),contractQtyMt,
+      snapEarned,liveEarned,delta,snapQtyPaid,liveQtyPaid,deltaQty:liveQtyPaid-snapQtyPaid,
+      snapDemanded,liveDemanded,deltaDemanded:liveDemanded-snapDemanded,remitted,status,
+      liveStatus:g(r,hi,'status').trim()};
+  });
+  // Rows the snapshot has that the live sheet no longer does. Their whole earned value has gone
+  // missing, so they carry the full negative — otherwise a deleted row would quietly shrink the
+  // total with nothing on screen to explain it.
+  const missing=(baseline&&baseline.asOf||[]).filter(s=>!seen.has(snapKey(s.schepensNo,s.chinaContractNo,s.contractQtyMt)))
+    .map(s=>({key:snapKey(s.schepensNo,s.chinaContractNo,s.contractQtyMt),schepensNo:s.schepensNo,
+      chinaContractNo:s.chinaContractNo,buyer:s.buyer,contractQtyMt:s.contractQtyMt,
+      snapEarned:s.earnedUsd,liveEarned:0,delta:-s.earnedUsd,
+      snapQtyPaid:s.qtyPaidMt,liveQtyPaid:0,deltaQty:-s.qtyPaidMt,
+      snapDemanded:s.demandedUsd,liveDemanded:0,deltaDemanded:-s.demandedUsd,
+      remitted:PAID_CONTRACT_NUMS.has(baseContractNum(s.schepensNo)),status:'missing',liveStatus:'—'}));
+  const all=rows.concat(missing);
+  let topUp=0,fresh=0,reversals=0;
+  all.forEach(r=>{
+    if(r.delta<0){ reversals+=r.delta; }
+    else if(r.remitted){ topUp+=r.delta; }
+    else { fresh+=r.delta; }
+  });
+  const snapEarnedTotal=(baseline&&baseline.asOf||[]).reduce((s,r)=>s+r.earnedUsd,0);
+  const priorBalance=snapEarnedTotal-TOTAL_REMITTED_USD;
+  const deltaDemanded=all.reduce((s,r)=>s+r.deltaDemanded,0);
+  return {rows:all,topUp,fresh,reversals,priorBalance,deltaDemanded,baseline,
+    total:topUp+fresh+reversals+priorBalance,hasData:!!(data&&data.length)};
+}
 // The broker position. Payable is live from the sheet; paid is the frozen remittance record. The
 // number that actually matters is the difference between them — and it carries forward on its own:
 // when new shipments push payable above what has already been remitted, outstanding goes positive
-// again without anyone editing the payment record.
+// again without anyone editing the payment record. `since` explains what that difference is MADE OF;
+// it can never contradict it, because the two are computed from the same totals.
 function commissionPosition(hi,data){
   let demanded=0,earned=0;
   (data||[]).forEach(r=>{
     demanded+=num(g(r,hi,'commission demanded ($) as per mail'));
     earned+=num(g(r,hi,'commission earned ($) as per qty paid'));
   });
-  const paid=PAYMENTS_MADE.reduce((s,p)=>s+p.settlementAmountUsd,0);
+  const paid=TOTAL_REMITTED_USD;
   const outstanding=earned-paid;
-  const last=PAYMENTS_MADE.slice().sort((a,b)=>a.settlementDate<b.settlementDate?1:-1)[0]||null;
+  const last=latestSettlement();
   // A sub-$1 gap is rounding, not a debt.
-  return {demanded,earned,paid,outstanding,last,settled:Math.abs(outstanding)<1};
+  return {demanded,earned,paid,outstanding,last,settled:Math.abs(outstanding)<1,
+    since:settlementLedger(hi,data)};
 }
 function fmtDate(iso){
   const d=new Date(iso+'T00:00:00');
@@ -1520,6 +1759,15 @@ function renderCommStats(hi,data){
   const over=!p.settled&&p.outstanding<0;
   const heroLbl=p.settled?'Broker position':(over?'Overpaid to broker':'Outstanding to broker');
   const heroVal=p.settled?'Settled':fmtUsd(Math.abs(p.outstanding));
+  // What the outstanding figure is made of, on the hero itself: a top-up on contracts the broker has
+  // already been paid for reads very differently from commission on contracts never remitted, and
+  // the difference decides whether the next statement is a correction or new business. Suppressed
+  // when settled (there is nothing to break down) and when a bucket is empty (an unnecessary "$0").
+  const parts=!p.settled?[
+    p.since.topUp>=1?`<span class="num">${fmtUsd(p.since.topUp)}</span> on contracts already remitted`:'',
+    p.since.fresh>=1?`<span class="num">${fmtUsd(p.since.fresh)}</span> not previously remitted`:'',
+  ].filter(Boolean):[];
+  const madeOf=parts.length?`<br>of which ${parts.join(' · ')}`:'';
   const wrap=document.getElementById('comm-stats');
   wrap.innerHTML=`
     <div class="chip-stat chip-lead${p.settled?' is-settled':''}">
@@ -1527,10 +1775,10 @@ function renderCommStats(hi,data){
       <span class="chip-v${p.settled?'':' num'}">${heroVal}</span>
       <span class="chip-s">${p.settled
         ?`nothing outstanding · <span class="num">${fmtUsd(p.paid)}</span> paid${p.last?` <span class="num">${esc(fmtDate(p.last.settlementDate))}</span>`:''}`
-        :`<span class="chip chip-${over?'ok':'due'}">${over?'Overpaid':'Due'}</span>${p.last?` last paid <span class="num">${esc(fmtDate(p.last.settlementDate))}</span>`:''}`}</span>
+        :`<span class="chip chip-${over?'ok':'due'}">${over?'Overpaid':'Due'}</span>${p.last?` last paid <span class="num">${esc(fmtDate(p.last.settlementDate))}</span>`:''}`}${madeOf}</span>
     </div>
-    <div class="chip-stat"><span class="chip-l">Payable to date</span><span class="chip-v num">${fmtUsd(p.earned)}</span><span class="chip-s">earned on qty buyers have paid</span></div>
-    <div class="chip-stat"><span class="chip-l">Paid</span><span class="chip-v num">${fmtUsd(p.paid)}</span><span class="chip-s">${PAYMENTS_MADE.length} remittance${PAYMENTS_MADE.length===1?'':'s'} on record</span></div>
+    <div class="chip-stat"><span class="chip-l">Payable to date</span><span class="chip-v num">${fmtUsd(p.earned)}</span><span class="chip-s">the broker's fee on qty buyers have paid</span></div>
+    <div class="chip-stat"><span class="chip-l">Remitted</span><span class="chip-v num">${fmtUsd(p.paid)}</span><span class="chip-s">${SETTLEMENTS.length} settlement${SETTLEMENTS.length===1?'':'s'} on record</span></div>
     <div class="chip-stat"><span class="chip-l">Demanded</span><span class="chip-v num">${fmtUsd(p.demanded)}</span><span class="chip-s">what the broker asked for</span></div>`;
   const vals=[p.outstanding,p.earned,p.paid,p.demanded].map(String);
   flashChanged(wrap.children, vals, prevCommStatVals);
@@ -1551,8 +1799,14 @@ function renderCommProcessing(hi,data){
       <td class="mt-sub">${fmtUsd(amt)}</td></tr>`;
   }).join('');
   document.getElementById('comm-processing-tbody').innerHTML=body||'<tr><td colspan="4" class="mt-sub">No invoices currently in process</td></tr>';
-  const covered=PAYMENTS_MADE.reduce((s,p)=>s+p.settlementAmountUsd,0)>=totalAmt-1;
-  setFold('fs-proc', rows.length+' invoices · '+fmtUsd(totalAmt)+(covered?' · settled':' · unsettled'));
+  // This panel totals FINAL PAYABLE, which is earned minus any deduction the broker has applied —
+  // a different basis from the earned figure every settlement is raised on. It used to declare
+  // "settled"/"unsettled" from that basis, which is how two settlement claims on one tab come to
+  // disagree the first time a deduction is entered. The position is stated once, in panel 05; this
+  // summary reports its own total and, when the two bases part company, says by how much.
+  const totalEarned=data.reduce((sum,r)=>sum+num(g(r,hi,'commission earned ($) as per qty paid')),0);
+  const deducted=totalEarned-totalAmt;
+  setFold('fs-proc', rows.length+' invoices · '+fmtUsd(totalAmt)+(Math.abs(deducted)>=1?' · '+fmtUsd(Math.abs(deducted))+(deducted>0?' deducted':' above earned'):''));
   document.getElementById('comm-processing-total').innerHTML=
     `<td colspan="2" style="font-weight:600;font-size:var(--t-sm)">Total</td>
      <td class="mt-sub" style="font-weight:600">${fmt(totalQty)}</td>
@@ -1582,36 +1836,41 @@ function aggregateFrozenByContract(payment){
   });
   return map;
 }
-function aggregateLiveByContract(chi,cdata){
+function aggregateSnapshotByContract(settlement){
   const map={};
-  cdata.forEach(r=>{
-    const sch=g(r,chi,'schepens no.').trim(); if(!sch) return;
-    const base=baseContractNum(sch);
+  (settlement.asOf||[]).forEach(r=>{
+    const base=baseContractNum(r.schepensNo); if(!base) return;
     if(!map[base]) map[base]={qtyPaidMt:0,earnedUsd:0,buyers:new Set()};
-    const m=map[base]; m.qtyPaidMt+=num(g(r,chi,'qty paid (mt)')); m.earnedUsd+=num(g(r,chi,'commission earned ($) as per qty paid'));
-    const b=g(r,chi,'buyer').trim(); if(b) m.buyers.add(b);
+    const m=map[base]; m.qtyPaidMt+=r.qtyPaidMt; m.earnedUsd+=r.earnedUsd;
+    if(r.buyer) m.buyers.add(r.buyer);
   });
   return map;
 }
-// Per-contract paid-vs-currently-payable. Never mutates PAYMENTS_MADE — only reads live data to
-// compare against it. Contracts with >1 frozen line (2883, 2899 here) are compared in aggregate
-// only: the payment document's "Note 1"/"Note 2" split does not correspond structurally to the live
-// sheet's own statement-line split, so asserting a line-level match would be a claim we can't back up.
-function reconcilePayment(payment,chi,cdata){
-  const frozen=aggregateFrozenByContract(payment);
-  const live=cdata?aggregateLiveByContract(chi,cdata):null;
+// Does the bank advice agree with the statement it was raised against? Both sides are FROZEN — the
+// remittance lines and that settlement's own asOf snapshot — so this verdict is permanent. It was
+// true the day it was recorded and it reads the same forever, which is the whole point: it used to
+// compare against the live sheet, and would therefore have flipped to "DIVERGES" on every settled
+// contract the first time a buyer paid, crying wolf daily until a real discrepancy was invisible.
+// Movement against live data is not a reconciliation failure; it is the next settlement, and it is
+// measured in settlementLedger() instead.
+//
+// Contracts with >1 frozen line (2883, 2899 here) are compared in aggregate only: the payment
+// document's "Note 1"/"Note 2" split does not correspond structurally to the statement's own
+// line split, so asserting a line-level match would be a claim we can't back up.
+function reconcileSettlement(settlement){
+  const frozen=aggregateFrozenByContract(settlement);
+  const snap=aggregateSnapshotByContract(settlement);
   return Object.keys(frozen).map(contract=>{
-    const f=frozen[contract], l=live?live[contract]:null;
+    const f=frozen[contract], l=snap[contract];
     let status,note='';
-    if(!live){ status='pending'; note='Live sheet not loaded this session — reconciliation unavailable.'; }
-    else if(!l){ status='no-match'; note='No live statement rows found for this contract number.'; }
+    if(!l){ status='no-match'; note='No statement rows found for this contract number in the settlement-date snapshot.'; }
     else{
       const qtyMatch=Math.abs(l.qtyPaidMt-f.qtyMt)<0.5, amtMatch=Math.abs(l.earnedUsd-f.amountUsd)<0.5;
       status=(qtyMatch&&amtMatch)?'match':'diverge';
     }
-    if(f.lineCount>1) note=(note?note+' ':'')+`Paid in ${f.lineCount} statement lines — aggregate compared; individual line correspondence with the live sheet is not established.`;
+    if(f.lineCount>1) note=(note?note+' ':'')+`Paid in ${f.lineCount} statement lines — aggregate compared; individual line correspondence with the statement is not established.`;
     return{contract,buyer:[...f.buyers].join(' / '),frozenQtyMt:f.qtyMt,frozenAmountUsd:f.amountUsd,
-      liveQtyMt:l?l.qtyPaidMt:null,liveAmountUsd:l?l.earnedUsd:null,status,note};
+      snapQtyMt:l?l.qtyPaidMt:null,snapAmountUsd:l?l.earnedUsd:null,status,note};
   });
 }
 function buildPaymentBasisText(payment){
@@ -1629,11 +1888,19 @@ function copyPaymentBasis(idx){
   const payment=PAYMENTS_MADE[idx]; if(!payment) return;
   copyTextWithFeedback(buildPaymentBasisText(payment),'pmt-copy-fb-'+idx);
 }
-// Small brutalist indicator on a commission row covered by a recorded payment — links back to the
-// Payments Made panel rather than duplicating its detail inline.
-function paidBadge(schepensNo){
-  return PAID_CONTRACT_NUMS.has(baseContractNum(schepensNo))?
-    `<button class="paid-badge" onclick="event.stopPropagation();goToPaymentsMade()" onkeydown="event.stopPropagation()" title="Covered by the recorded bank remittance — view in Payments Made">Remitted</button>`:'';
+// Small brutalist indicator on a commission row covered by a recorded settlement — links back to
+// the Settlements panel rather than duplicating its detail inline. It must distinguish "remitted and
+// still square" from "remitted, but this row has earned more since": saying only "Remitted" on a row
+// that has accrued further commission states something false, and after the first buyer payment
+// lands most remitted rows are exactly that case.
+function paidBadge(schepensNo,ledgerRow){
+  if(!PAID_CONTRACT_NUMS.has(baseContractNum(schepensNo))) return '';
+  const part=!!(ledgerRow&&ledgerRow.status==='accrued');
+  const label=part?'Part-remitted':'Remitted';
+  const title=part
+    ?'Remitted in an earlier settlement, but has earned further commission since — see Since Last Settlement'
+    :'Covered in full by a recorded bank remittance — view in Settlements';
+  return `<button class="paid-badge${part?' is-part':''}" onclick="event.stopPropagation();goToPaymentsMade()" onkeydown="event.stopPropagation()" title="${title}">${label}</button>`;
 }
 function goToPaymentsMade(){
   const sec=document.getElementById('payments-made'); if(!sec) return;
@@ -1643,27 +1910,36 @@ function goToPaymentsMade(){
   sec.classList.remove('flash'); void sec.offsetWidth; sec.classList.add('flash');
   sec.addEventListener('animationend',()=>sec.classList.remove('flash'),{once:true});
 }
-// Renders independently of live data (chi/cdata may be omitted entirely — e.g. on first load before
-// the sheet fetch resolves, or forever if it never does). The payment record itself never depends on
-// the CSVs; only the reconciliation section below it does, and degrades to a 'pending' status if data
-// isn't available yet rather than omitting the record.
-function renderPaymentsMade(chi,cdata){
+// Wholly independent of live data — every figure here is frozen, so the archive paints once at boot
+// and never needs re-rendering when the sheet moves. That independence is deliberate: the record of
+// what was paid, and of the state it was paid on, must be readable even if the fetch never resolves.
+function renderPaymentsMade(){
   const wrap=document.getElementById('payments-made'); if(!wrap) return;
-  setFold('fs-pmt', PAYMENTS_MADE.map(p=>fmtUsd(p.statedTotals.amountUsd)).join(' · ')+' remitted');
-  wrap.innerHTML=PAYMENTS_MADE.map((payment,pIdx)=>{
+  setFold('fs-pmt', SETTLEMENTS.length+(SETTLEMENTS.length===1?' settlement · ':' settlements · ')+fmtUsd(TOTAL_REMITTED_USD)+' remitted');
+  wrap.innerHTML=SETTLEMENTS.map((payment,pIdx)=>{
     const v=verifyPaymentTotals(payment);
-    const recon=reconcilePayment(payment,chi,cdata);
+    const sv=verifySnapshot(payment);
+    const recon=reconcileSettlement(payment);
     const warnHtml=v.ok?'':`<div class="pmt-warn" role="alert">⚠ TOTALS DO NOT VERIFY — computed ${fmt(v.computed.qtyMt)} MT / ${fmtUsd(v.computed.amountUsd)} vs stated ${fmt(v.stated.qtyMt)} MT / ${fmtUsd(v.stated.amountUsd)}. Do not rely on this record until corrected.</div>`;
+    // The snapshot's own integrity, stated rather than assumed. Its right to stand in for the
+    // settlement-date state rests entirely on tying out to the remittance; if it ever stopped doing
+    // so, every "since last settlement" figure below would be measured from a false baseline.
+    const snapWarn=[
+      sv.totalsOk?'':`row totals do not re-sum to the stated totals (computed ${fmt(sv.computed.qtyPaidMt)} MT / ${fmtUsd(sv.computed.earnedUsd)})`,
+      sv.tiesToRemittance?'':`snapshot earned ${fmtUsd(sv.computed.earnedUsd)} does not tie to the ${fmtUsd(payment.settlementAmountUsd)} remitted`,
+      sv.keysUnique?'':'two snapshot rows share the same identity, so movement cannot be attributed to either',
+    ].filter(Boolean);
+    const snapWarnHtml=snapWarn.length?`<div class="pmt-warn" role="alert">⚠ SNAPSHOT DOES NOT VERIFY — ${esc(snapWarn.join('; '))}. Figures measured from this baseline are unreliable until corrected.</div>`:'';
     const lineRows=payment.lines.map(l=>`<tr><td class="contract-id">${esc(l.contract)}${l.note?` <span class="pmt-note-tag">${esc(l.note)}</span>`:''}</td><td class="buyer-cell">${esc(l.buyer)}</td><td class="mt-sub">${fmt(l.qtyMt)}</td><td class="mt-sub">$${esc(l.rateUsdPerMt)}</td><td class="mt-sub" style="font-weight:500">${fmtUsd(l.amountUsd)}</td></tr>`).join('');
     const lineCards=payment.lines.map(l=>`<div class="pmt-line-card"><div class="pmt-line-top"><span class="contract-id">${esc(l.contract)}${l.note?` <span class="pmt-note-tag">${esc(l.note)}</span>`:''}</span><span style="font-weight:500">${fmtUsd(l.amountUsd)}</span></div><div class="buyer-cell">${esc(l.buyer)}</div><div class="mt-sub">${fmt(l.qtyMt)} MT &nbsp;·&nbsp; $${esc(l.rateUsdPerMt)}/MT</div></div>`).join('');
     const reconRowHtml=r=>{
-      const label=r.status==='match'?'Matches live sheet':r.status==='diverge'?'DIVERGES from live sheet':r.status==='no-match'?'No live match found':'Live data not loaded';
+      const label=r.status==='match'?'Agrees with the statement':r.status==='diverge'?'DIVERGES from the statement':'No statement match found';
       return `<div class="pmt-recon-row pmt-status-${r.status}"><div class="pmt-recon-top"><span class="contract-id">${esc(r.contract)}</span><span class="buyer-cell">${esc(r.buyer)}</span><span class="pmt-recon-status">${esc(label)}</span></div>`+
-        `<div class="pmt-recon-figs"><div><div class="pmt-fig-l">Paid (this record)</div><div class="pmt-fig-v">${fmt(r.frozenQtyMt)} MT · ${fmtUsd(r.frozenAmountUsd)}</div></div>`+
-        `<div><div class="pmt-fig-l">Currently payable (live sheet)</div><div class="pmt-fig-v">${r.liveQtyMt!=null?fmt(r.liveQtyMt)+' MT · '+fmtUsd(r.liveAmountUsd):'—'}</div></div></div>`+
+        `<div class="pmt-recon-figs"><div><div class="pmt-fig-l">Remitted (bank advice)</div><div class="pmt-fig-v">${fmt(r.frozenQtyMt)} MT · ${fmtUsd(r.frozenAmountUsd)}</div></div>`+
+        `<div><div class="pmt-fig-l">Payable (statement, ${esc(fmtDate(payment.settlementDate))})</div><div class="pmt-fig-v">${r.snapQtyMt!=null?fmt(r.snapQtyMt)+' MT · '+fmtUsd(r.snapAmountUsd):'—'}</div></div></div>`+
         (r.note?`<div class="pmt-recon-note">${esc(r.note)}</div>`:'')+`</div>`;
     };
-    // Exceptions (diverge/no-match/pending) always render expanded — they're the rows that need
+    // Exceptions (diverge/no-match) always render expanded — they're the rows that need
     // eyes. Matches collapse into one summary line so the panel doesn't grow unbounded with scale;
     // if nothing matched there's nothing to fold, so the summary line is omitted entirely.
     const reconExceptions=recon.filter(r=>r.status!=='match');
@@ -1682,19 +1958,138 @@ function renderPaymentsMade(chi,cdata){
       `<div><div class="pmt-fig-l">Creditor</div><div class="pmt-fig-v">${esc(payment.creditor.name)}<br>${esc(payment.creditor.address)}<br>BIC ${esc(payment.creditor.agentBic)} · Acct ${esc(payment.creditor.acctMasked)}</div></div>`+
       `<div><div class="pmt-fig-l">Remittance Info</div><div class="pmt-fig-v">${esc(payment.remittanceInfo)}</div></div>`+
       `</div></details>`;
+    // The statement as it stood on the settlement date, folded away by default: it is the evidence
+    // behind the panel above and the baseline behind the panel below, and it needs to be on the page
+    // — but 18 rows of history should not be the first thing read.
+    const snapRows=(payment.asOf||[]).map(r=>`<tr><td class="contract-id">${esc(r.schepensNo)}</td><td class="buyer-cell">${esc(r.buyer)}</td>`+
+      `<td class="mt-sub">${fmt(r.qtyShippedMt)}</td><td class="mt-sub">${fmt(r.qtyPaidMt)}</td>`+
+      `<td class="mt-sub">${r.demandedUsd?fmtUsd(r.demandedUsd):'<span class="led-nil">—</span>'}</td>`+
+      `<td class="mt-sub" style="font-weight:500">${r.earnedUsd?fmtUsd(r.earnedUsd):'<span class="led-nil">—</span>'}</td>`+
+      `<td class="mt-sub">${esc(r.status)}</td></tr>`).join('');
+    const snapHtml=(payment.asOf||[]).length?`<details class="pmt-audit"><summary>Statement as it stood on ${esc(fmtDate(payment.settlementDate))} — ${payment.asOf.length} rows, the baseline for everything since</summary>`+
+      `<div class="pmt-snap-note mt-sub">Transcribed from the sheet on ${esc(fmtDate(payment.asOfCapturedAt))}, when it still totalled ${fmtUsd(sv.computed.earnedUsd)} payable on ${fmt(sv.computed.qtyPaidMt)} MT paid — tying to the remittance above to the dollar and to the tonne. Frozen: it does not move when the sheet moves.</div>`+
+      `<div class="pmt-snap-scroll"><table class="pmt-basis-table"><thead><tr><th>Record</th><th>Buyer</th><th>Shipped (MT)</th><th>Paid (MT)</th><th>Demanded</th><th>Payable</th><th>Status</th></tr></thead>`+
+      `<tbody>${snapRows}</tbody><tfoot><tr><td colspan="3" style="font-weight:600">Total</td><td style="font-weight:600">${fmt(sv.computed.qtyPaidMt)}</td><td style="font-weight:600">${fmtUsd(sv.computed.demandedUsd)}</td><td style="font-weight:600">${fmtUsd(sv.computed.earnedUsd)}</td><td></td></tr></tfoot></table></div></details>`:'';
     return `<div class="pmt-panel">`+
-      `<div class="pmt-hd"><div><div class="pmt-hd-label">Payment Made — Commission Remitted</div><div class="pmt-hd-amt">${fmtUsd(payment.settlementAmountUsd)}</div><div class="mt-sub">Settled ${esc(payment.settlementDate)} · to ${esc(payment.creditor.name)}</div></div>`+
+      `<div class="pmt-hd"><div><div class="pmt-hd-label">${esc(payment.label||'Settlement')} — Commission Remitted</div><div class="pmt-hd-amt">${fmtUsd(payment.settlementAmountUsd)}</div><div class="mt-sub">Settled ${esc(fmtDate(payment.settlementDate))} · to ${esc(payment.creditor.name)}</div></div>`+
       `<div><button class="copy-btn" onclick="copyPaymentBasis(${pIdx})" title="Copy full payment basis as text">Copy Basis</button><span class="copy-fb" id="pmt-copy-fb-${pIdx}"></span></div></div>`+
-      warnHtml+
+      warnHtml+snapWarnHtml+
       `<div class="pmt-basis"><div class="expand-section-label">Payment Basis — ${payment.lines.length} line items</div>`+
       `<table class="pmt-basis-table"><thead><tr><th>Contract</th><th>Buyer</th><th>Qty (MT)</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${lineRows}</tbody>`+
       `<tfoot><tr><td colspan="2" style="font-weight:600">Verified Total</td><td style="font-weight:600">${fmt(v.computed.qtyMt)}</td><td></td><td style="font-weight:600">${fmtUsd(v.computed.amountUsd)}</td></tr></tfoot></table>`+
       `<div class="pmt-basis-cards">${lineCards}</div></div>`+
-      `<div class="pmt-recon"><div class="expand-section-label">Reconciliation — Paid vs. Currently Payable (Live Sheet)</div>${reconHtml}</div>`+
+      `<div class="pmt-recon"><div class="expand-section-label">Reconciliation — Bank advice vs. the statement it was raised against</div>${reconHtml}</div>`+
+      snapHtml+
       auditHtml+
       `</div>`;
   }).join('');
 }
+
+// ---- Since last settlement: the next statement, building itself ----
+// The position as one bar: everything earned to date, split into what has been remitted and what
+// has not, with the unremitted part separated by whether the contract was ever paid for. Colour is
+// never the only signal — the legend below carries the words and the figures, and the whole thing
+// is redundant with the table underneath it.
+function positionBarHtml(p){
+  const s=p.since, earned=p.earned;
+  // Drawn only when the position is a clean three-way split. With a reversal or a prior-period
+  // balance in play, "earned to date" and "remitted to date" stop being nested quantities and any
+  // single bar has to misstate one of them — so none is drawn, and the alert and the table carry it
+  // instead. In the branch that does draw, earned − topUp − fresh is exactly what was remitted.
+  if(Math.abs(s.reversals)>=1||Math.abs(s.priorBalance)>=1) return '';
+  const topUp=Math.max(s.topUp,0), fresh=Math.max(s.fresh,0);
+  const remitted=earned-topUp-fresh;
+  const total=earned;
+  if(total<=0||remitted<0) return '';
+  const pct=v=>(v/total*100).toFixed(3)+'%';
+  const seg=(v,cls,label)=>v>0?`<span class="pos-seg ${cls}" style="width:${pct(v)}" title="${label}: ${fmtUsd(v)}"></span>`:'';
+  const item=(v,cls,label,sub)=>v>0?`<span class="legend-i"><span class="legend-sw ${cls}"></span><span>${label} <span class="num">${fmtUsd(v)}</span><span class="pos-legend-s"> ${sub}</span></span></span>`:'';
+  return `<div class="pos-bar" role="img" aria-label="Commission payable to date ${fmtUsd(total)}: ${fmtUsd(remitted)} already remitted, ${fmtUsd(topUp)} further owed on contracts already remitted, ${fmtUsd(fresh)} owed on contracts not previously remitted.">`+
+    seg(remitted,'pos-remitted','Remitted')+seg(topUp,'pos-topup','Top-up due')+seg(fresh,'pos-fresh','New due')+`</div>`+
+    `<div class="legend">`+
+    item(remitted,'pos-remitted','Remitted','already paid')+
+    item(topUp,'pos-topup','Top-up due','on contracts already remitted')+
+    item(fresh,'pos-fresh','New due','not previously remitted')+
+    `</div>`;
+}
+// What the next statement to Schepens is made of. Every row is a difference against the frozen
+// baseline, so this panel empties itself the moment a settlement is appended and starts filling
+// again on its own — nobody restates it by hand.
+function renderCommSince(hi,data){
+  const wrap=document.getElementById('comm-since'); if(!wrap) return;
+  const p=commissionPosition(hi,data), s=p.since;
+  if(!s.baseline||!s.hasData){
+    wrap.innerHTML=`<div class="mt-sub empty-state">Statement not loaded — nothing to measure against the settlement baseline yet.</div>`;
+    setFold('fs-since','awaiting live statement');
+    return;
+  }
+  const moved=s.rows.filter(r=>r.status!=='unchanged');
+  // Exceptions first and always visible: a figure that went DOWN, or a row that vanished, is a
+  // data-integrity question, not billable movement, and must not be sorted in among the accruals.
+  const rank={altered:0,missing:1,new:2,accrued:3};
+  moved.sort((a,b)=>(rank[a.status]-rank[b.status])||(Math.abs(b.delta)-Math.abs(a.delta)));
+  // Chip colour tracks the position bar segment by segment — amber is a top-up, blue is money never
+  // remitted, red is an integrity exception — so the bar and the table teach the same three words.
+  const chip=r=>r.status==='altered'?'<span class="chip chip-alert">Reduced</span>'
+    :r.status==='missing'?'<span class="chip chip-alert">Row gone</span>'
+    :r.remitted?'<span class="chip chip-due">Top-up</span>':'<span class="chip chip-new">New</span>';
+  const rowsHtml=moved.map(r=>`<tr class="since-${r.status}">`+
+    `<td data-l="Record" class="contract-id" style="font-size:var(--t-sm)">${esc(r.schepensNo)}</td>`+
+    `<td data-l="Buyer" class="buyer-cell">${esc(r.buyer)}</td>`+
+    `<td data-l="Basis">${chip(r)}</td>`+
+    `<td data-l="Qty since" class="mt-sub">${r.deltaQty?fmtSigned(r.deltaQty)+' MT':'<span class="led-nil">—</span>'}</td>`+
+    `<td data-l="Payable since" class="mt-sub" style="font-weight:500">${fmtSignedUsd(r.delta)}</td>`+
+    `<td data-l="Demanded since" class="mt-sub">${r.deltaDemanded?fmtSignedUsd(r.deltaDemanded):'<span class="led-nil">—</span>'}</td></tr>`).join('');
+  // The arithmetic stated before any row of the table, so the figure is explained even to someone
+  // who never reads one — same chain component the buyer-gap panel uses. Deliberately WITHOUT
+  // .is-result: the hero above already carries Outstanding, and accenting the same figure again
+  // here would make the restatement louder than the statement.
+  const chain=`<div class="chain">`+
+    `<div class="chain-step"><span class="chain-v num">${fmtUsd(p.earned)}</span><span class="chain-l">Payable to date</span></div>`+
+    `<div class="chain-op">−</div>`+
+    `<div class="chain-step"><span class="chain-v num">${fmtUsd(p.paid)}</span><span class="chain-l">Remitted</span></div>`+
+    `<div class="chain-op">=</div>`+
+    `<div class="chain-step"><span class="chain-v num">${fmtUsd(p.outstanding)}</span><span class="chain-l">Outstanding</span></div></div>`;
+  const alerts=[];
+  if(Math.abs(s.reversals)>=1) alerts.push(`${fmtUsd(Math.abs(s.reversals))} of commission recorded at the last settlement is no longer on the statement. That is a correction or a deletion, not new business — check it before this statement goes out.`);
+  if(Math.abs(s.priorBalance)>=1) alerts.push(`${fmtUsd(Math.abs(s.priorBalance))} ${s.priorBalance>0?'was payable but unremitted':'was remitted beyond what was payable'} at the last settlement, and is carried into this figure.`);
+  const alertHtml=alerts.length?`<div class="pmt-warn" role="alert">⚠ ${alerts.map(esc).join(' ')}</div>`:'';
+  const empty=`<tr><td colspan="6"><div class="mt-sub empty-state">Nothing has moved since ${esc(fmtDate(s.baseline.settlementDate))} — the statement is unchanged from the settled position.</div></td></tr>`;
+  wrap.innerHTML=positionBarHtml(p)+chain+alertHtml+
+    `<div class="since-hd"><div class="expand-section-label">Movement since ${esc(fmtDate(s.baseline.settlementDate))} — ${moved.length} record${moved.length===1?'':'s'}</div>`+
+    `<div><button class="copy-btn" onclick="copyNextStatement()" title="Copy the next commission statement as text">Copy Statement</button><span class="copy-fb" id="since-copy-fb"></span></div></div>`+
+    `<div class="since-scroll"><table class="mini-table since-table"><thead><tr><th>Record</th><th>Buyer</th><th>Basis</th><th>Qty since</th><th>Payable since</th><th>Demanded since</th></tr></thead>`+
+    `<tbody>${rowsHtml||empty}</tbody>`+
+    `<tfoot><tr><td colspan="4" style="font-weight:600;font-size:var(--t-sm)">Outstanding to broker</td>`+
+    `<td class="mt-sub" style="font-weight:600">${fmtUsd(p.outstanding)}</td>`+
+    `<td class="mt-sub" style="font-weight:600">${s.deltaDemanded?fmtSignedUsd(s.deltaDemanded):'—'}</td></tr></tfoot></table></div>`+
+    `<div class="working-note">This is money Satyam Balajee <strong>pays out</strong>, not receives. Payable is the broker's fee on tonnage buyers have actually paid for, and is the basis every settlement has been raised on. Demanded is what the broker has asked for.`+
+    (Math.abs(p.demanded-p.earned)>=1?` The two differ by <span class="num">${fmtUsd(Math.abs(p.demanded-p.earned))}</span> across the whole statement, which is a rate dispute, not a debt.`:'')+`</div>`;
+  setFold('fs-since', p.settled?'nothing accrued since '+fmtDate(s.baseline.settlementDate)
+    :fmtUsd(p.outstanding)+' accrued · '+moved.length+' record'+(moved.length===1?'':'s'));
+}
+// Built from the rows the ledger last rendered, so the copied text and the visible table can never
+// disagree. With no rows in hand it refuses rather than emitting a statement measured against
+// nothing — a figure copied out of this dashboard goes to the broker.
+function buildNextStatementText(){
+  if(!commRenderedRows||!commRenderedRows.length) return 'Commission statement not available — the live sheet has not loaded in this session.';
+  const p=commissionPosition(commHi,commRenderedRows), s=p.since;
+  if(!s.baseline) return 'Commission statement not available — no settlement on record to measure movement against.';
+  const moved=s.rows.filter(r=>r.status!=='unchanged');
+  const lines=moved.map(r=>`${r.schepensNo} — ${r.buyer} — ${fmtSigned(r.deltaQty)} MT — ${fmtSignedUsd(r.delta)}`+
+    (r.status==='altered'||r.status==='missing'?'  [REDUCED SINCE LAST SETTLEMENT — VERIFY]':r.remitted?'  [top-up on a remitted contract]':'  [not previously remitted]')).join('\n');
+  return `COMMISSION STATEMENT — movement since ${s.baseline.settlementDate}\n`+
+    `Beneficiary: ${s.baseline.creditor.name}\n`+
+    `Payer: ${s.baseline.debtor.name}\n`+
+    `Basis: broker's commission on quantity the buyer has paid for\n\n`+
+    `Payable to date: ${fmtUsd(p.earned)}\nRemitted to date: ${fmtUsd(p.paid)}\nOutstanding: ${fmtUsd(p.outstanding)}\n\n`+
+    `Of which:\n  on contracts already remitted: ${fmtUsd(s.topUp)}\n  not previously remitted: ${fmtUsd(s.fresh)}\n`+
+    (Math.abs(s.reversals)>=1?`  reversals/corrections: ${fmtUsd(s.reversals)}\n`:'')+
+    (Math.abs(s.priorBalance)>=1?`  prior-period balance: ${fmtUsd(s.priorBalance)}\n`:'')+
+    `\nMovement (${moved.length} records):\n${lines||'  none'}\n\n`+
+    `Demanded by broker across the statement: ${fmtUsd(p.demanded)} — variance vs earned ${fmtUsd(p.demanded-p.earned)} (rate dispute, not billed).`;
+}
+function copyNextStatement(){ copyTextWithFeedback(buildNextStatementText(),'since-copy-fb'); }
 
 // Commission master list. Schepens No. is NOT unique (HK2860, HK2899-1 and HK2899-2 each appear
 // twice), so selection is keyed on id+position rather than id alone.
@@ -1710,8 +2105,13 @@ function renderCommissionLedger(hi,data){
     return;
   }
   const selIdx=selCommKey?data.findIndex((r,i)=>g(r,hi,'schepens no.').trim()+'|'+i===selCommKey):-1;
+  // Ledger movement, keyed for O(1) lookup so the badge can tell "remitted in full" from "remitted,
+  // but this exact row has earned more since" without re-diffing the whole sheet per row.
+  const since=settlementLedger(hi,data);
+  const sinceByKey=new Map(since.rows.map(r=>[r.key,r]));
   body.innerHTML=data.map((r,idx)=>{
     const id=g(r,hi,'schepens no.').trim(), buyer=g(r,hi,'buyer').trim();
+    const sinceRow=sinceByKey.get(snapKey(id,g(r,hi,'china contract no.').trim(),num(g(r,hi,'contract qty (mt)'))));
     const pqty=num(g(r,hi,'qty paid (mt)'));
     const earned=g(r,hi,'commission earned ($) as per qty paid').trim();
     const variance=g(r,hi,'variance ($)').trim(), status=g(r,hi,'status').trim();
@@ -1720,7 +2120,7 @@ function renderCommissionLedger(hi,data){
     return `<tr class="led-row${open?' open':''}${u?' unread-row':''}" tabindex="${open||(selIdx<0&&idx===0)?'0':'-1'}" role="button"
       aria-expanded="${open}" aria-controls="drill-m-${idx}"
       onclick="activateListRow('commission',${idx})" onkeydown="onListKeydown(event,'commission',${idx})">
-      <td data-l="Record">${unreadDot(u)}<span class="contract-id">${esc(id)}</span>${paidBadge(id)}</td>
+      <td data-l="Record">${unreadDot(u)}<span class="contract-id">${esc(id)}</span>${paidBadge(id,sinceRow)}</td>
       <td data-l="Buyer" class="buyer-cell">${esc(buyer)}</td>
       <td data-l="Status">${pill(csig,true)}</td>
       <td data-l="Qty paid" class="col-num${movedCls(u,'paid')}">${fmt(pqty)}</td>
@@ -1915,9 +2315,11 @@ async function loadData(){
     applyContractFilterSort(); // re-applies any filter/sort already set — a refresh must not reset it
     renderAnalytics(hi,data,chi,cdata);
     renderCommStats(chi,cdata);
+    renderCommSince(chi,cdata);
     renderCommProcessing(chi,cdata);
     renderCommissionLedger(chi,cdata);
-    renderPaymentsMade(chi,cdata); // re-render with live data so reconciliation can move off 'pending'
+    // The settlement archive is not re-rendered here: every figure in it is frozen, so it painted
+    // once at boot and nothing the sheet does can change it.
     document.getElementById('loading').style.display='none';
     const em=document.getElementById('error-msg'); em.style.display='none'; em.classList.remove('inline');
     const dash=document.getElementById('dashboard');
@@ -2019,7 +2421,7 @@ window.addEventListener('resize',()=>{
 });
 switchTab(tabFromHash(),true);
 syncFolds();
-renderPaymentsMade(); // frozen payment record — paints immediately, independent of the sheet fetch below
+renderPaymentsMade(); // frozen settlement archive — paints immediately and once, independent of the sheet fetch below
 loadData();
 </script>
 </body>
