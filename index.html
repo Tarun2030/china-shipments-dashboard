@@ -1055,7 +1055,7 @@ function buyerPosition(hi,data){
     const shipped=num(g(r,hi,'shipped mt')), paid=num(g(r,hi,'qty paid mt'));
     const cmt=num(g(r,hi,'contracted mt'));
     const usd=num(g(r,hi,'value m ($)')||g(r,hi,'value ($)')||g(r,hi,'value'))*1e6;
-    const own=cmt>0&&usd>0, rt=own?usd/cmt:blended;
+    const own=cmt>0&&usd>0, rt=295; // contract rate, per Tarun — was the register's value ÷ tonnage
     const gap=Math.max(shipped-paid,0), amount=gap*rt;
     shippedMt+=shipped; paidMt+=paid; unpaidMt+=gap; unpaidUsd+=amount;
     const port=g(r,hi,'disport').trim();
@@ -1093,7 +1093,7 @@ function renderWorking(bp){
     ${op('=')}
     ${step(fmt(Math.round(bp.unpaidMt))+' MT','not paid for')}
     ${op('&times;')}
-    ${step('$'+effRate.toFixed(2),'per MT, blended')}
+    ${step('$'+effRate.toFixed(2),'per MT, contract rate')}
     ${op('=')}
     ${step(fmtUsd(bp.unpaidUsd),'still to come',' is-result')}
   </div>`;
